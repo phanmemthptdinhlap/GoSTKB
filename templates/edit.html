@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sửa người dùng</title>
+</head>
+<body>
+    <h1>Sửa người dùng</h1>
+    <form method="POST" action="/edit?id={{.ID}}">
+        <label>Tên:</label>
+        <input type="text" name="name" value="{{.Name}}" required><br>
+        <label>Email:</label>
+        <input type="email" name="email" value="{{.Email}}" required><br>
+        <button type="submit">Cập nhật</button>
+    </form>
+    <a href="/">Quay lại</a>
+</body>
+</html>
