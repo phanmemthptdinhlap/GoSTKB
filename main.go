@@ -50,7 +50,7 @@ func main() {
 // Handler: Hiển thị danh sách người dùng
 func listUsers(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		rows, err := db.Query("SELECT id, user,password,name, email FROM users")
+		rows, err := db.Query("SELECT id, user, password, name, email FROM users")
 		if err != nil {
 			http.Error(w, "Lỗi truy vấn", http.StatusInternalServerError)
 			return
