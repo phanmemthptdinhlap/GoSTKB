@@ -9,13 +9,17 @@
     <table border="1">
         <tr>
             <th>ID</th>
-            <th>Tên</th>
+            <th>username</th>
+            <th>password</th>
+            <th>Ho và Tên</th>
             <th>Email</th>
             <th>Hành động</th>
         </tr>
         {{range .}}
         <tr>
             <td>{{.ID}}</td>
+            <td>{{.Username}}</td>
+            <td>{{.Password}}</td>
             <td>{{.Name}}</td>
             <td>{{.Email}}</td>
             <td>

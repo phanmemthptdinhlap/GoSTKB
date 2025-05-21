@@ -9,9 +9,11 @@ import (
 )
 
 type User struct {
-	ID    int
-	Name  string
-	Email string
+	ID       int
+	User     string
+	Password string
+	Name     string
+	Email    string
 }
 
 func main() {
@@ -25,8 +27,11 @@ func main() {
 	// Tạo bảng nếu chưa tồn tại
 	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user TEXT,
+		password PASSWORD,
         name TEXT,
-        email TEXT
+		email TEXT,
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`)
 	if err != nil {
 		panic(err)
@@ -45,7 +50,7 @@ func main() {
 // Handler: Hiển thị danh sách người dùng
 func listUsers(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		rows, err := db.Query("SELECT id, name, email FROM users")
+		rows, err := db.Query("SELECT id, user,password,name, email FROM users")
 		if err != nil {
 			http.Error(w, "Lỗi truy vấn", http.StatusInternalServerError)
 			return
@@ -55,7 +60,7 @@ func listUsers(db *sql.DB) http.HandlerFunc {
 		users := []User{}
 		for rows.Next() {
 			var u User
-			if err := rows.Scan(&u.ID, &u.Name, &u.Email); err != nil {
+			if err := rows.Scan(&u.ID, &u.User, &u.Password, &u.Name, &u.Email); err != nil {
 				http.Error(w, "Lỗi đọc dữ liệu", http.StatusInternalServerError)
 				return
 			}
@@ -80,9 +85,11 @@ func createUser(db *sql.DB) http.HandlerFunc {
 			return
 		}
 		if r.Method == http.MethodPost {
+			user := r.FormValue("user")
+			password := r.FormValue("password")
 			name := r.FormValue("name")
 			email := r.FormValue("email")
-			_, err := db.Exec("INSERT INTO users (name, email) VALUES (?, ?)", name, email)
+			_, err := db.Exec("INSERT INTO users (user, password, name, email) VALUES (?, ?, ?, ?)", user, password, name, email)
 			if err != nil {
 				http.Error(w, "Lỗi thêm người dùng", http.StatusInternalServerError)
 				return
@@ -97,7 +104,7 @@ func editUser(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := r.URL.Query().Get("id")
 		if r.Method == http.MethodGet {
-			row := db.QueryRow("SELECT id, name, email FROM users WHERE id = ?", id)
+			row := db.QueryRow("SELECT id, user, name, email FROM users WHERE id = ?", id)
 			var u User
 			if err := row.Scan(&u.ID, &u.Name, &u.Email); err != nil {
 				http.Error(w, "Lỗi truy vấn", http.StatusInternalServerError)
