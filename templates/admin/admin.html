@@ -9,19 +9,17 @@
     <table border="1">
         <tr>
             <th>ID</th>
-            <th>username</th>
-            <th>password</th>
-            <th>Ho và Tên</th>
+            <th>Họ và tên</th>
             <th>Email</th>
+            <th>Mã đăng nhập</th>
             <th>Hành động</th>
         </tr>
         {{range .}}
         <tr>
             <td>{{.ID}}</td>
-            <td>{{.User}}</td>
-            <td>{{.Password}}</td>
             <td>{{.Name}}</td>
             <td>{{.Email}}</td>
+            <td>{{.password}}</td>
             <td>
                 <a href="/edit?id={{.ID}}">Sửa</a>
                 <a href="/delete?id={{.ID}}" onclick="return confirm('Xóa?')">Xóa</a>

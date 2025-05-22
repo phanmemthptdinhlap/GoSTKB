@@ -28,7 +28,6 @@ func main() {
 	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user TEXT,
-		password PASSWORD,
         name TEXT,
 		email TEXT,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -45,6 +44,24 @@ func main() {
 
 	// Khởi động server
 	http.ListenAndServe(":8080", nil)
+}
+
+// Login
+func login(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodGet {
+		tmpl, _ := template.ParseFiles("templates/login.html")
+		tmpl.Execute(w, nil)
+		return
+	}
+	if r.Method == http.MethodPost {
+		user := r.FormValue("user")
+		password := r.FormValue("password")
+		if user == "admin" && password == "admin" {
+			http.Redirect(w, r, "/", http.StatusSeeOther)
+			return
+		}
+		http.Error(w, "Sai tên đăng nhập hoặc mật khẩu", http.StatusUnauthorized)
+	}
 }
 
 // Handler: Hiển thị danh sách người dùng
