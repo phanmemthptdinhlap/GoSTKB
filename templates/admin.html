@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Danh sách người dùng</title>
+</head>
+<body>
+    <h1>Danh sách người dùng</h1>
+    <a href="/create">Thêm người dùng</a>
+    <table border="1">
+        <tr>
+            <th>ID</th>
+            <th>username</th>
+            <th>password</th>
+            <th>Ho và Tên</th>
+            <th>Email</th>
+            <th>Hành động</th>
+        </tr>
+        {{range .}}
+        <tr>
+            <td>{{.ID}}</td>
+            <td>{{.User}}</td>
+            <td>{{.Password}}</td>
+            <td>{{.Name}}</td>
+            <td>{{.Email}}</td>
+            <td>
+                <a href="/edit?id={{.ID}}">Sửa</a>
+                <a href="/delete?id={{.ID}}" onclick="return confirm('Xóa?')">Xóa</a>
+            </td>
+        </tr>
+        {{end}}
+    </table>
+</body>
+</html>
