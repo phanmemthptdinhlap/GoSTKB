@@ -9,6 +9,24 @@ import (
 
 func Check_login(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// Xử lý đăng nhập
+		if r.Method == http.MethodPost {
+			// ...kiểm tra tài khoản...
+			session, _ := myauth.Store.Get(r, "session-name")
+			session.Values["authenticated"] = true
+			session.Save(r, w)
+			http.Redirect(w, r, "/admin/dashboard", http.StatusSeeOther)
+			return
+		}
+		// Hiển thị form đăng nhập
+		tmpl := template.Must(template.ParseFiles("templates/admin/login.html"))
+		tmpl.Execute(w, nil)
+	}
+
+}
+
+func Do_login(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPost {
 			// Lấy dữ liệu từ form
 			user := r.FormValue("user")
@@ -29,7 +47,13 @@ func Check_login(db *sql.DB) http.HandlerFunc {
 				return
 			}
 
-			// Đăng nhập thành công
+			// Lưu thông tin đăng nhập vào session
+			session, _ := myauth.Store.Get(r, "session-name")
+			session.Values["authenticated"] = true
+			session.Values["user"] = user
+			session.Save(r, w)
+			// Chuyển hướng đến trang dashboard
+			// Nếu đăng nhập thành công, chuyển hướng đến trang dashboard
 			http.Redirect(w, r, "/admin/dashboard", http.StatusSeeOther)
 			return
 		}

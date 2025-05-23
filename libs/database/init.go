@@ -1,6 +1,7 @@
 package database
 
 import (
+	"GoSTKB/libs/myauth"
 	"database/sql"
 	"fmt"
 
@@ -13,7 +14,6 @@ func Connect() (*sql.DB, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to database: %w", err)
 	}
-	defer db.Close()
 	return db, nil
 }
 func CreateTable_admin(db *sql.DB) error {
@@ -25,10 +25,10 @@ func CreateTable_admin(db *sql.DB) error {
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	)`)
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("failed to create table: %w", err)
 	}
 	// Tạo tài khoản admin mặc định
-	hashedPassword, _ := auth.hasPassword("admin1234")
+	hashedPassword, _ := myauth.HasPassword("admin1234")
 	_, err = db.Exec(`INSERT INTO admin (user, password) VALUES (?, ?)`, "admin", hashedPassword)
 	if err != nil {
 		return fmt.Errorf("failed to create table: %w", err)
