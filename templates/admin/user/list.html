@@ -5,7 +5,7 @@
 </head>
 <body>
     <h1>Danh sách người dùng</h1>
-    <a href="/create">Thêm người dùng</a>
+    <a href="/admin/logout">Đăng xuất</a>
     <table border="1">
         <tr>
             <th>ID</th>
@@ -21,11 +21,12 @@
             <td>{{.Email}}</td>
             <td>{{.password}}</td>
             <td>
-                <a href="/edit?id={{.ID}}">Sửa</a>
-                <a href="/delete?id={{.ID}}" onclick="return confirm('Xóa?')">Xóa</a>
+                <a href="/admin/user/edit?id={{.ID}}">Sửa</a>
+                <a href="/admin/user/delete?id={{.ID}}" onclick="return confirm('Xóa?')">Xóa</a>
             </td>
         </tr>
         {{end}}
     </table>
+    <a href="/admin/user/add">Thêm người dùng</a>
 </body>
 </html>

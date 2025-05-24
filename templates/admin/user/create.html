@@ -5,15 +5,13 @@
 </head>
 <body>
     <h1>Thêm người dùng</h1>
-    <form method="POST" action="/create">
-        <label>User:</label>
-        <input type="text" name="user" required><br>
-        <label>Password:</label>
-        <input type="password" name="password" required><br>
-        <label>Tên:</label>
+    <form method="POST" action="/admin/user/add">
+        <label>Họ và tên:</label>
         <input type="text" name="name" required><br>
         <label>Email:</label>
         <input type="email" name="email" required><br>
+        <label>Mã đăng nhập:</label>
+        <input type="password" name="password" required><br>
         <button type="submit">Thêm</button>
     </form>
     <a href="/">Quay lại</a>

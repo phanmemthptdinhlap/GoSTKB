@@ -10,7 +10,7 @@ import (
 
 func Connect() (*sql.DB, error) {
 	// Kết nối SQLite
-	db, err := sql.Open("sqlite3", "./data.db")
+	db, err := sql.Open("sqlite3", "./database/database.db")
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to database: %w", err)
 	}
@@ -20,7 +20,7 @@ func CreateTable_admin(db *sql.DB) error {
 	// Tạo bảng nếu chưa tồn tại
 	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS admin(
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		user TEXT,
+		user TEXT UNIQUE,
 		password TEXT,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	)`)
@@ -40,7 +40,8 @@ func CreateTable_users(db *sql.DB) error {
 	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS users (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		name TEXT,
-		email TEXT,
+		email TEXT UNIQUE,
+		password TEXT,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	)`)
 	if err != nil {

@@ -2,9 +2,8 @@ package main
 
 import (
 	"GoSTKB/cmd/admin"
+	"GoSTKB/cmd/user"
 	"GoSTKB/libs/database"
-	"GoSTKB/libs/myauth"
-	"html/template"
 	"net/http"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -16,21 +15,17 @@ func main() {
 	db, _ := database.Connect()
 	database.CreateTable_admin(db)
 	database.CreateTable_users(db)
+
 	// Định nghĩa các handler
-	http.HandleFunc("/admin", admin.Check_login(db))
-	http.HandleFunc("/admin/login", admin.Do_login(db))
-	http.HandleFunc("/admin/logout", func(w http.ResponseWriter, r *http.Request) {
-		// Xử lý đăng xuất
-		session, _ := myauth.Store.Get(r, "session-name")
-		session.Values["authenticated"] = false
-		session.Save(r, w)
-		http.Redirect(w, r, "/admin", http.StatusSeeOther)
-	})
-	http.HandleFunc("/admin/dashboard", myauth.RequireAuth(func(w http.ResponseWriter, r *http.Request) {
-		// Hiển thị trang dashboard
-		tmpl := template.Must(template.ParseFiles("templates/admin/dashboard.html"))
-		tmpl.Execute(w, nil)
-	}))
+	http.HandleFunc("/", user.Show_home())
+	//admin
+	http.HandleFunc("/admin", admin.RequireAuth(admin.ListUser(db)))
+	http.HandleFunc("/admin/user", admin.RequireAuth(admin.ListUser(db)))
+	http.HandleFunc("/admin/user/add", admin.RequireAuth(admin.CreateUser(db)))
+	http.HandleFunc("/admin/user/edit", admin.RequireAuth(admin.EditUser(db)))
+	http.HandleFunc("/admin/user/delete", admin.RequireAuth(admin.DeleteUser(db)))
+	http.HandleFunc("/admin/login", admin.Do_admin(db))
+	http.HandleFunc("/admin/logout", admin.Logout())
 	// Khởi động server
 	http.ListenAndServe(":8080", nil)
 }

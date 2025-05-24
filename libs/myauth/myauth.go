@@ -36,7 +36,7 @@ func IsAuthenticated(r *http.Request) bool {
 func RequireAuth(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if !IsAuthenticated(r) {
-			http.Redirect(w, r, "/admin", http.StatusSeeOther)
+			http.Redirect(w, r, "/", http.StatusSeeOther)
 			return
 		}
 		next(w, r)
