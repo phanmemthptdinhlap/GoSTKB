@@ -10,7 +10,7 @@ import (
 
 func Connect() (*sql.DB, error) {
 	// Kết nối SQLite
-	db, err := sql.Open("sqlite3", "./data.go")
+	db, err := sql.Open("sqlite3", "./data.db")
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to database: %w", err)
 	}
