@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"GoSTKB/libs/database"
 	"GoSTKB/libs/myauth"
 	"database/sql"
 	"html/template"
@@ -128,7 +129,7 @@ func CreateUser(db *sql.DB) http.HandlerFunc {
 			email := r.FormValue("email")
 			password := r.FormValue("password")
 			// Kiểm tra xem email đã tồn tại chưa
-			_, err := db.Exec("INSERT INTO users (name, email, password) VALUES (?, ?, ?)", name, email, password)
+			err := database.CreateUser(db, name, email, password)
 			if err != nil {
 				http.Error(w, "Lỗi thêm người dùng", http.StatusInternalServerError)
 				return

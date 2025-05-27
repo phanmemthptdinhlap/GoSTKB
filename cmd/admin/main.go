@@ -13,8 +13,12 @@ import (
 func main() {
 	// Kết nối SQLite
 	db, _ := database.Connect()
-	database.CreateTable_admin(db)
-	database.CreateTable_users(db)
+	database.CreateTableAdmin(db)
+	database.CreateTableUsers(db)
+
+	// Phục vụ các tệp tĩnh
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+	// Phục vụ các tệp HTML
 
 	// Định nghĩa các handler
 	http.HandleFunc("/", user.Show_home())
