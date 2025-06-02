@@ -1,13 +1,9 @@
-<!DOCTYPE html>
-<html>
-<head>
-	<title>Trang chính</title>
-	<meta charset="UTF-8">
-	<link rel="stylesheet" href="/static/css/style.css">
-</head>
-<body>
-	<h1>Chào mừng bạn đến với trang chính!</h1>
-	<p>{{.Msg}}</p>
-	<a href="/">Đăng xuất</a>
-</body>
-</html>
+{{define "content"}}
+<div id ="main">
+    <p>Chào mừng bạn đến với trang chủ của hệ thống quản lý giáo dục.</p>
+    <p>Hệ thống này được thiết kế để giúp quản lý thông tin giáo viên, học sinh và các hoạt động học tập một cách hiệu quả.</p>
+    <p>Vui lòng sử dụng menu bên trên để truy cập các chức năng khác nhau của hệ thống.</p>
+    <p>Nếu bạn cần hỗ trợ, vui lòng liên hệ với quản trị viên.</p>
+    <p>Chúc bạn có một trải nghiệm tốt!</p>
+</div>
+{{end}}

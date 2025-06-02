@@ -1,0 +1,9 @@
+{{define "menu"}}
+<nav class="menu">
+    <ul>
+        {{range .Menu}}
+            <li><a href="{{.URL}}">{{.Name}}</a></li>
+        {{end}}
+    </ul>
+</nav>
+{{end}}
