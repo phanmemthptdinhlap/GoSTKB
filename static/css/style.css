@@ -5,3 +5,119 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
 .menu a { color: white; text-decoration: none; }
 .menu a:hover { color: #ddd; }
 main { padding: 20px; }
+header { 
+    background-color: #0212f2; 
+    padding: 10px; 
+    text-align: center;
+    border-bottom: 1px solid #ccc;
+    margin-bottom: 20px;
+    font-size: 40px;
+    color: #f6f3f3;
+}
+footer { background-color: #333; 
+    color: white; 
+    text-align: center; 
+    padding: 10px; 
+    position: fixed; 
+    width: 100%; 
+    bottom: 0; }
+.table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+.table th, .table td { border: 2px solid #b2b2b2; padding: 8px; text-align: left; }
+.table th { background-color: #f2f2f2; }
+.table tr:hover { background-color: #828080; }
+.button { 
+    background-color: #4CAF50; 
+    color: white; 
+    padding: 10px 20px; 
+    border: none; 
+    border-radius: 5px; 
+    cursor: pointer; 
+}
+.button:hover { 
+    background-color: #45a049; 
+}
+.button:disabled { 
+    background-color: #ccc; 
+    cursor: not-allowed; 
+}
+.input-field { 
+    width: 100%; 
+    padding: 10px; 
+    margin: 10px 0; 
+    border: 1px solid #ccc; 
+    border-radius: 5px; 
+}
+.input-field:focus { 
+    border-color: #4CAF50; 
+    outline: none; 
+}
+.alert { 
+    padding: 15px; 
+    background-color: #f44336; 
+    color: white; 
+    margin-bottom: 20px; 
+    border-radius: 5px; 
+}
+.alert.success { 
+    background-color: #4CAF50; 
+}
+.alert.info { 
+    background-color: #2196F3; 
+}
+.alert.warning { 
+    background-color: #ff9800; 
+}
+.alert.close { 
+    float: right; 
+    font-size: 20px; 
+    font-weight: bold; 
+    cursor: pointer; 
+}
+.alert.close:hover { 
+    color: black; 
+}
+@media (max-width: 600px) {
+    .menu ul { flex-direction: column; }
+    .menu li { margin-right: 0; margin-bottom: 10px; }
+    header { font-size: 30px; }
+    .table th, .table td { font-size: 14px; }
+    .button { width: 100%; }
+    .input-field { width: calc(100% - 20px); }
+}
+@media (min-width: 601px) and (max-width: 1024px) {
+    header { font-size: 35px; }
+    .table th, .table td { font-size: 16px; }
+    .button { width: auto; }
+    .input-field { width: calc(100% - 20px); }
+}
+@media (min-width: 1025px) {
+    header { font-size: 40px; }
+    .table th, .table td { font-size: 18px; }
+    .button { width: auto; }
+    .input-field { width: calc(100% - 20px); }
+}
+@media print {
+    body { font-size: 12px; }
+    .menu, footer { display: none; }
+    header { font-size: 20px; }
+    .table th, .table td { padding: 4px; }
+    .button, .input-field { display: none; }
+    .alert { margin-bottom: 10px; }
+}
+@media (prefers-color-scheme: dark) {
+    body { background-color: #121212; color: #e0e0e0; }
+    .menu { background-color: #1f1f1f; }
+    .menu a { color: #e0e0e0; }
+    .menu a:hover { color: #bbb; }
+    header { background-color: #1a237e; color: #fff; }
+    footer { background-color: #1f1f1f; color: #e0e0e0; }
+    .table th, .table td { border-color: #444; }
+    .table th { background-color: #333; }
+    .alert { background-color: #d32f2f; }
+    .alert.success { background-color: #388e3c; }
+    .alert.info { background-color: #1976d2; }
+    .alert.warning { background-color: #f57c00; }
+}
+.alert.close { color: #fff; }
+.alert.close:hover { color: #ddd; }
+/* End of static/css/style.css */

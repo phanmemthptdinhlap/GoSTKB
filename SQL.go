@@ -271,18 +271,18 @@ func GetAssignments(db *sql.DB) ([]map[string]interface{}, error) {
 	for rows.Next() {
 		var id int
 		var teacherName, subjectName string
-		var week, hours int
+		var week, numberLession int
 		var createdAt string
-		if err := rows.Scan(&id, &teacherName, &subjectName, &week, &hours, &createdAt); err != nil {
+		if err := rows.Scan(&id, &teacherName, &subjectName, &week, &numberLession, &createdAt); err != nil {
 			return nil, fmt.Errorf("lỗi khi quét hàng: %w", err)
 		}
 		assignments = append(assignments, map[string]interface{}{
-			"id":           id,
-			"teacher_name": teacherName,
-			"subject_name": subjectName,
-			"week":         week,
-			"hours":        hours,
-			"created_at":   createdAt,
+			"id":             id,
+			"teacher_name":   teacherName,
+			"subject_name":   subjectName,
+			"week":           week,
+			"number_lession": numberLession,
+			"created_at":     createdAt,
 		})
 	}
 	return assignments, nil
