@@ -150,6 +150,45 @@ func ShowTable(db *sql.DB, table_name string) http.HandlerFunc {
 		}
 	}
 }
+func ShowForm(db *sql.DB, table_name string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// Xử lý dữ liệu từ form nếu có
+		if r.Method == http.MethodPost {
+			// Lấy dữ liệu từ form và lưu vào cơ sở dữ liệu
+			// Ví dụ: Lấy tên giáo viên từ form
+			name := r.FormValue("name")
+			// Thực hiện lưu dữ liệu vào cơ sở dữ liệu
+			_, err := db.Exec("INSERT INTO "+table_name+" (name) VALUES (?)", name)
+			if err != nil {
+				http.Error(w, fmt.Sprintf("Lỗi khi lưu dữ liệu: %v", err), http.StatusInternalServerError)
+				return
+			}
+			// Chuyển hướng về trang danh sách sau khi lưu thành công
+			http.Redirect(w, r, "/"+table_name, http.StatusSeeOther)
+			return
+		}
+		// Hiển thị form để thêm mới dữ liệu
+		data := &WebGui{
+			Title:  "Thêm mới " + table_name,
+			Header: "Thêm mới " + table_name,
+			Footer: "© 2023 Quản lý thời khóa biểu",
+			Body: `<form method="post">
+				<label for="name">Tên:</label>
+				<input type="text" id="name" name="name" required>
+				<button type="submit">Lưu</button>
+			</form>`,
+		}
+		// Tạo template từ dữ liệu
+		tmpl := data.Template()
+		// Thực thi template và gửi kết quả đến trình duyệt
+		err := tmpl.Execute(w, data)
+		if err != nil {
+			http.Error(w, "Lỗi khi hiển thị trang", http.StatusInternalServerError)
+			return
+		}
+	}
+	// Gui khởi tạo giao diện web cho quản lý thời khóa biểu
+}
 
 func Gui(db *sql.DB) {
 	// Tạo một template mới
