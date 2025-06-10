@@ -39,11 +39,13 @@ func CreateTable(db *sql.DB) error {
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		giaovien_id INTEGER,
 		monhoc_id INTEGER,
+		class_id INTEGER,
 		tuan INTEGER,
 		sotiet INTEGER,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 		FOREIGN KEY (giaovien_id) REFERENCES giaovien(id),
-		FOREIGN KEY (monhoc_id) REFERENCES monhoc(id)
+		FOREIGN KEY (monhoc_id) REFERENCES monhoc(id),
+		FOREIGN KEY (class_id) REFERENCES lophoc(id)
 	);
 	`
 	_, err := db.Exec(sqlCreateTables)
@@ -109,6 +111,25 @@ func GetTeachers(db *sql.DB) ([]map[string]interface{}, error) {
 	}
 	return teachers, nil
 }
+func GetTeacherByID(db *sql.DB, id int) (map[string]interface{}, error) {
+	// Lấy thông tin giáo viên theo ID
+	sqlSelect := `SELECT id, tkb_name, name, created_at FROM giaovien WHERE id = ?`
+	row := db.QueryRow(sqlSelect, id)
+
+	var teacher map[string]interface{}
+	var tkbName, name, createdAt string
+	if err := row.Scan(&id, &tkbName, &name, &createdAt); err != nil {
+		return nil, fmt.Errorf("lỗi khi quét hàng: %w", err)
+	}
+
+	teacher = map[string]interface{}{
+		"id":         id,
+		"tkb_name":   tkbName,
+		"name":       name,
+		"created_at": createdAt,
+	}
+	return teacher, nil
+}
 func AddSubject(db *sql.DB, name string) error {
 	// Thêm môn học mới
 	sqlInsert := `INSERT INTO monhoc (name) VALUES (?)`
@@ -163,6 +184,24 @@ func GetSubjects(db *sql.DB) ([]map[string]interface{}, error) {
 		})
 	}
 	return subjects, nil
+}
+func GetSubjectByID(db *sql.DB, id int) (map[string]interface{}, error) {
+	// Lấy thông tin môn học theo ID
+	sqlSelect := `SELECT id, name, created_at FROM monhoc WHERE id = ?`
+	row := db.QueryRow(sqlSelect, id)
+
+	var subject map[string]interface{}
+	var name, createdAt string
+	if err := row.Scan(&id, &name, &createdAt); err != nil {
+		return nil, fmt.Errorf("lỗi khi quét hàng: %w", err)
+	}
+
+	subject = map[string]interface{}{
+		"id":         id,
+		"name":       name,
+		"created_at": createdAt,
+	}
+	return subject, nil
 }
 
 // Lớp học
@@ -222,6 +261,25 @@ func GetClasses(db *sql.DB) ([]map[string]interface{}, error) {
 	}
 	return classes, nil
 }
+func GetClassByID(db *sql.DB, id int) (map[string]interface{}, error) {
+	// Lấy thông tin lớp học theo ID
+	sqlSelect := `SELECT id, name, khoi, created_at FROM lophoc WHERE id = ?`
+	row := db.QueryRow(sqlSelect, id)
+
+	var class map[string]interface{}
+	var name, khoi, createdAt string
+	if err := row.Scan(&id, &name, &khoi, &createdAt); err != nil {
+		return nil, fmt.Errorf("lỗi khi quét hàng: %w", err)
+	}
+
+	class = map[string]interface{}{
+		"id":         id,
+		"name":       name,
+		"khoi":       khoi,
+		"created_at": createdAt,
+	}
+	return class, nil
+}
 
 // Phân công giáo viên cho môn học
 func AssignTeacherToSubject(db *sql.DB, teacherID, subjectID, week, hours int) error {
@@ -260,10 +318,141 @@ func GetAssignments(db *sql.DB) ([]map[string]interface{}, error) {
 	SELECT p.id, g.name AS teacher_name, m.name AS subject_name, p.tuan, p.sotiet, p.created_at 
 	FROM phancong p 
 	JOIN giaovien g ON p.giaovien_id = g.id 
-	JOIN monhoc m ON p.monhoc_id = m.id`
+	JOIN monhoc m ON p.monhoc_id = m.id
+	JOIN lophoc c ON p.class_id = c.id`
 	rows, err := db.Query(sqlSelect)
 	if err != nil {
 		return nil, fmt.Errorf("lấy danh sách phân công giáo viên thất bại: %w", err)
+	}
+	defer rows.Close()
+
+	var assignments []map[string]interface{}
+	for rows.Next() {
+		var id int
+		var teacherName, subjectName string
+		var week, numberLession int
+		var createdAt string
+		if err := rows.Scan(&id, &teacherName, &subjectName, &week, &numberLession, &createdAt); err != nil {
+			return nil, fmt.Errorf("lỗi khi quét hàng: %w", err)
+		}
+		assignments = append(assignments, map[string]interface{}{
+			"id":             id,
+			"teacher_name":   teacherName,
+			"subject_name":   subjectName,
+			"week":           week,
+			"number_lession": numberLession,
+			"created_at":     createdAt,
+		})
+	}
+	return assignments, nil
+}
+func GetAssignmentByID(db *sql.DB, id int) (map[string]interface{}, error) {
+	// Lấy thông tin phân công giáo viên theo ID
+	sqlSelect := `
+	SELECT p.id, g.name AS teacher_name, m.name AS subject_name, p.tuan, p.sotiet, p.created_at 
+	FROM phancong p 
+	JOIN giaovien g ON p.giaovien_id = g.id 
+	JOIN monhoc m ON p.monhoc_id = m.id 
+	WHERE p.id = ?`
+	row := db.QueryRow(sqlSelect, id)
+
+	var assignment map[string]interface{}
+	var teacherName, subjectName string
+	var week, numberLession int
+	var createdAt string
+	if err := row.Scan(&id, &teacherName, &subjectName, &week, &numberLession, &createdAt); err != nil {
+		return nil, fmt.Errorf("lỗi khi quét hàng: %w", err)
+	}
+
+	assignment = map[string]interface{}{
+		"id":             id,
+		"teacher_name":   teacherName,
+		"subject_name":   subjectName,
+		"week":           week,
+		"number_lession": numberLession,
+		"created_at":     createdAt,
+	}
+	return assignment, nil
+}
+func GetAssignmentByTeacherID(db *sql.DB, teacherID int) ([]map[string]interface{}, error) {
+	// Lấy danh sách phân công giáo viên theo ID giáo viên
+	sqlSelect := `
+	SELECT p.id, g.name AS teacher_name, m.name AS subject_name, p.tuan, p.sotiet, p.created_at 
+	FROM phancong p 
+	JOIN giaovien g ON p.giaovien_id = g.id 
+	JOIN monhoc m ON p.monhoc_id = m.id 
+	WHERE p.giaovien_id = ?`
+	rows, err := db.Query(sqlSelect, teacherID)
+	if err != nil {
+		return nil, fmt.Errorf("lấy danh sách phân công giáo viên theo ID giáo viên thất bại: %w", err)
+	}
+	defer rows.Close()
+
+	var assignments []map[string]interface{}
+	for rows.Next() {
+		var id int
+		var teacherName, subjectName string
+		var week, numberLession int
+		var createdAt string
+		if err := rows.Scan(&id, &teacherName, &subjectName, &week, &numberLession, &createdAt); err != nil {
+			return nil, fmt.Errorf("lỗi khi quét hàng: %w", err)
+		}
+		assignments = append(assignments, map[string]interface{}{
+			"id":             id,
+			"teacher_name":   teacherName,
+			"subject_name":   subjectName,
+			"week":           week,
+			"number_lession": numberLession,
+			"created_at":     createdAt,
+		})
+	}
+	return assignments, nil
+}
+func GetAssignmentBySubjectID(db *sql.DB, subjectID int) ([]map[string]interface{}, error) {
+	// Lấy danh sách phân công giáo viên theo ID môn học
+	sqlSelect := `
+	SELECT p.id, g.name AS teacher_name, m.name AS subject_name, p.tuan, p.sotiet, p.created_at 
+	FROM phancong p 
+	JOIN giaovien g ON p.giaovien_id = g.id 
+	JOIN monhoc m ON p.monhoc_id = m.id 
+	WHERE p.monhoc_id = ?`
+	rows, err := db.Query(sqlSelect, subjectID)
+	if err != nil {
+		return nil, fmt.Errorf("lấy danh sách phân công giáo viên theo ID môn học thất bại: %w", err)
+	}
+	defer rows.Close()
+
+	var assignments []map[string]interface{}
+	for rows.Next() {
+		var id int
+		var teacherName, subjectName string
+		var week, numberLession int
+		var createdAt string
+		if err := rows.Scan(&id, &teacherName, &subjectName, &week, &numberLession, &createdAt); err != nil {
+			return nil, fmt.Errorf("lỗi khi quét hàng: %w", err)
+		}
+		assignments = append(assignments, map[string]interface{}{
+			"id":             id,
+			"teacher_name":   teacherName,
+			"subject_name":   subjectName,
+			"week":           week,
+			"number_lession": numberLession,
+			"created_at":     createdAt,
+		})
+	}
+	return assignments, nil
+}
+func GetAssignmentByClassID(db *sql.DB, classID int) ([]map[string]interface{}, error) {
+	// Lấy danh sách phân công giáo viên theo ID lớp học
+	sqlSelect := `
+	SELECT p.id, g.name AS teacher_name, m.name AS subject_name, p.tuan, p.sotiet, p.created_at 
+	FROM phancong p 
+	JOIN giaovien g ON p.giaovien_id = g.id 
+	JOIN monhoc m ON p.monhoc_id = m.id 
+	WHERE p.class_id = ?`
+	rows, err := db.Query(sqlSelect, classID)
+	if err != nil {
+		return nil, fmt.Errorf("lấy danh sách phân công giáo viên theo ID lớp học thất bại: %w", err)
 	}
 	defer rows.Close()
 

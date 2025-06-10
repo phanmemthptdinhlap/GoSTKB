@@ -150,6 +150,14 @@ func ShowTable(db *sql.DB, table_name string) http.HandlerFunc {
 		}
 	}
 }
+
+type DataForm struct {
+	Title       string
+	Actions     string
+	FieldsName  []string
+	FieldsValue []string
+}
+
 func ShowForm(db *sql.DB, table_name string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Xử lý dữ liệu từ form nếu có
