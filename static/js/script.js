@@ -1,14 +1,20 @@
 document.addEventListener('DOMContentLoaded', () => {
+    const getTableName=() => {
+        const path = window.location.pathname;
+        const parts = path.split('/');
+        return parts[parts.length - 1]; // Lấy phần cuối cùng của đường dẫn
+    }
+    // Chỉ hiển thị nút Thêm 
     document.querySelectorAll('.add-btn').forEach(button => {
         button.addEventListener('click', () => {
-            window.location.href = `/edit/`; // Chuyển hướng tới trang chỉnh sửa
+            window.location.href = `/add/${getTableName()}`; // Chuyển hướng tới trang chỉnh sửa
         });
     });
     // Xử lý nút Sửa
     document.querySelectorAll('.edit-btn').forEach(button => {
         button.addEventListener('click', () => {
             const id = button.getAttribute('data-id');
-            window.location.href = `/edit/?id=${id}`; // Chuyển hướng tới trang chỉnh sửa
+            window.location.href = `/edit/${getTableName()}?id=${id}`; // Chuyển hướng tới trang chỉnh sửa
         });
     });
 
@@ -21,7 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             try {
-                const response = await fetch(`/delete/?id=${id}`, {
+                const response = await fetch(`/delete/${getTableName()}?id=${id}`, {
                     method: 'DELETE',
                 });
 

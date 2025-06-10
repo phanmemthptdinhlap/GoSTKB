@@ -15,8 +15,8 @@ type Table_view struct {
 	Rows    []map[string]interface{}
 }
 
-func (p *Table_view) GetHtml(id_table, class_table string, edit bool) string {
-	texthtml := `<table id=` + id_table + ` class="` + class_table + `">
+func (p *Table_view) GetHtml(name, class_table string, edit bool) string {
+	texthtml := `<table id="table_` + name + `" data-table-name="` + name + `" class="` + class_table + `">
 	<thead>
 	<tr>`
 	for _, col := range p.Columns {
@@ -107,12 +107,11 @@ func getData(tableName string, db *sql.DB) (table []map[string]interface{}, col 
 		title = "Danh sách Môn học"
 	case "classes":
 		table, err = GetClasses(db)
-
 		col = []string{"id", "name"}
 		title = "Danh sách Lớp học"
 	case "assignments":
 		table, err = GetAssignments(db)
-		col = []string{"id", "teacher_id", "subject_id", "class_id", "day_of_week", "start_time", "end_time"}
+		col = []string{"id", "teacher_name", "subject_name", "class_name", "day_of_week", "start_time", "end_time"}
 		title = "Danh sách Phân công"
 	// Thêm các trường hợp khác nếu cần
 	default:
@@ -134,7 +133,7 @@ func ShowTable(db *sql.DB, table_name string) http.HandlerFunc {
 			Columns: col,
 			Rows:    table,
 		}
-		htmlTable := data.GetHtml("table_"+table_name, "table", true)
+		htmlTable := data.GetHtml(table_name, "table", true)
 		// Tạo dữ liệu để truyền vào template
 		tmpl := (&WebGui{
 			Title:  "Quản lý thời khóa biểu",
@@ -151,57 +150,114 @@ func ShowTable(db *sql.DB, table_name string) http.HandlerFunc {
 	}
 }
 
-type DataForm struct {
-	Title       string
-	Actions     string
-	FieldsName  []string
-	FieldsValue []string
-}
-
-func ShowForm(db *sql.DB, table_name string) http.HandlerFunc {
+func AddGiaovien(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// Xử lý dữ liệu từ form nếu có
+		// Xử lý thêm giáo viên mới vào cơ sở dữ liệu
 		if r.Method == http.MethodPost {
-			// Lấy dữ liệu từ form và lưu vào cơ sở dữ liệu
-			// Ví dụ: Lấy tên giáo viên từ form
 			name := r.FormValue("name")
-			// Thực hiện lưu dữ liệu vào cơ sở dữ liệu
-			_, err := db.Exec("INSERT INTO "+table_name+" (name) VALUES (?)", name)
+			tkbName := r.FormValue("tkb_name")
+			// Thêm giáo viên vào cơ sở dữ liệu
+			_, err := db.Exec("INSERT INTO teachers (name, tkb_name) VALUES (?, ?)", name, tkbName)
 			if err != nil {
-				http.Error(w, fmt.Sprintf("Lỗi khi lưu dữ liệu: %v", err), http.StatusInternalServerError)
+				http.Error(w, fmt.Sprintf("Lỗi khi thêm giáo viên: %v", err), http.StatusInternalServerError)
 				return
 			}
-			// Chuyển hướng về trang danh sách sau khi lưu thành công
-			http.Redirect(w, r, "/"+table_name, http.StatusSeeOther)
-			return
-		}
-		// Hiển thị form để thêm mới dữ liệu
-		data := &WebGui{
-			Title:  "Thêm mới " + table_name,
-			Header: "Thêm mới " + table_name,
-			Footer: "© 2023 Quản lý thời khóa biểu",
-			Body: `<form method="post">
-				<label for="name">Tên:</label>
-				<input type="text" id="name" name="name" required>
-				<button type="submit">Lưu</button>
-			</form>`,
-		}
-		// Tạo template từ dữ liệu
-		tmpl := data.Template()
-		// Thực thi template và gửi kết quả đến trình duyệt
-		err := tmpl.Execute(w, data)
-		if err != nil {
-			http.Error(w, "Lỗi khi hiển thị trang", http.StatusInternalServerError)
-			return
+			// Chuyển hướng về trang danh sách giáo viên
+			http.Redirect(w, r, "/teachers", http.StatusSeeOther)
+		} else {
+			// Hiển thị form thêm giáo viên
+			data := &WebGui{
+				Title:  "Thêm Giáo viên",
+				Header: "Thêm Giáo viên",
+				Footer: "© 2023 Quản lý thời khóa biểu",
+				Body: `<form method="POST" action="/teachers/add">
+					<label for="name">Tên Giáo viên:</label>
+					<input type="text" id="name" name="name" required>
+					<label for="tkb_name">Tên Thời khóa biểu:</label>
+					<input type="text" id="tkb_name" name="tkb_name" required>
+					<button type="submit">Thêm Giáo viên</button>
+				</form>`,
+			}
+			// Tạo template từ dữ liệu
+			tmpl := data.Template()
+			// Thực thi template và gửi kết quả đến trình duyệt
+			err := tmpl.Execute(w, data)
+			if err != nil {
+				http.Error(w, "Lỗi khi hiển thị trang", http.StatusInternalServerError)
+				return
+			}
 		}
 	}
 	// Gui khởi tạo giao diện web cho quản lý thời khóa biểu
 }
+func EditGiaovien(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// Xử lý sửa thông tin giáo viên
+		if r.Method == http.MethodPost {
+			id := r.FormValue("id")
+			name := r.FormValue("name")
+			tkbName := r.FormValue("tkb_name")
+			// Cập nhật thông tin giáo viên trong cơ sở dữ liệu
+			_, err := db.Exec("UPDATE teachers SET name = ?, tkb_name = ? WHERE id = ?", name, tkbName, id)
+			if err != nil {
+				http.Error(w, fmt.Sprintf("Lỗi khi cập nhật giáo viên: %v", err), http.StatusInternalServerError)
+				return
+			}
+			// Chuyển hướng về trang danh sách giáo viên
+			http.Redirect(w, r, "/teachers", http.StatusSeeOther)
+		} else {
+			// Hiển thị form sửa thông tin giáo viên
+			data := &WebGui{
+				Title:  "Sửa Giáo viên",
+				Header: "Sửa Giáo viên",
+				Footer: "© 2023 Quản lý thời khóa biểu",
+				Body: `<form method="POST" action="/teachers/edit">
+					<label for="id">ID Giáo viên:</label>
+					<input type="text" id="id" name="id" required>
+					<label for="name">Tên Giáo viên:</label>
+					<input type="text" id="name" name="name" required>
+					<label for="tkb_name">Tên Thời khóa biểu:</label>
+					<input type="text" id="tkb_name" name="tkb_name" required>
+					<button type="submit">Cập nhật Giáo viên</button>
+				</form>`,
+			}
+			tmpl := data.Template()
+			err := tmpl.Execute(w, data)
+			if err != nil {
+				http.Error(w, "Lỗi khi hiển thị trang", http.StatusInternalServerError)
+				return
+			}
+		}
+	}
+}
+func DelGiaovien(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// Xử lý xóa giáo viên
+		if r.Method == http.MethodPost {
+			id := r.FormValue("id")
+			// Xóa giáo viên khỏi cơ sở dữ liệu
+			_, err := db.Exec("DELETE FROM teachers WHERE id = ?", id)
+			if err != nil {
+				http.Error(w, fmt.Sprintf("Lỗi khi xóa giáo viên: %v", err), http.StatusInternalServerError)
+				return
+			}
+			// Chuyển hướng về trang danh sách giáo viên
+			http.Redirect(w, r, "/teachers", http.StatusSeeOther)
+		} else {
+			http.Error(w, "Phương thức không hợp lệ", http.StatusMethodNotAllowed)
+		}
+	}
+}
+
+// Gui khởi tạo giao diện web cho quản lý thời khóa biểu
 
 func Gui(db *sql.DB) {
 	// Tạo một template mới
 	// Tạo một HTTP handler để phục vụ trang web
 	http.HandleFunc("/teachers", ShowTable(db, "teachers"))
+	http.HandleFunc("/add/teachers", AddGiaovien(db))   // Thêm route cho thêm giáo viên
+	http.HandleFunc("/edit/teachers", EditGiaovien(db)) // Thêm route cho sửa giáo viên
+	http.HandleFunc("/del/teachers", DelGiaovien(db))   // Thêm route cho xóa giáo viên
 	http.HandleFunc("/subjects", ShowTable(db, "subjects"))
 	http.HandleFunc("/classes", ShowTable(db, "classes"))
 	http.HandleFunc("/assignments", ShowTable(db, "assignments"))
