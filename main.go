@@ -1,18 +1,18 @@
 package main
 
 import (
+	"GoSTKB/SQL"
+	"GoSTKB/VIEW"
+
 	_ "github.com/mattn/go-sqlite3"
 )
 
 func main() {
 	// Kết nối đến cơ sở dữ liệu SQLite
-	db, _ := ConnectSTKB()
-	Gui(db)
-	// Phục vụ các tệp tĩnh
-	//http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
-	// Phục vụ các tệp HTML
-	//http.HandleFunc("/", ShowHome)
-	// Định nghĩa các handler
-	// Khởi động server
-	//http.ListenAndServe(":8080", nil)
+	db, _ := SQL.ConnectSTKB()
+	if db == nil {
+		panic("Không thể kết nối đến cơ sở dữ liệu")
+	}
+	// Tạo bảng nếu chưa tồn tại
+	VIEW.Gui(db)
 }

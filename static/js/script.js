@@ -25,7 +25,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!confirm('Bạn có chắc muốn xóa mục này?')) {
                 return;
             }
-
             try {
                 const response = await fetch(`/${getTableName()}/delete?id=${id}`, {
                     method: 'DELETE',

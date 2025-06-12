@@ -1,51 +1,13 @@
-package main
+package VIEW
 
 import (
+	"GoSTKB/SQL"
 	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
 	"text/template"
 )
-
-// Showtable Hiển thị bảng dữ liệu
-type Table_view struct {
-	Name    string
-	Columns []string
-	Rows    []map[string]interface{}
-}
-
-func (p *Table_view) GetHtml(name, class_table string, edit bool) string {
-	texthtml := `<table id="table_` + name + `" data-table-name="` + name + `" class="` + class_table + `">
-	<thead>
-	<tr>`
-	for _, col := range p.Columns {
-		texthtml += `<th>` + col + `</th>`
-	}
-	if edit {
-		texthtml += `<th>Hành động</th>` // Thêm cột Actions nếu cần
-	}
-	texthtml += `</tr>
-	</thead>
-	<tbody>`
-	for _, row := range p.Rows {
-		texthtml += `<tr>`
-		for _, col := range p.Columns {
-			texthtml += `<td>` + fmt.Sprintf("%v", row[col]) + `</td>`
-		}
-		if edit {
-			texthtml += `<td>
-				<button class="edit-btn" data-id="` + fmt.Sprintf("%v", row["id"]) + `">Sửa</button>
-				<button class="delete-btn" data-id="` + fmt.Sprintf("%v", row["id"]) + `">Xóa</button>
-			</td>` // Thêm nút Sửa và Xóa
-			texthtml += `</tr>`
-		}
-	}
-	texthtml += `</tbody>
-	</table>
-	<button class="add-btn">Thêm mới Giáo viên</button>`
-	return texthtml
-}
 
 // ‌ WebGui là hàm chính để khởi tạo giao diện web
 type WebGui struct {
@@ -95,45 +57,43 @@ func (w *WebGui) Template() *template.Template {
 	return tmpl
 }
 
-func getData(tableName string, db *sql.DB) (table []map[string]interface{}, col []string, title string, err error) {
+func getData(tableName string, db *sql.DB) (table *SQL.TABLE, title string, err error) {
 	switch tableName {
-	case "teachers":
-		table, err = GetTeachers(db)
-		col = []string{"id", "name", "tkb_name"}
+	case "giaovien":
+		table = SQL.NewTable(tableName, []string{"id", "ten_ngan", "hoten"})
 		title = "Danh sách Giáo viên"
-	case "subjects":
-		table, err = GetSubjects(db)
-		col = []string{"id", "name"}
+	case "monhoc":
+		table = SQL.NewTable(tableName, []string{"id", "ten"})
 		title = "Danh sách Môn học"
-	case "classes":
-		table, err = GetClasses(db)
-		col = []string{"id", "name"}
+	case "lop":
+		table = SQL.NewTable(tableName, []string{"id", "ten", "khoi"})
 		title = "Danh sách Lớp học"
-	case "assignments":
-		table, err = GetAssignments(db)
-		col = []string{"id", "teacher_name", "subject_name", "class_name", "day_of_week", "start_time", "end_time"}
+	case "phancong":
+		table = SQL.NewTable(tableName, []string{"id", "giaovien_id", "lop_id", "mon_id", "tuan", "sotiet"})
 		title = "Danh sách Phân công"
 	// Thêm các trường hợp khác nếu cần
 	default:
 		table = nil
 		err = fmt.Errorf("bảng không hợp lệ: %s", tableName)
 	}
-	return table, col, title, err
+	table.SyncDataBase(db)
+	return table, title, err
 }
 
 func ShowTable(db *sql.DB, table_name string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		table, col, title, err := getData(table_name, db)
+		table, title, err := getData(table_name, db)
 		if err != nil {
-			http.Error(w, fmt.Sprintf("Lỗi khi lấy dữ liệu: %v", err), http.StatusInternalServerError)
+			http.Error(w, fmt.Sprintf("%v <br> Lỗi khi lấy dữ liệu: %v", title, err), http.StatusInternalServerError)
 			return
 		}
-		data := &Table_view{
-			Name:    title,
-			Columns: col,
-			Rows:    table,
+		for _, row := range table.GetRows() {
+			fmt.Printf("%v,%v,%v", row["id"], row["ten_ngan"], row["hoten"])
 		}
-		htmlTable := data.GetHtml(table_name, "table", true)
+		ptitle := "Danh sách giáo viên"
+		data := NewTableView(table, &ptitle)
+		htmlTable := data.ToHTML(false)
+		fmt.Println(htmlTable)
 		// Tạo dữ liệu để truyền vào template
 		tmpl := (&WebGui{
 			Title:  "Quản lý thời khóa biểu",
@@ -163,7 +123,7 @@ func AddGiaovien(db *sql.DB) http.HandlerFunc {
 				return
 			}
 			// Chuyển hướng về trang danh sách giáo viên
-			http.Redirect(w, r, "/teachers", http.StatusSeeOther)
+			http.Redirect(w, r, "/giaovien", http.StatusSeeOther)
 		} else {
 			// Hiển thị form thêm giáo viên
 			data := &WebGui{
@@ -254,13 +214,13 @@ func DelGiaovien(db *sql.DB) http.HandlerFunc {
 func Gui(db *sql.DB) {
 	// Tạo một template mới
 	// Tạo một HTTP handler để phục vụ trang web
-	http.HandleFunc("/teachers", ShowTable(db, "teachers"))
-	http.HandleFunc("/add/teachers", AddGiaovien(db))   // Thêm route cho thêm giáo viên
-	http.HandleFunc("/edit/teachers", EditGiaovien(db)) // Thêm route cho sửa giáo viên
-	http.HandleFunc("/del/teachers", DelGiaovien(db))   // Thêm route cho xóa giáo viên
-	http.HandleFunc("/subjects", ShowTable(db, "subjects"))
-	http.HandleFunc("/classes", ShowTable(db, "classes"))
-	http.HandleFunc("/assignments", ShowTable(db, "assignments"))
+	http.HandleFunc("/giaovien", ShowTable(db, "giaovien"))
+	http.HandleFunc("/giaovien/add/", AddGiaovien(db))   // Thêm route cho thêm giáo viên
+	http.HandleFunc("/giaovien/edit/", EditGiaovien(db)) // Thêm route cho sửa giáo viên
+	http.HandleFunc("/giaovien/del/", DelGiaovien(db))   // Thêm route cho xóa giáo viên
+	http.HandleFunc("/lop", ShowTable(db, "lop"))
+	http.HandleFunc("/mon", ShowTable(db, "mon"))
+	http.HandleFunc("/phancong", ShowTable(db, "phancong"))
 	// Hiển thị trang chủ
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		// Tạo dữ liệu để truyền vào template
@@ -271,10 +231,10 @@ func Gui(db *sql.DB) {
 			Body: `<h1>Chào mừng đến với Quản lý thời khóa biểu</h1><p>Vui lòng chọn một mục từ menu bên dưới dây.</p>
 			<nav>
 				<ul>
-					<li><a href="/teachers">Danh sách Giáo viên</a></li>
-					<li><a href="/subjects">Danh sách Môn học</a></li>
-					<li><a href="/classes">Danh sách Lớp học</a></li>
-					<li><a href="/assignments">Danh sách Phân công</a></li>
+					<li><a href="/giaovien">Danh sách Giáo viên</a></li>
+					<li><a href="/lop">Danh sách Môn học</a></li>
+					<li><a href="/mon">Danh sách Lớp học</a></li>
+					<li><a href="/phancong">Danh sách Phân công</a></li>
 				</ul>
 			</nav>`,
 		}
