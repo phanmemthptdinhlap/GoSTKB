@@ -1,4 +1,4 @@
-package main
+package SQL
 
 import (
 	"database/sql"
@@ -9,9 +9,9 @@ import (
 
 func ConnectSTKB() (*sql.DB, error) {
 	// Kết nối SQLite
-	db, err := sql.Open("sqlite3", "./database/STKB.db")
+	db, err := sql.Open("sqlite3", "./SQL/STKB.db")
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to database: %w", err)
+		return nil, fmt.Errorf("không kết nối được với CSDL : %w", err)
 	}
 	return db, nil
 }
