@@ -172,9 +172,9 @@ func AddGiaovien(db *sql.DB) http.HandlerFunc {
 				Footer: "© 2023 Quản lý thời khóa biểu",
 				Body: `<form method="POST" action="/teachers/add">
 					<label for="name">Tên Giáo viên:</label>
-					<input type="text" id="name" name="name" required>
+					<input type="text" id="name" name="name" required><br>
 					<label for="tkb_name">Tên Thời khóa biểu:</label>
-					<input type="text" id="tkb_name" name="tkb_name" required>
+					<input type="text" id="tkb_name" name="tkb_name" required><br>
 					<button type="submit">Thêm Giáo viên</button>
 				</form>`,
 			}
@@ -213,11 +213,11 @@ func EditGiaovien(db *sql.DB) http.HandlerFunc {
 				Footer: "© 2023 Quản lý thời khóa biểu",
 				Body: `<form method="POST" action="/teachers/edit">
 					<label for="id">ID Giáo viên:</label>
-					<input type="text" id="id" name="id" required>
+					<input type="text" id="id" name="id" required><br>
 					<label for="name">Tên Giáo viên:</label>
-					<input type="text" id="name" name="name" required>
+					<input type="text" id="name" name="name" required><br>
 					<label for="tkb_name">Tên Thời khóa biểu:</label>
-					<input type="text" id="tkb_name" name="tkb_name" required>
+					<input type="text" id="tkb_name" name="tkb_name" required><br>
 					<button type="submit">Cập nhật Giáo viên</button>
 				</form>`,
 			}
