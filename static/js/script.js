@@ -7,14 +7,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // Chỉ hiển thị nút Thêm 
     document.querySelectorAll('.add-btn').forEach(button => {
         button.addEventListener('click', () => {
-            window.location.href = `/add/${getTableName()}`; // Chuyển hướng tới trang chỉnh sửa
+            window.location.href = `/${getTableName()}/add`; // Chuyển hướng tới trang chỉnh sửa
         });
     });
     // Xử lý nút Sửa
     document.querySelectorAll('.edit-btn').forEach(button => {
         button.addEventListener('click', () => {
             const id = button.getAttribute('data-id');
-            window.location.href = `/edit/${getTableName()}?id=${id}`; // Chuyển hướng tới trang chỉnh sửa
+            window.location.href = `/${getTableName()}/edit?id=${id}`; // Chuyển hướng tới trang chỉnh sửa
         });
     });
 
@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             try {
-                const response = await fetch(`/delete/${getTableName()}?id=${id}`, {
+                const response = await fetch(`/${getTableName()}/delete?id=${id}`, {
                     method: 'DELETE',
                 });
 

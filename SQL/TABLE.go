@@ -1,5 +1,10 @@
 package SQL
 
+import (
+	"database/sql"
+	"strings"
+)
+
 type TABLE struct {
 	name    string
 	columns []string
@@ -12,6 +17,71 @@ func NewTable(name string, columns []string) *TABLE {
 		columns: columns,
 		rows:    make([]map[string]interface{}, 0),
 	}
+}
+func (t *TABLE) SyncDataBase(db *sql.DB) {
+	for _, row := range t.rows {
+		if row["id"] == nil {
+			// Thêm mới
+			db.Exec("INSERT INTO "+t.name+" ("+strings.Join(t.columns, ", ")+") VALUES ("+placeholders(len(t.columns))+")", rowValues(row, t.columns)...)
+		} else {
+			// Cập nhật
+			updates := make([]string, 0)
+			for _, col := range t.columns {
+				if col != "id" {
+					updates = append(updates, col+" = ?")
+				}
+			}
+			query := "UPDATE " + t.name + " SET " + strings.Join(updates, ", ") + " WHERE id = ?"
+			values := rowValues(row, t.columns)
+			values = append(values, row["id"])
+			_, err := db.Exec(query, values...)
+			if err != nil {
+				panic("Cập nhật dữ liệu thất bại: " + err.Error())
+			}
+		}
+	}
+	rows, err := db.Query("SELECT * FROM " + t.name)
+	if err != nil {
+		panic("Lấy dữ liệu từ CSDL thất bại: " + err.Error())
+	}
+	defer rows.Close()
+	t.rows = make([]map[string]interface{}, 0)
+	for rows.Next() {
+		row := make(map[string]interface{})
+		columns := make([]interface{}, len(t.columns))
+		for i := range columns {
+			columns[i] = new(interface{})
+		}
+		if err := rows.Scan(columns...); err != nil {
+			panic("Lấy dữ liệu từ CSDL thất bại: " + err.Error())
+		}
+		for i, col := range t.columns {
+			row[col] = *(columns[i].(*interface{}))
+		}
+		t.rows = append(t.rows, row)
+	}
+}
+
+func placeholders(n int) string {
+	if n <= 0 {
+		return ""
+	}
+	s := make([]string, n)
+	for i := range s {
+		s[i] = "?"
+	}
+	return strings.Join(s, ", ")
+}
+
+func rowValues(row map[string]interface{}, s []string) []interface{} {
+	values := make([]interface{}, len(s))
+	for i, col := range s {
+		values[i] = row[col]
+	}
+	return values
+}
+func (t *TABLE) GetNameAndColumns() (string, []string) {
+	return t.name, t.columns
 }
 func (t *TABLE) AddRow(row map[string]interface{}) {
 	if len(row) != len(t.columns) {
