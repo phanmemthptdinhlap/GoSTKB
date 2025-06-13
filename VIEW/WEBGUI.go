@@ -87,13 +87,9 @@ func ShowTable(db *sql.DB, table_name string) http.HandlerFunc {
 			http.Error(w, fmt.Sprintf("%v <br> Lỗi khi lấy dữ liệu: %v", title, err), http.StatusInternalServerError)
 			return
 		}
-		for _, row := range table.GetRows() {
-			fmt.Printf("%v,%v,%v", row["id"], row["ten_ngan"], row["hoten"])
-		}
 		ptitle := "Danh sách giáo viên"
 		data := NewTableView(table, &ptitle)
-		htmlTable := data.ToHTML(false)
-		fmt.Println(htmlTable)
+		htmlTable := data.ToHTML(true)
 		// Tạo dữ liệu để truyền vào template
 		tmpl := (&WebGui{
 			Title:  "Quản lý thời khóa biểu",
@@ -103,7 +99,6 @@ func ShowTable(db *sql.DB, table_name string) http.HandlerFunc {
 		}).Template()
 		err = tmpl.Execute(w, data)
 		if err != nil {
-			fmt.Println(data)
 			fmt.Println("Lỗi khi thực thi template:", err)
 			return
 		}

@@ -45,10 +45,10 @@ func (tv *TABLEVIEW) ToHTML(isedit bool) string {
     <tr>
         {{range .Columns}}<th>{{.}}</th>{{end}}
     </tr>
-    {{range .Rows}}
+    {{range $_ , $Value:= .Rows}}
     <tr>
-        {{range $.Columns}}
-        <td>{{if .}}{{index $.Rows $.Index . }}{{else}}NULL{{end}}</td>
+        {{range $_ ,$Key:= $.Columns}}
+        <td>{{if index $Value $Key}}{{index $Value $Key}}{{else}}NULL{{end}}</td>
         {{end}}
         {{if $.IsEdit}}
         <td>

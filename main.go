@@ -15,4 +15,5 @@ func main() {
 	}
 	// Tạo bảng nếu chưa tồn tại
 	VIEW.Gui(db)
+
 }
