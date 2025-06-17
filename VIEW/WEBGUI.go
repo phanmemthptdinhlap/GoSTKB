@@ -108,39 +108,25 @@ func ShowTable(db *sql.DB, table_name string) http.HandlerFunc {
 func AddGiaovien(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Xử lý thêm giáo viên mới vào cơ sở dữ liệu
-		if r.Method == http.MethodPost {
-			name := r.FormValue("name")
-			tkbName := r.FormValue("tkb_name")
-			// Thêm giáo viên vào cơ sở dữ liệu
-			_, err := db.Exec("INSERT INTO teachers (name, tkb_name) VALUES (?, ?)", name, tkbName)
-			if err != nil {
-				http.Error(w, fmt.Sprintf("Lỗi khi thêm giáo viên: %v", err), http.StatusInternalServerError)
-				return
-			}
-			// Chuyển hướng về trang danh sách giáo viên
-			http.Redirect(w, r, "/giaovien", http.StatusSeeOther)
-		} else {
-			// Hiển thị form thêm giáo viên
-			data := &WebGui{
-				Title:  "Thêm Giáo viên",
-				Header: "Thêm Giáo viên",
-				Footer: "© 2023 Quản lý thời khóa biểu",
-				Body: `<form method="POST" action="/teachers/add">
-					<label for="name">Tên Giáo viên:</label>
-					<input type="text" id="name" name="name" required><br>
-					<label for="tkb_name">Tên Thời khóa biểu:</label>
-					<input type="text" id="tkb_name" name="tkb_name" required><br>
-					<button type="submit">Thêm Giáo viên</button>
-				</form>`,
-			}
-			// Tạo template từ dữ liệu
-			tmpl := data.Template()
-			// Thực thi template và gửi kết quả đến trình duyệt
-			err := tmpl.Execute(w, data)
-			if err != nil {
-				http.Error(w, "Lỗi khi hiển thị trang", http.StatusInternalServerError)
-				return
-			}
+		table, title, err := getData("giaovien", db)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("%v <br> Lỗi khi lấy dữ liệu: %v", title, err), http.StatusInternalServerError)
+			return
+		}
+		ptitle := "Danh sách giáo viên"
+		data := NewFormView(table, &ptitle)
+		htmlTable := data.ToHTML(true)
+		// Tạo dữ liệu để truyền vào template
+		tmpl := (&WebGui{
+			Title:  "Quản lý thời khóa biểu",
+			Header: "Giáo viên",
+			Footer: "© 2023 Quản lý thời khóa biểu",
+			Body:   htmlTable,
+		}).Template()
+		err = tmpl.Execute(w, data)
+		if err != nil {
+			fmt.Println("Lỗi khi thực thi template:", err)
+			return
 		}
 	}
 	// Gui khởi tạo giao diện web cho quản lý thời khóa biểu
