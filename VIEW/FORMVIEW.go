@@ -32,10 +32,10 @@ func NewFormView(table *SQL.TABLE, ptitle *string) *FORMVIEW {
 type FormViewData struct {
 	ID      string
 	ThemeID string
-	Title string
+	Title   string
 	Name    string
 	Columns []string
-	Rows    []map[string]interface{}
+	Row     map[string]interface{}
 	IsEdit  bool
 }
 
@@ -60,10 +60,10 @@ func (fv *FORMVIEW) ToHTML(isedit bool) string {
 	data := FormViewData{
 		ID:      fv.id,
 		ThemeID: fv.theme_id,
-		Title: fv.title,
+		Title:   fv.title,
 		Name:    fv.table.GetName(),
 		Columns: fv.table.GetColumns(),
-		Row:    fv.table.GetRow(),
+		Row:     fv.table.GetRow(1),
 		IsEdit:  isedit,
 	}
 

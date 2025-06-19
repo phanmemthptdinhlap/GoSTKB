@@ -232,9 +232,11 @@ func Gui(db *sql.DB) {
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	// Khởi động server
 	log.Println("Đang chạy server trên cổng 8080...")
+	openBrowser("http://127.0.0.1:8080") // Mở trình duyệt tự động (bỏ qua nếu không định nghĩa browser)
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		log.Fatalf("Lỗi khi khởi động server: %v", err)
 	}
+
 	log.Println("Server đã dừng.")
 }
 
