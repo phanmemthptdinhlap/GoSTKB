@@ -1,8 +1,6 @@
 package models
 
-import (
-	"gorm.io/gorm"
-)
+import "gorm.io/gorm"
 
 // GiaoVien represents a teacher in the system.
 type GiaoVien struct {
