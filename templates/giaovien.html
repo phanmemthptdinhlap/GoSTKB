@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="vi">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Phần mềm hỗ trợ xếp thời khóa biểu</title>
+        <link rel="stylesheet" href="/static/css/style.css">
+    </head>
+    <body>
+        <header>
+            <h2>Quản lý giáo viên</h1>
+            <nav>
+                <a href="/">Trang chủ</a>
+            </nav>
+        </header>
+        <main>
+            <h3 id="title">Danh sách giáo viên</h2>
+            <div id="divform" class="hiden">
+                <form id="FormGiaoVien">
+                    <input type="text" id="ma_giao_vien" placeholder="Mã Giáo Viên" required>
+                    <input type="text" id="ho_ten" placeholder="Ho Tên Giao Viên" required>
+                    <input type="text" id="ten_tkb"placeholder="Tên viết tắt" required>
+                    <button type="submit">Lưu Giáo Viên</button>
+                </form>
+            </div>
+            <div id="divview" class="show">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Mã giáo viên</th>
+                            <th>Họ tên giáo viên</th>
+                            <th>Tên viêt tắt</th>
+                            <th>Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody id="BangGiaoVien"></tbody>
+                </table>
+            </div>
+            <div id="control">
+                <button id="btThemMoi">Thêm mưới giáo viên</button>
+            </div>
+        </main>
+        <script src="/static/js/script_giaovien.js"></script>
+    </body>
+</html>

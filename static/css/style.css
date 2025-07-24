@@ -120,4 +120,14 @@ footer { background-color: #333;
 }
 .alert.close { color: #fff; }
 .alert.close:hover { color: #ddd; }
+
+/* Cài đặt tham số cho Div */
+div.hiden{
+    display: none;
+}
+div.show{
+    display: block;
+}
+
+
 /* End of static/css/style.css */
