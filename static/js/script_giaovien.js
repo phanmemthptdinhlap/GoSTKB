@@ -10,8 +10,8 @@ function LayDanhSachGiaoVien(){
                 <td>${giaovien.ho_ten}</td>
                 <td>${giaovien.ten_tkb}</td>
                 <td>
-                    <button class="edit" onclick="suaGiaoVien(${giaovien.id})">Sửa</button>
-                    <button class="delete" onclick="xoaGiaoVien(${giaovien.id})">Xóa</button>
+                    <button class="edit" onclick="suaGiaoVien(${giaovien.ma_giao_vien})">Sửa</button>
+                    <button class="delete" onclick="xoaGiaoVien(${giaovien.ma_giao_vien})">Xóa</button>
                 </td>
                 </tr>`;
                 bang.innerHTML+=row;
@@ -21,7 +21,6 @@ function LayDanhSachGiaoVien(){
         });
 }
 function xoaGiaoVien(id){
-    alert(`Xóa giáo viên? ${id}`)
     fetch(`/api/giaovien/${id}`,{method:'DELETE'})
     .then(()=>LayDanhSachGiaoVien());
 }

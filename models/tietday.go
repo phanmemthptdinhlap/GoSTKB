@@ -1,14 +1,12 @@
 package models
-import "gorm.io/gorm"
 
 // Tiết học
 type TietDay struct {
-	gorm.Model
-	Tuan int    `json:"tuan" gorm:"not null"`
-	MaPhanCong string `json:"ma_phan_cong" gorm:"not null"`
-	TongSoTiet	 int    `json:"so_tiet" gorm:"not null"`
-	SoTietSang int    `json:"so_tiet_sang" gorm:"not null"`
-	SoTietNo int	`json:"so_tiet_no" gorm:"default:0"`
-	SoTietThua int    `json:"so_tiet_thua" gorm:"default:0"`
-	SoTietBu int    `json:"so_tiet_bu" gorm:"default:0"`
+	MaTietDay        string `json:"ma_tiet_day"`
+	MaPhanCong       string `json:"ma_phan_cong"`
+	TuanHoc          string `json:"tuan_hoc"`
+	TongTietPhanCong string `json:"tong_tiet_phan_cong"`
+	TietSang         string `json:"tiet_sang"`
+	TietChieu        string `json:"tiet_chieu"`
+	TietTuanTruoc    string `json:"tiet_tuan_truoc"`
 }
