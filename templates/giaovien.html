@@ -15,16 +15,17 @@
         </header>
         <main>
             <h3 id="title">Danh sách giáo viên</h2>
-            <div id="divform" class="hiden">
+            <div id="divform" style="display: none;">
                 <form id="FormGiaoVien">
-                    <input type="text" id="ma_giao_vien" placeholder="Mã Giáo Viên" required>
+                    <input type="hidden" id="form_edit">
+                    <input type="text" id="ma_giao_vien" placeholder="Mã Giáo Viên">
                     <input type="text" id="ho_ten" placeholder="Ho Tên Giao Viên" required>
                     <input type="text" id="ten_tkb"placeholder="Tên viết tắt" required>
-                    <button type="submit">Lưu Giáo Viên</button>
+                    <button class="button" type="submit">Lưu Giáo Viên</button>
                 </form>
             </div>
             <div id="divview" class="show">
-                <table>
+                <table class="table">
                     <thead>
                         <tr>
                             <th>Mã giáo viên</th>
@@ -37,7 +38,7 @@
                 </table>
             </div>
             <div id="control">
-                <button id="btThemMoi">Thêm mưới giáo viên</button>
+                <button class="button" id="btThemMoi">Thêm mưới giáo viên</button>
             </div>
         </main>
         <script src="/static/js/script_giaovien.js"></script>

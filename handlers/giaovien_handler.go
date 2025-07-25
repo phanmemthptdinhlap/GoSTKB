@@ -50,7 +50,16 @@ func (h *ThaoTac_GiaoVien) TaoGiaoVien(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	result, err := h.DB.Exec("INSERT INTO giaovien (ma_giao_vien, ho_ten, ten_tkb) VALUES (?, ?, ?)", giaovien.MaGiaoVien, giaovien.HoTen, giaovien.TenTKB)
+	var sqlcmd string
+	var args []interface{}
+	if giaovien.MaGiaoVien == "" {
+		sqlcmd = "INSERT INTO giaovien (ho_ten, ten_tkb) VALUES (?, ?)"
+		args = []interface{}{giaovien.HoTen, giaovien.TenTKB}
+	} else {
+		sqlcmd = "INSERT INTO giaovien (ma_giao_vien, ho_ten, ten_tkb) VALUES (?, ?, ?)"
+		args = []interface{}{giaovien.MaGiaoVien, giaovien.HoTen, giaovien.TenTKB}
+	}
+	result, err := h.DB.Exec(sqlcmd, args...)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Không thể thêm giáo viên"})
 		return
