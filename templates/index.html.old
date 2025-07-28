@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="vi">
+    <head>
+        <meta charset="UTF8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Hỗ trợ xếp thời khóa biểu</title>
+        <link rel="stylesheet" href="/static/css/style.css">
+    </head>
+    <body>
+        <header>
+            <h2>Hỗ trợ xếp thời khóa biểu</h1>
+            <nav>
+                <a href="/giaovien">Giáo viên</a>
+            </nav>
+        </header>
+        <main>
+            <h3>Chào mừng đến với phần mềm hỗ trợ xếp thời khóa biểu</h2>
+        </main>
+        <script src="/static/js/script.js"></script>
+    </body>
+</html>

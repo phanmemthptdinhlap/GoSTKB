@@ -17,7 +17,7 @@ function LayDanhSachGiaoVien(){
                 bang.innerHTML+=row;
             });
         document.getElementById("title").textContent="Danh sách giáo viên";
-        document.getElementById("divform").style.display="none";
+        document.getElementById("input_div").style.display="none";
         });
 }
 function xoaGiaoVien(ma_giao_vien){
@@ -27,20 +27,20 @@ function xoaGiaoVien(ma_giao_vien){
 //Sửa giáo viên
 function suaGiaoVien(ma_giao_vien,ho_ten,ten_tkb){
     document.getElementById("title").textContent="Sửa giáo viên"
-    document.getElementById("divform").style.display="block";
+    document.getElementById("input_div").style.display="block";
     document.getElementById("form_edit").value="edit";
     document.getElementById("ma_giao_vien").value=ma_giao_vien;
     document.getElementById("ho_ten").value=ho_ten;
     document.getElementById("ten_tkb").value=ten_tkb;
 }
 //Thêm giáo viên vào danh sách
-document.getElementById("btThemMoi").addEventListener("click",function(e){
+document.getElementById("append").addEventListener("click",function(e){
     e.preventDefault();
     document.getElementById("title").textContent="Thêm mới giáo viên"
-    document.getElementById("divform").style.display="block";
+    document.getElementById("input_div").style.display="block";
     document.getElementById("form_edit").value="";
 });
-document.getElementById("FormGiaoVien").addEventListener("submit",function(e){
+document.getElementById("giaovien_form").addEventListener("submit",function(e){
     e.preventDefault();
     const formedit=document.getElementById("form_edit").value;
     const giaovien={
