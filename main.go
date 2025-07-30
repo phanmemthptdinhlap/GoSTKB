@@ -49,8 +49,8 @@ func main() {
 		//Giao viên
 		api.POST("/giaovien", thaotacgiaovien.TaoGiaoVien)
 		api.GET("/giaovien", thaotacgiaovien.DanhSachGiaoVien)
-		api.PUT("/giaovien", thaotacgiaovien.CapNhatGiaoVien)
-		api.DELETE("/giaovien", thaotacgiaovien.XoaGiaoVien)
+		api.PUT("/giaovien/:id", thaotacgiaovien.CapNhatGiaoVien)
+		api.DELETE("/giaovien/:id", thaotacgiaovien.XoaGiaoVien)
 		//Lớp học
 
 	}

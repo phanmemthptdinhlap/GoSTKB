@@ -53,9 +53,9 @@ func (h *ThaoTac_GiaoVien) CapNhatGiaoVien(c *gin.Context) {
 // Xóa giáo viên khỏi danh sách
 func (h *ThaoTac_GiaoVien) XoaGiaoVien(c *gin.Context) {
 	id := c.Param("id")
-	fmt.Printf("ID: %s", id)
+	fmt.Printf("ma_giao_vien: %s", id)
 	var giaovien models.GiaoVien
-	if err := h.DB.First(&giaovien, id).Error; err != nil {
+	if err := h.DB.First(&giaovien, "ma_giao_vien:gv01").Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error": "Không tìm thấy thông tin giáo viên"})
 		return
