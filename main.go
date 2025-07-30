@@ -2,29 +2,47 @@ package main
 
 import (
 	"GoSTKB/handlers"
-	"GoSTKB/models" // Adjust the import path as necessary
+	"log"
+	"os"
+
+	// Adjust the import path as necessary
+	"database/sql"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/driver/sqlite"
-	"gorm.io/gorm"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 func main() {
-
-	// Kết nối CSDL
-	db, err := gorm.Open(sqlite.Open("stkb.db"), &gorm.Config{})
+	//Kết nối CSDL
+	db, err := sql.Open("sqlite3", "tkb.db")
 	if err != nil {
-		panic("Không kết nối được với cơ sở dữ liệu")
+		log.Fatalf("Không kết nối được với cơ sở dữ liệu: %v", err)
 	}
+	defer db.Close()
+	//Khởi tạo cấu trúc CSDL
+	sqlcmd, err := os.ReadFile("database.sql")
+	if err != nil {
+		log.Fatalf("Lỗi đọc file cấu trúc CSDL: %v", err)
+	}
+	_, err = db.Exec(string(sqlcmd))
+	if err != nil {
+		log.Fatalf("Lỗi khởi tạo CSDL: %v", err)
+	}
+	/*
+		// Kết nối CSDL
+		db, err := gorm.Open(sqlite.Open("stkb.db"), &gorm.Config{})
+		if err != nil {
+			panic("Không kết nối được với cơ sở dữ liệu")
+		}
 
-	// Khởi tạo cấu trúc CSDL
-	if err := db.AutoMigrate(&models.GiaoVien{},
-		models.LopHoc{},
-		models.MonHoc{},
-		models.PhanCong{},
-		models.TietDay{}); err != nil {
-		panic("Lỗi khởi tạo CSDL")
-	}
+		// Khởi tạo cấu trúc CSDL
+		if err := db.AutoMigrate(&models.GiaoVien{},
+			models.LopHoc{},
+			models.MonHoc{},
+			models.PhanCong{},
+			models.TietDay{}); err != nil {
+			panic("Lỗi khởi tạo CSDL")
+		}*/
 	//Khởi tạo trình quản lý truy vấn web
 	r := gin.Default()
 	//Tải template

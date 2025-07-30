@@ -21,7 +21,7 @@ footer { background-color: #333;
     position: fixed; 
     width: 100%; 
     bottom: 0; }
-.table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+.table { width: auto; border-collapse: collapse; margin-top: 20px; }
 .table th, .table td { border: 2px solid #b2b2b2; padding: 8px; text-align: left; }
 .table th { background-color: #f2f2f2; }
 .table tr:hover { background-color: #828080; }
@@ -122,12 +122,7 @@ footer { background-color: #333;
 .alert.close:hover { color: #ddd; }
 
 /* Cài đặt tham số cho Div */
-div.hiden{
-    display: none;
-}
-div.show{
-    display: block;
-}
+
 
 
 /* End of static/css/style.css */
