@@ -97,12 +97,8 @@ func (h *ThaoTac_GiaoVien) XoaGiaoVien(c *gin.Context) {
 	id := c.Param("id")
 	fmt.Printf("ma_giao_vien: %s", id)
 	var giaovien models.GiaoVien
-<<<<<<< HEAD
-	if err := h.DB.First(&giaovien, "ma_giao_vien:gv01").Error; err != nil {
-=======
 	row := h.DB.QueryRow("SELECT ma_giao_vien, ho_ten, ten_tkb FROM giaovien WHERE ma_giao_vien = ?", id)
 	if err := row.Scan(&giaovien.MaGiaoVien, &giaovien.HoTen, &giaovien.TenTKB); err != nil {
->>>>>>> refs/remotes/origin/dev
 		c.JSON(http.StatusNotFound, gin.H{
 			"error": "Không tìm thấy thông tin giáo viên"})
 		return
@@ -116,6 +112,97 @@ func (h *ThaoTac_GiaoVien) XoaGiaoVien(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Xóa giáo viên thành công"})
 }
+
+// Thêm hoặc cập nhật danh sách giáo viên từ file Excel
+func (h *ThaoTac_GiaoVien) ImportGiaoVienExcel(c *gin.Context) {
+	file, err := c.FormFile("file")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Không tìm thấy file"})
+		return
+	}
+
+	f, err := file.Open()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Không thể mở file"})
+		return
+	}
+	defer f.Close()
+
+	// Sử dụng thư viện excelize để đọc file Excel
+	// Cần import: "github.com/xuri/excelize/v2"
+	// Đảm bảo đã thêm vào go.mod
+
+	imported := 0
+	updated := 0
+	fx, err := excelize.OpenReader(f)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "File excel không hợp lệ"})
+		return
+	}
+	defer fx.Close()
+
+	rows, err := fx.GetRows("Sheet1")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Không đọc được sheet"})
+		return
+	}
+
+	for i, row := range rows {
+		if i == 0 {
+			// Bỏ qua dòng tiêu đề
+			continue
+		}
+		var maGV, hoTen, tenTKB string
+		if len(row) > 0 {
+			maGV = row[0]
+		}
+		if len(row) > 1 {
+			hoTen = row[1]
+		}
+		if len(row) > 2 {
+			tenTKB = row[2]
+		}
+		if hoTen == "" {
+			continue // Bỏ qua nếu không có tên
+		}
+
+		if maGV == "" {
+			// Thêm mới nếu mã trống
+			_, err := h.DB.Exec("INSERT INTO giaovien (ho_ten, ten_tkb) VALUES (?, ?)", hoTen, tenTKB)
+			if err == nil {
+				imported++
+			}
+			continue
+		}
+
+		// Kiểm tra mã giáo viên đã tồn tại chưa
+		var exists bool
+		err := h.DB.QueryRow("SELECT EXISTS(SELECT 1 FROM giaovien WHERE ma_giao_vien = ?)", maGV).Scan(&exists)
+		if err != nil {
+			continue
+		}
+		if exists {
+			// Nếu tồn tại thì cập nhật
+			_, err := h.DB.Exec("UPDATE giaovien SET ho_ten = ?, ten_tkb = ? WHERE ma_giao_vien = ?", hoTen, tenTKB, maGV)
+			if err == nil {
+				updated++
+			}
+		} else {
+			// Nếu không tồn tại thì thêm mới
+			_, err := h.DB.Exec("INSERT INTO giaovien (ma_giao_vien, ho_ten, ten_tkb) VALUES (?, ?, ?)", maGV, hoTen, tenTKB)
+			if err == nil {
+				imported++
+			}
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"imported": imported,
+		"updated":  updated,
+		"message":  "Đã xử lý file excel",
+	})
+}
+
 func (h *ThaoTac_GiaoVien) TestGiaoVien(c *gin.Context) {
 	fmt.Print("test giao vien")
 	c.JSON(http.StatusNotFound, gin.H{"message": "Test GIao VIên"})
