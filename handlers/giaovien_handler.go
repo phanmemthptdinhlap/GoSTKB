@@ -8,6 +8,7 @@ import (
 	"database/sql"
 
 	"github.com/gin-gonic/gin"
+	"github.com/xuri/excelize/v2"
 )
 
 // Danh sách giáo viên
@@ -95,7 +96,7 @@ func (h *ThaoTac_GiaoVien) CapNhatGiaoVien(c *gin.Context) {
 // Xóa giáo viên khỏi danh sách
 func (h *ThaoTac_GiaoVien) XoaGiaoVien(c *gin.Context) {
 	id := c.Param("id")
-	fmt.Printf("ma_giao_vien: %s", id)
+	fmt.Printf("ID: %s", id)
 	var giaovien models.GiaoVien
 	row := h.DB.QueryRow("SELECT ma_giao_vien, ho_ten, ten_tkb FROM giaovien WHERE ma_giao_vien = ?", id)
 	if err := row.Scan(&giaovien.MaGiaoVien, &giaovien.HoTen, &giaovien.TenTKB); err != nil {
@@ -112,98 +113,67 @@ func (h *ThaoTac_GiaoVien) XoaGiaoVien(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Xóa giáo viên thành công"})
 }
-
-// Thêm hoặc cập nhật danh sách giáo viên từ file Excel
-func (h *ThaoTac_GiaoVien) ImportGiaoVienExcel(c *gin.Context) {
-	file, err := c.FormFile("file")
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Không tìm thấy file"})
-		return
-	}
-
-	f, err := file.Open()
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Không thể mở file"})
-		return
-	}
-	defer f.Close()
-
-	// Sử dụng thư viện excelize để đọc file Excel
-	// Cần import: "github.com/xuri/excelize/v2"
-	// Đảm bảo đã thêm vào go.mod
-
-	imported := 0
-	updated := 0
-	fx, err := excelize.OpenReader(f)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "File excel không hợp lệ"})
-		return
-	}
-	defer fx.Close()
-
-	rows, err := fx.GetRows("Sheet1")
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Không đọc được sheet"})
-		return
-	}
-
-	for i, row := range rows {
-		if i == 0 {
-			// Bỏ qua dòng tiêu đề
-			continue
-		}
-		var maGV, hoTen, tenTKB string
-		if len(row) > 0 {
-			maGV = row[0]
-		}
-		if len(row) > 1 {
-			hoTen = row[1]
-		}
-		if len(row) > 2 {
-			tenTKB = row[2]
-		}
-		if hoTen == "" {
-			continue // Bỏ qua nếu không có tên
-		}
-
-		if maGV == "" {
-			// Thêm mới nếu mã trống
-			_, err := h.DB.Exec("INSERT INTO giaovien (ho_ten, ten_tkb) VALUES (?, ?)", hoTen, tenTKB)
-			if err == nil {
-				imported++
-			}
-			continue
-		}
-
-		// Kiểm tra mã giáo viên đã tồn tại chưa
-		var exists bool
-		err := h.DB.QueryRow("SELECT EXISTS(SELECT 1 FROM giaovien WHERE ma_giao_vien = ?)", maGV).Scan(&exists)
-		if err != nil {
-			continue
-		}
-		if exists {
-			// Nếu tồn tại thì cập nhật
-			_, err := h.DB.Exec("UPDATE giaovien SET ho_ten = ?, ten_tkb = ? WHERE ma_giao_vien = ?", hoTen, tenTKB, maGV)
-			if err == nil {
-				updated++
-			}
-		} else {
-			// Nếu không tồn tại thì thêm mới
-			_, err := h.DB.Exec("INSERT INTO giaovien (ma_giao_vien, ho_ten, ten_tkb) VALUES (?, ?, ?)", maGV, hoTen, tenTKB)
-			if err == nil {
-				imported++
-			}
-		}
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"imported": imported,
-		"updated":  updated,
-		"message":  "Đã xử lý file excel",
-	})
-}
-
 func (h *ThaoTac_GiaoVien) TestGiaoVien(c *gin.Context) {
 	fmt.Print("test giao vien")
 	c.JSON(http.StatusNotFound, gin.H{"message": "Test GIao VIên"})
+}
+
+func (h *ThaoTac_GiaoVien) XuatDanhSachGiaoVien(c *gin.Context) {
+	// Tạo file Excel mới
+	f := excelize.NewFile()
+	defer func() {
+		if err := f.Close(); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+	}()
+
+	// Tạo sheet mới
+	sheetName := "Danh sách giáo viên"
+	index, err := f.NewSheet(sheetName)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Đặt tiêu đề các cột
+	f.SetCellValue(sheetName, "A1", "Mã giáo viên")
+	f.SetCellValue(sheetName, "B1", "Họ và tên")
+	f.SetCellValue(sheetName, "C1", "Tên trên TKB")
+
+	// Truy vấn dữ liệu từ database
+	rows, err := h.DB.Query("SELECT ma_giao_vien, ho_ten, ten_tkb FROM giaovien")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Không thể truy vấn dữ liệu"})
+		return
+	}
+	defer rows.Close()
+
+	// Ghi dữ liệu vào file Excel
+	rowIndex := 2
+	for rows.Next() {
+		var id int
+		var hoten, tentkb string
+		if err := rows.Scan(&id, &hoten, &tentkb); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		f.SetCellValue(sheetName, fmt.Sprintf("A%d", rowIndex), id)
+		f.SetCellValue(sheetName, fmt.Sprintf("B%d", rowIndex), hoten)
+		f.SetCellValue(sheetName, fmt.Sprintf("C%d", rowIndex), tentkb)
+		rowIndex++
+	}
+
+	f.SetActiveSheet(index)
+
+	// Thiết lập header cho response
+	c.Header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+	c.Header("Content-Disposition", "attachment; filename=danh_sach_giao_vien.xlsx")
+
+	// Ghi file Excel vào response
+	if err := f.Write(c.Writer); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 }

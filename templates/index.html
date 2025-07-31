@@ -11,10 +11,42 @@
         <h1>Kiểm tra thử</h1>
     </header>
     <main>
-        <p>.</p>
+        <p>Import Giáo viên</p>
+        <form action="/import-teachers" method="post" enctype="multipart/form-data">
+            <label for="file">Chọn tệp excel:</label>
+            <input type="file" id="file" name="file" accept=".xlsx" required>
+            <button type="submit">Tải lên</button>
     </main>
     <footer>
         <p>&copy; 2023 Công ty của bạn</p>
     </footer>
+    <script >
+        document.addEventListener('DOMContentLoaded', function() {
+            const fileInput = document.getElementById('file');
+            fileInput.addEventListener('change', function() {
+                if (fileInput.files.length > 0) {
+                    const fileName = fileInput.files[0].name;
+                    alert(`Bạn đã chọn tệp: ${fileName}`);
+                }
+            });
+            const form = document.querySelector('form');
+            form.addEventListener('submit', function(event) {
+                const file = fileInput.files[0];
+                if (!file) {
+                    event.preventDefault();
+                    alert('Vui lòng chọn một tệp để tải lên.');
+                } else if (file.size > 5 * 1024 * 1024) { // 5MB limit
+                    event.preventDefault();
+                    alert('Tệp quá lớn. Vui lòng chọn tệp nhỏ hơn 5MB.');
+                } else if (!file.name.endsWith('.xlsx')) {
+                    event.preventDefault();
+                    alert('Vui lòng chọn tệp Excel (.xlsx).');
+                } else {
+                    alert('Tệp hợp lệ. Đang tải lên...');
+                }
+
+        });
+        });
+    </script>
 </body>
 </html>
