@@ -21,15 +21,15 @@
                 <h5 class="card-title">Quản lý giáo viên</h5>
                 <div class="mb-3">
                     <label class="form-label">Mã giáo viên</label>
-                    <input type="text" class="form-control" v-model="formData.maGiaoVien">
+                    <input type="text" class="form-control" v-model="formData.ma_giao_vien">
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Họ và tên</label>
-                    <input type="text" class="form-control" v-model="formData.hoTen" required>
+                    <input type="text" class="form-control" v-model="formData.ho_ten" required>
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Tên trên TKB</label>
-                    <input type="text" class="form-control" v-model="formData.tenTKB" required>
+                    <input type="text" class="form-control" v-model="formData.ten_tkb" required>
                 </div>
                 <button @click="saveGiaoVien" class="btn btn-primary">Lưu</button>
                 <button @click="resetForm" class="btn btn-secondary ms-2">Hủy</button>
@@ -54,18 +54,18 @@
                         <tr>
                             <th>Mã GV</th>
                             <th>Họ và tên</th>
-                            <th>Tên TKB</th>
+                            <th>Tên trên TKB</th>
                             <th>Thao tác</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="gv in danhSachGiaoVien" :key="gv.MaGiaoVien">
-                            <td v-text="gv.MaGiaoVien"></td>
-                            <td v-text="gv.HoTen"></td>
-                            <td v-text="TenTKB"></td>
+                        <tr v-for="gv in danhSachGiaoVien" :key="gv.ma_giao_vien">
+                            <td v-text="gv.ma_giao_vien"></td>
+                            <td v-text="gv.ho_ten"></td>
+                            <td v-text="gv.ten_tkb"></td>
                             <td>
                                 <button @click="editGiaoVien(gv)" class="btn btn-sm btn-warning me-2">Sửa</button>
-                                <button @click="deleteGiaoVien(gv.maGiaoVien)" class="btn btn-sm btn-danger">Xóa</button>
+                                <button @click="deleteGiaoVien(gv.ma_giao_vien)" class="btn btn-sm btn-danger">Xóa</button>
                             </td>
                         </tr>
                     </tbody>
@@ -82,9 +82,9 @@
                 return {
                     danhSachGiaoVien: [],
                     formData: {
-                        maGiaoVien: '',
-                        hoTen: '',
-                        tenTKB: ''
+                        ma_giao_vien: '',
+                        ho_ten: '',
+                        ten_tkb: ''
                     },
                     isEditing: false
                 }
@@ -109,7 +109,7 @@
                 async saveGiaoVien() {
                     try {
                         if (this.isEditing) {
-                            await axios.put(`/api/giaovien/${this.formData.maGiaoVien}`, this.formData)
+                            await axios.put(`/api/giaovien/${this.formData.ma_giao_vien}`, this.formData)
                         } else {
                             await axios.post('/api/giaovien', this.formData)
                         }
@@ -141,9 +141,9 @@
                 // Reset form về trạng thái ban đầu
                 resetForm() {
                     this.formData = {
-                        maGiaoVien: '',
-                        hoTen: '',
-                        tenTKB: ''
+                        ma_giao_vien: '',
+                        ho_ten: '',
+                        ten_tkb: ''
                     }
                     this.isEditing = false
                 },
