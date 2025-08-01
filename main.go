@@ -69,6 +69,8 @@ func main() {
 		api.GET("/giaovien", thaotacgiaovien.DanhSachGiaoVien)
 		api.PUT("/giaovien/:id", thaotacgiaovien.CapNhatGiaoVien)
 		api.DELETE("/giaovien/:id", thaotacgiaovien.XoaGiaoVien)
+		api.GET("/export/giaovien", thaotacgiaovien.XuatDanhSachGiaoVien)
+		api.POST("/import/giaovien", thaotacgiaovien.NhapDanhSachGiaoVien)
 		//Lớp học
 
 	}

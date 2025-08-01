@@ -1,57 +1,193 @@
 <!DOCTYPE html>
 <html lang="vi">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Phần mềm hỗ trợ xếp thời khóa biểu</title>
-        <link rel="stylesheet" href="/static/css/style.css">
-    </head>
-    <body>
-        <header>
-            <h2>Quản lý giáo viên</h1>
-            <nav>
-                <a href="/">Trang chủ</a>
-            </nav>
-        </header>
-        <main>
-            <h3 id="title">Danh sách giáo viên</h2>
-            <div id="input_div" style="display: none;">
-                <form id="giaovien_form">
-                    <input type="hidden" id="form_edit">
-                    <input type="text" id="ma_giao_vien" placeholder="Mã Giáo Viên">
-                    <input type="text" id="ho_ten" placeholder="Ho Tên Giao Viên" required>
-                    <input type="text" id="ten_tkb"placeholder="Tên viết tắt" required>
-                    <button class="button" type="submit">Lưu Giáo Viên</button>
-                </form>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý giáo viên</title>
+    <!-- Thêm Vue.js -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- Thêm Axios để gọi API -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <!-- Thêm Bootstrap cho UI -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div id="app" class="container mt-4">
+        <h2 class="mb-4">Quản lý giáo viên</h2>
+        
+        <!-- Form thêm/sửa giáo viên -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Quản lý giáo viên</h5>
+                <div class="mb-3">
+                    <label class="form-label">Mã giáo viên</label>
+                    <input type="text" class="form-control" v-model="formData.maGiaoVien">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Họ và tên</label>
+                    <input type="text" class="form-control" v-model="formData.hoTen" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Tên trên TKB</label>
+                    <input type="text" class="form-control" v-model="formData.tenTKB" required>
+                </div>
+                <button @click="saveGiaoVien" class="btn btn-primary">Lưu</button>
+                <button @click="resetForm" class="btn btn-secondary ms-2">Hủy</button>
             </div>
-            <div id="upload_div" style="display: none;">
-                <form id="upload_form" enctype="multipart/form-data" >
-                    <input type="file" id="fileInput" name="file" accept=".xlsx">
-                    <button class="button" type="submit">Upload</button>
-                </form>
-            </div>
-            <div id="view_div" class="show">
+        </div>
+
+        <!-- Bảng danh sách giáo viên -->
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-3">
+                    <h5 class="card-title">Danh sách giáo viên</h5>
+                    <div>
+                        <button @click="exportExcel" class="btn btn-success me-2">Xuất Excel</button>
+                        <label class="btn btn-info">
+                            Nhập Excel
+                            <input type="file" @change="importExcel" class="d-none" accept=".xlsx,.xls">
+                        </label>
+                    </div>
+                </div>
                 <table class="table">
                     <thead>
                         <tr>
-                            <th>Mã giáo viên</th>
-                            <th>Họ tên giáo viên</th>
-                            <th>Tên viêt tắt</th>
-                            <th>Hành động</th>
+                            <th>Mã GV</th>
+                            <th>Họ và tên</th>
+                            <th>Tên TKB</th>
+                            <th>Thao tác</th>
                         </tr>
                     </thead>
-                    <tbody id="BangGiaoVien"></tbody>
+                    <tbody>
+                        <tr v-for="gv in danhSachGiaoVien" :key="gv.MaGiaoVien">
+                            <td v-text="gv.MaGiaoVien"></td>
+                            <td v-text="gv.HoTen"></td>
+                            <td v-text="TenTKB"></td>
+                            <td>
+                                <button @click="editGiaoVien(gv)" class="btn btn-sm btn-warning me-2">Sửa</button>
+                                <button @click="deleteGiaoVien(gv.maGiaoVien)" class="btn btn-sm btn-danger">Xóa</button>
+                            </td>
+                        </tr>
+                    </tbody>
                 </table>
             </div>
-            <div id="control_div">
-                <button class="button" id="append">Thêm mưới giáo viên</button>
-                <button class="button" id="import">Upload giáo viên từ tệp excel</button>
-                <button class="button" id="export">Export giáo viên từ tệp excel</button>
-            </div>
-            <div id="dialog_div">
-                <p id="message"></p>
-            </div>
-        </main>
-        <script src="/static/js/script_giaovien.js"></script>
-    </body>
+        </div>
+    </div>
+
+    <script>
+        const { createApp } = Vue
+
+        createApp({
+            data() {
+                return {
+                    danhSachGiaoVien: [],
+                    formData: {
+                        maGiaoVien: '',
+                        hoTen: '',
+                        tenTKB: ''
+                    },
+                    isEditing: false
+                }
+            },
+            computed: {
+                formTitle() {
+                    return this.isEditing ? 'Sửa thông tin giáo viên' : 'Thêm giáo viên mới'
+                }
+            },
+            methods: {
+                // Lấy danh sách giáo viên
+                async loadDanhSachGiaoVien() {
+                    try {
+                        const response = await axios.get('/api/giaovien')
+                        this.danhSachGiaoVien = response.data
+                    } catch (error) {
+                        alert('Không thể tải danh sách giáo viên')
+                    }
+                },
+
+                // Lưu giáo viên (thêm mới hoặc cập nhật)
+                async saveGiaoVien() {
+                    try {
+                        if (this.isEditing) {
+                            await axios.put(`/api/giaovien/${this.formData.maGiaoVien}`, this.formData)
+                        } else {
+                            await axios.post('/api/giaovien', this.formData)
+                        }
+                        this.loadDanhSachGiaoVien()
+                        this.resetForm()
+                    } catch (error) {
+                        alert('Không thể lưu thông tin giáo viên')
+                    }
+                },
+
+                // Xóa giáo viên
+                async deleteGiaoVien(id) {
+                    if (confirm('Bạn có chắc muốn xóa giáo viên này?')) {
+                        try {
+                            await axios.delete(`/api/giaovien/${id}`)
+                            this.loadDanhSachGiaoVien()
+                        } catch (error) {
+                            alert('Không thể xóa giáo viên')
+                        }
+                    }
+                },
+
+                // Chuẩn bị form để sửa
+                editGiaoVien(gv) {
+                    this.formData = { ...gv }
+                    this.isEditing = true
+                },
+
+                // Reset form về trạng thái ban đầu
+                resetForm() {
+                    this.formData = {
+                        maGiaoVien: '',
+                        hoTen: '',
+                        tenTKB: ''
+                    }
+                    this.isEditing = false
+                },
+
+                // Xuất Excel
+                async exportExcel() {
+                    try {
+                        const response = await axios.get('/api/export/giaovien', {
+                            responseType: 'blob'
+                        })
+                        const url = window.URL.createObjectURL(new Blob([response.data]))
+                        const link = document.createElement('a')
+                        link.href = url
+                        link.setAttribute('download', 'danh_sach_giao_vien.xlsx')
+                        document.body.appendChild(link)
+                        link.click()
+                        link.remove()
+                    } catch (error) {
+                        alert('Không thể xuất file Excel')
+                    }
+                },
+
+                // Nhập Excel
+                async importExcel(event) {
+                    const file = event.target.files[0]
+                    if (!file) return
+
+                    const formData = new FormData()
+                    formData.append('file', file)
+
+                    try {
+                        const response = await axios.post('/api/import/giaovien', formData)
+                        alert(`Nhập dữ liệu thành công!\nĐã cập nhật: ${response.data.updated}\nĐã thêm mới: ${response.data.inserted}`)
+                        this.loadDanhSachGiaoVien()
+                    } catch (error) {
+                        alert('Không thể nhập file Excel')
+                    }
+                    event.target.value = '' // Reset input file
+                }
+            },
+            mounted() {
+                this.loadDanhSachGiaoVien()
+            }
+        }).mount('#app')
+    </script>
+</body>
 </html>

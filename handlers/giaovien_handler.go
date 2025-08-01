@@ -4,6 +4,7 @@ import (
 	"GoSTKB/models"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"database/sql"
 
@@ -118,6 +119,104 @@ func (h *ThaoTac_GiaoVien) TestGiaoVien(c *gin.Context) {
 	c.JSON(http.StatusNotFound, gin.H{"message": "Test GIao VIên"})
 }
 
+// Thêm vào file hiện tại
+
+func (h *ThaoTac_GiaoVien) NhapDanhSachGiaoVien(c *gin.Context) {
+	// Nhận file từ form
+	file, err := c.FormFile("file")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Vui lòng chọn file Excel"})
+		return
+	}
+
+	// Mở file Excel
+	f, err := file.Open()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Không thể mở file Excel"})
+		return
+	}
+	defer f.Close()
+
+	fmt.Printf("Đã nhận file: %s\n", file.Filename)
+	// Đọc file Excel
+	xlsx, err := excelize.OpenReader(f)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Không thể đọc file Excel"})
+		return
+	}
+	defer xlsx.Close()
+
+	// Lấy tên sheet đầu tiên
+	sheetName := xlsx.GetSheetName(0)
+	fmt.Printf("Tên sheet: %s\n", sheetName)
+	// Khởi tạo biến đếm số lượng cập nhật và thêm mới
+	var countUpdated, countInserted int
+
+	// Đọc từng dòng trong file Excel
+	rows, err := xlsx.GetRows(sheetName)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Không thể đọc dữ liệu từ sheet"})
+		return
+	}
+	// Kiểm tra nếu không có dòng nào
+	fmt.Printf("Số dòng trong sheet: %d\n", len(rows))
+	// Bỏ qua dòng tiêu đề
+	for i := 1; i < len(rows); i++ {
+		row := rows[i]
+		if len(row) < 3 {
+			continue // Bỏ qua dòng không đủ dữ liệu
+		}
+
+		maGiaoVien := strings.TrimSpace(row[0])
+		hoTen := strings.TrimSpace(row[1])
+		tenTKB := strings.TrimSpace(row[2])
+		fmt.Printf("Mã giáo viên: %s, Họ tên: %s, Tên TKB: %s\n", maGiaoVien, hoTen, tenTKB)
+
+		// Kiểm tra dữ liệu bắt buộc
+		if hoTen == "" || tenTKB == "" {
+			continue // Bỏ qua nếu thiếu thông tin bắt buộc
+		}
+
+		if maGiaoVien != "" {
+			// Kiểm tra xem giáo viên đã tồn tại chưa
+			var exists bool
+			err := h.DB.QueryRow("SELECT EXISTS(SELECT 1 FROM giaovien WHERE ma_giao_vien = ?)", maGiaoVien).Scan(&exists)
+			if err != nil {
+				continue
+			}
+
+			if exists {
+				// Cập nhật nếu đã tồn tại
+				_, err = h.DB.Exec("UPDATE giaovien SET ho_ten = ?, ten_tkb = ? WHERE ma_giao_vien = ?",
+					hoTen, tenTKB, maGiaoVien)
+				if err == nil {
+					countUpdated++
+				}
+			} else {
+				// Thêm mới với mã giáo viên được chỉ định
+				_, err = h.DB.Exec("INSERT INTO giaovien (ma_giao_vien, ho_ten, ten_tkb) VALUES (?, ?, ?)",
+					maGiaoVien, hoTen, tenTKB)
+				if err == nil {
+					countInserted++
+				}
+			}
+		} else {
+			// Thêm mới không có mã giáo viên
+			_, err = h.DB.Exec("INSERT INTO giaovien (ho_ten, ten_tkb) VALUES (?, ?)",
+				hoTen, tenTKB)
+			if err == nil {
+				countInserted++
+			}
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message":  "Nhập dữ liệu thành công",
+		"updated":  countUpdated,
+		"inserted": countInserted,
+	})
+}
+
 func (h *ThaoTac_GiaoVien) XuatDanhSachGiaoVien(c *gin.Context) {
 	// Tạo file Excel mới
 	f := excelize.NewFile()
@@ -127,9 +226,13 @@ func (h *ThaoTac_GiaoVien) XuatDanhSachGiaoVien(c *gin.Context) {
 			return
 		}
 	}()
-
+	shellnameold := f.GetSheetName(0)
 	// Tạo sheet mới
 	sheetName := "Danh sách giáo viên"
+	if err := f.SetSheetName(shellnameold, sheetName); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Không thể tạo sheet"})
+		return
+	}
 	index, err := f.NewSheet(sheetName)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
