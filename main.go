@@ -28,29 +28,15 @@ func main() {
 	if err != nil {
 		log.Fatalf("Lỗi khởi tạo CSDL: %v", err)
 	}
-	/*
-		// Kết nối CSDL
-		db, err := gorm.Open(sqlite.Open("stkb.db"), &gorm.Config{})
-		if err != nil {
-			panic("Không kết nối được với cơ sở dữ liệu")
-		}
-
-		// Khởi tạo cấu trúc CSDL
-		if err := db.AutoMigrate(&models.GiaoVien{},
-			models.LopHoc{},
-			models.MonHoc{},
-			models.PhanCong{},
-			models.TietDay{}); err != nil {
-			panic("Lỗi khởi tạo CSDL")
-		}*/
 	//Khởi tạo trình quản lý truy vấn web
 	r := gin.Default()
 	//Tải template
-	r.LoadHTMLGlob("templates/*")
+	r.LoadHTMLGlob("templates/**/*.html")
 	//Cấu hình file tĩnh
 	r.Static("static", "./static")
 	//khỏi tạo các thao tác
 	thaotacgiaovien := &handlers.ThaoTac_GiaoVien{DB: db}
+	thaotaclophoc := &handlers.ThaoTac_LopHoc{DB: db}
 
 	//Điều phối truy vấn trang HTML
 	r.GET("/", func(c *gin.Context) {
@@ -72,6 +58,13 @@ func main() {
 		api.GET("/export/giaovien", thaotacgiaovien.XuatDanhSachGiaoVien)
 		api.POST("/import/giaovien", thaotacgiaovien.NhapDanhSachGiaoVien)
 		//Lớp học
+		api.POST("/lophoc", thaotaclophoc.TaoLopHoc)
+		api.GET("/lophoc", thaotacglophoc.DanhSachLopHoc)
+		api.PUT("/lophoc/:id", thaotacglophoc.CapNhatLopHoc)
+		api.DELETE("/lophoc/:id", thaotacglophoc.XoaLopHoc)
+		api.GET("/export/lophoc", thaotacglophoc.XuatDanhSachLopHoc)
+		api.POST("/import/lophoc", thaotacglophoc.NhapDanhSachLopHoc)
+		//Học sinh
 
 	}
 

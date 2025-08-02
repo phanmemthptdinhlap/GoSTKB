@@ -1,21 +1,32 @@
-<!DOCTYPE html>
-<html lang="vi">
-    <head>
-        <meta charset="UTF8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Hỗ trợ xếp thời khóa biểu</title>
-        <link rel="stylesheet" href="/static/css/style.css">
-    </head>
-    <body>
-        <header>
-            <h2>Hỗ trợ xếp thời khóa biểu</h1>
-            <nav>
-                <a href="/giaovien">Giáo viên</a>
-            </nav>
-        </header>
-        <main>
-            <h3>Chào mừng đến với phần mềm hỗ trợ xếp thời khóa biểu</h2>
-        </main>
-        <script src="/static/js/script.js"></script>
-    </body>
-</html>
+{{ template "layouts/base.html" . }}
+
+{{ define "title" }}Trang chủ - Hỗ trợ xếp thời khóa biểu{{ end }}
+
+{{ define "content" }}
+<div class="jumbotron">
+    <h1 class="display-4">Chào mừng đến với phần mềm hỗ trợ xếp thời khóa biểu</h1>
+    <p class="lead">Hệ thống hỗ trợ xếp thời khóa biểu cho trường học</p>
+    <hr class="my-4">
+    <p>Chọn một trong các chức năng bên dưới để bắt đầu:</p>
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Quản lý giáo viên</h5>
+                    <p class="card-text">Thêm, sửa, xóa và quản lý thông tin giáo viên</p>
+                    <a href="/giaovien" class="btn btn-primary">Đi đến quản lý giáo viên</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Quản lý lớp học</h5>
+                    <p class="card-text">Thêm, sửa, xóa và quản lý thông tin lớp học</p>
+                    <a href="/lophoc" class="btn btn-primary">Đi đến quản lý lớp học</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{ end }}

@@ -10,7 +10,8 @@ CREATE TABLE IF NOT EXISTS monhoc (
 CREATE TABLE IF NOT EXISTS lophoc (
 		ma_lop_hoc INTEGER PRIMARY KEY AUTOINCREMENT,
 		ten_lop_hoc TEXT NOT NULL,
-		Khoi_lop TEXT NOT NULL
+		khoi_lop TEXT NOT NULL,
+		ma_chu_nhiem INTEGER REFERENCES giaovien(ma_giao_vien)
 );
 CREATE TABLE IF NOT EXISTS phancong (
 		ma_phan_cong INTEGER PRIMARY KEY AUTOINCREMENT,
