@@ -8,30 +8,29 @@
             <div class="card-body">
                 <h5 class="card-title" v-text="formTitle"></h5>
                 <div class="mb-3">
-                    <label class="form-label">Mã lớp học</label>
-                    <input type="text" class="form-control" v-model="formData.ma_lop_hoc">
+                    <label class="form-label">Mã lớp học</label><br>
+                    <input type="text" class="form-control-sm" v-model="formData.ma_lop">
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Tên lớp học</label>
-                    <input type="text" class="form-control" v-model="formData.ten_lop" required>
+                    <label class="form-label">Tên lớp học</label><br>
+                    <input type="text" class="form-control-sm" v-model="formData.ten_lop" required>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Khối lớp</label>
-                    <input type="text" class="form-control" v-model="formData.khoi_lop" required>
+                    <label class="form-label">Khối lớp</label><br>
+                    <input type="text" class="form-control-sm" v-model="formData.khoi_lop" required>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Giáo viên chủ nhiệm</label>
-                    <select id="listbox" class="form-control" v-model="formData.ma_giao_vien">
-                        <option v-for="gv in giaovien" :key="gv.ma_giao_vien" :value="gv.ho_ten" v-text="gv.ho_ten">
-                        </option>
-                    </select>
+                    <label class="form-label">Giáo viên chủ nhiệm</label><br>
+                    <input type="text" readonly class="form-control-sm" style="width:50px;" v-model="formData.ma_chu_nhiem">
+                    <input type="text" readonly class="form-control-sm" v-model="formData.ten_chu_nhiem">
+                    <button @click="selectgiaovien" class="btn btn-primary">Chọn giáo viên</button>
                 </div>
                 <button @click="savelophoc" class="btn btn-primary">Lưu</button>
                 <button @click="resetForm" class="btn btn-secondary ms-2">Hủy</button>
             </div>
         </div>
 
-        <!-- Bảng danh sách giáo viên -->
+        <!-- Bảng danh sách lớp học -->
         <div class="card">
             <div class="card-body">
                 <div class="d-flex justify-content-between mb-3">
@@ -56,14 +55,14 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="lop in dslop" :key="lop.ma_lop_hoc">
-                            <td v-text="lop.ma_lop_hoc"></td>
+                        <tr v-for="lop in dslop" :key="lop.ma_lop">
+                            <td v-text="lop.ma_lop"></td>
                             <td v-text="lop.ten_lop"></td>
                             <td v-text="lop.khoi_lop"></td>
                             <td v-text="lop.ten_chu_nhiem"></td>
                             <td>
                                 <button @click="editLopHoc(lop)" class="btn btn-sm btn-warning me-2">Sửa</button>
-                                <button @click="deleteLopHoc(lop.ma_lop_hoc)" class="btn btn-sm btn-danger">Xóa</button>
+                                <button @click="deleteLopHoc(lop.ma_lop)" class="btn btn-sm btn-danger">Xóa</button>
                             </td>
                         </tr>
                     </tbody>
@@ -81,7 +80,7 @@
                     dslop: [],
                     dsgiaovien:[],
                     formData: {
-                        ma_lop_hoc: '',
+                        ma_lop: '',
                         ten_lop: '',
                         khoi_lop: '',
                         ma_chu_nhiem: '',
@@ -151,7 +150,7 @@
                 // Reset form về trạng thái ban đầu
                 resetForm() {
                     this.formData = {
-                        ma_lop_hoc: '',
+                        ma_lop: '',
                         ten_lop: '',
                         khoi_lop: '',
                         ma_chu_nhiem: '',

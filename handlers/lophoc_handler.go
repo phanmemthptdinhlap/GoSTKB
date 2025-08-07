@@ -21,31 +21,17 @@ type ThaoTac_LopHoc struct {
 func (h *ThaoTac_LopHoc) DanhSachLopHoc(c *gin.Context) {
 	var lophoc []models.LopHoc
 
-	rows, err := h.DB.Query(`SELECT l.ma_lop, l.ten_lop, l.khoi_lop, l.ma_chu_nhiem, g.ho_ten
+	rows, err := h.DB.Query(`SELECT l.ma_lop, l.ten_lop, l.khoi_lop, l.ma_chu_nhiem, COALESCE(g.ho_ten,'')
 						FROM lophoc l
-						RIGHT OUTER JOIN giaovien g 
-						ON l.ma_chu_nhiem=g.ma_giao_vien`)
+						LEFT OUTER JOIN giaovien g ON l.ma_chu_nhiem = g.ma_giao_vien`)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Không thể truy vấn dữ liệu"})
 		fmt.Printf("Lỗi phần sql\n")
 		return
 	}
 	defer rows.Close()
-	columns, err := rows.Columns()
-	if err != nil {
-		fmt.Printf("Lỗi lấy danh sách cột \n")
-		return
-	}
-	fmt.Printf("Columns: %v", columns)
-	var ma, ten, khoi, macn, hoten string
-	for rows.Next() {
-		if err := rows.Scan(&ma, &ten, &khoi, &macn, &hoten); err != nil {
-			fmt.Printf("Lỗi đọc dữ liệu\n")
-			return
-		}
-	}
 
-	/*for rows.Next() {
+	for rows.Next() {
 		var lh models.LopHoc
 		if err := rows.Scan(&lh.MaLop, &lh.TenLop, &lh.KhoiLop, &lh.MaChuNhiem, &lh.TenChuNhiem); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Lỗi khi đọc dữ liệu"})
@@ -53,7 +39,7 @@ func (h *ThaoTac_LopHoc) DanhSachLopHoc(c *gin.Context) {
 			return
 		}
 		lophoc = append(lophoc, lh)
-	}*/
+	}
 
 	if err := rows.Err(); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Lỗi khi duyệt dữ liệu"})
@@ -178,11 +164,11 @@ func (h *ThaoTac_LopHoc) XuatDanhSachLopHoc(c *gin.Context) {
 	f.SetCellValue(sheetName, "E1", "Tên Chủ Nhiệm")
 
 	// Truy vấn dữ liệu
-	sqlcmd := `SELECT l.ma_lop, l.ten_lop, l.khoi_lop, l.ma_chu_nhiem, g.ho_ten 
-			FROM lophoc l
-			INNER JOIN giaovien g on l.ma_chu_nhiem = g.ma_giao_gien`
-	rows, err := h.DB.Query(sqlcmd)
+	rows, err := h.DB.Query(`SELECT l.ma_lop, l.ten_lop, l.khoi_lop, l.ma_chu_nhiem, COALESCE(g.ho_ten,'')
+						FROM lophoc l
+						LEFT OUTER JOIN giaovien g ON l.ma_chu_nhiem = g.ma_giao_vien`)
 	if err != nil {
+		fmt.Printf("Lỗi SQL \n")
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Không thể truy vấn dữ liệu"})
 		return
 	}
@@ -191,9 +177,9 @@ func (h *ThaoTac_LopHoc) XuatDanhSachLopHoc(c *gin.Context) {
 	// Ghi dữ liệu vào file Excel
 	rowIndex := 2
 	for rows.Next() {
-		var malop int
-		var tenlop, khoilop string
-		if err := rows.Scan(&malop, &tenlop, &khoilop); err != nil {
+		var malop, tenlop, khoilop, machunhiem, tenchunhiem string
+		if err := rows.Scan(&malop, &tenlop, &khoilop, &machunhiem, &tenchunhiem); err != nil {
+			fmt.Printf("Lỗi Scan dữ liệu\n")
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
@@ -201,6 +187,8 @@ func (h *ThaoTac_LopHoc) XuatDanhSachLopHoc(c *gin.Context) {
 		f.SetCellValue(sheetName, fmt.Sprintf("A%d", rowIndex), malop)
 		f.SetCellValue(sheetName, fmt.Sprintf("B%d", rowIndex), tenlop)
 		f.SetCellValue(sheetName, fmt.Sprintf("C%d", rowIndex), khoilop)
+		f.SetCellValue(sheetName, fmt.Sprintf("D%d", rowIndex), machunhiem)
+		f.SetCellValue(sheetName, fmt.Sprintf("E%d", rowIndex), tenchunhiem)
 		rowIndex++
 	}
 
@@ -210,6 +198,7 @@ func (h *ThaoTac_LopHoc) XuatDanhSachLopHoc(c *gin.Context) {
 
 	// Ghi file Excel vào response
 	if err := f.Write(c.Writer); err != nil {
+		fmt.Printf("Lỗi ghi file\n")
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
