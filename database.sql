@@ -4,20 +4,20 @@ CREATE TABLE IF NOT EXISTS giaovien (
 		ten_tkb TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS monhoc (
-		ma_mon_hoc INTEGER PRIMARY KEY AUTOINCREMENT,
-		ten_mon_hoc TEXT NOT NULL
+		ma_mon INTEGER PRIMARY KEY AUTOINCREMENT,
+		ten_mon TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS lophoc (
-		ma_lop_hoc INTEGER PRIMARY KEY AUTOINCREMENT,
-		ten_lop_hoc TEXT NOT NULL,
+		ma_lop INTEGER PRIMARY KEY AUTOINCREMENT,
+		ten_lop TEXT NOT NULL,
 		khoi_lop TEXT NOT NULL,
-		ma_chu_nhiem INTEGER REFERENCES giaovien(ma_giao_vien)
+		ma_chu_nhiem INTEGER
 );
 CREATE TABLE IF NOT EXISTS phancong (
 		ma_phan_cong INTEGER PRIMARY KEY AUTOINCREMENT,
 		ma_giao_vien INTEGER REFERENCES giaovien(ma_giao_vien),
-		ma_mon_hoc INTEGER REFERENCES monhoc(ma_mon_hoc),
-		ma_lop_hoc INTEGER REFERENCES lophoc(ma_lop_hoc)
+		ma_mon INTEGER REFERENCES monhoc(ma_mon_hoc),
+		ma_lop INTEGER REFERENCES lophoc(ma_lop_hoc)
 );
 CREATE TABLE IF NOT EXISTS tietday(
 	ma_tiet_day INTEGER PRIMARY KEY	AUTOINCREMENT,

@@ -1,37 +1,32 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản lý giáo viên</title>
-    <!-- Thêm Vue.js -->
-    <script src="static/js/vue.global.js"></script>
-    <!-- Thêm Axios để gọi API -->
-    <script src="static/js/axios.min.js"></script>
-    <!-- Thêm Bootstrap cho UI -->
-    <link href="static/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body>
+
+{{ template "header.html" }}
     <div id="app" class="container mt-4">
-        <h2 class="mb-4">Quản lý giáo viên</h2>
+        <h2 class="mb-4">Quản lý lớp học</h2>
         
-        <!-- Form thêm/sửa giáo viên -->
+        <!-- Form thêm/sửa lớp học -->
         <div class="card mb-4" v-if="isVisible">
             <div class="card-body">
                 <h5 class="card-title" v-text="formTitle"></h5>
                 <div class="mb-3">
-                    <label class="form-label">Mã giáo viên</label>
-                    <input type="text" class="form-control" v-model="formData.ma_giao_vien">
+                    <label class="form-label">Mã lớp học</label>
+                    <input type="text" class="form-control" v-model="formData.ma_lop_hoc">
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Họ và tên</label>
-                    <input type="text" class="form-control" v-model="formData.ho_ten" required>
+                    <label class="form-label">Tên lớp học</label>
+                    <input type="text" class="form-control" v-model="formData.ten_lop" required>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Tên trên TKB</label>
-                    <input type="text" class="form-control" v-model="formData.ten_tkb" required>
+                    <label class="form-label">Khối lớp</label>
+                    <input type="text" class="form-control" v-model="formData.khoi_lop" required>
                 </div>
-                <button @click="saveGiaoVien" class="btn btn-primary">Lưu</button>
+                <div class="mb-3">
+                    <label class="form-label">Giáo viên chủ nhiệm</label>
+                    <select id="listbox" class="form-control" v-model="formData.ma_giao_vien">
+                        <option v-for="gv in giaovien" :key="gv.ma_giao_vien" :value="gv.ho_ten" v-text="gv.ho_ten">
+                        </option>
+                    </select>
+                </div>
+                <button @click="savelophoc" class="btn btn-primary">Lưu</button>
                 <button @click="resetForm" class="btn btn-secondary ms-2">Hủy</button>
             </div>
         </div>
@@ -40,9 +35,9 @@
         <div class="card">
             <div class="card-body">
                 <div class="d-flex justify-content-between mb-3">
-                    <h5 class="card-title">Danh sách giáo viên</h5>
+                    <h5 class="card-title">Danh sách lớp học</h5>
                     <div>
-                        <button @click="newTeacher" class="btn btn-primary me-2">Thêm mới giáo viên</button>
+                        <button @click="newClass" class="btn btn-primary me-2">Thêm mới lớp học</button>
                         <label class="btn btn-info me-2">
                             Nhập Excel
                             <input type="file" @change="importExcel" class="d-none" accept=".xlsx,.xls">
@@ -53,20 +48,22 @@
                 <table class="table">
                     <thead>
                         <tr>
-                            <th>Mã GV</th>
-                            <th>Họ và tên</th>
-                            <th>Tên trên TKB</th>
+                            <th>Mã lớp học</th>
+                            <th>Tên lớp học</th>
+                            <th>Khối lớp</th>
+                            <th>Giáo viên chủ nhiệm</th>
                             <th>Thao tác</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="gv in danhSachGiaoVien" :key="gv.ma_giao_vien">
-                            <td v-text="gv.ma_giao_vien"></td>
-                            <td v-text="gv.ho_ten"></td>
-                            <td v-text="gv.ten_tkb"></td>
+                        <tr v-for="lop in dslop" :key="lop.ma_lop_hoc">
+                            <td v-text="lop.ma_lop_hoc"></td>
+                            <td v-text="lop.ten_lop"></td>
+                            <td v-text="lop.khoi_lop"></td>
+                            <td v-text="lop.ten_chu_nhiem"></td>
                             <td>
-                                <button @click="editGiaoVien(gv)" class="btn btn-sm btn-warning me-2">Sửa</button>
-                                <button @click="deleteGiaoVien(gv.ma_giao_vien)" class="btn btn-sm btn-danger">Xóa</button>
+                                <button @click="editLopHoc(lop)" class="btn btn-sm btn-warning me-2">Sửa</button>
+                                <button @click="deleteLopHoc(lop.ma_lop_hoc)" class="btn btn-sm btn-danger">Xóa</button>
                             </td>
                         </tr>
                     </tbody>
@@ -81,11 +78,14 @@
         createApp({
             data() {
                 return {
-                    danhSachGiaoVien: [],
+                    dslop: [],
+                    dsgiaovien:[],
                     formData: {
-                        ma_giao_vien: '',
-                        ho_ten: '',
-                        ten_tkb: ''
+                        ma_lop_hoc: '',
+                        ten_lop: '',
+                        khoi_lop: '',
+                        ma_chu_nhiem: '',
+                        ten_chu_nhiem:''
                     },
                     isVisible: false,
                     isEditing: false
@@ -93,50 +93,57 @@
             },
             computed: {
                 formTitle() {
-                    return this.isEditing ? 'Sửa thông tin giáo viên' : 'Thêm giáo viên mới'
+                    return this.isEditing ? 'Sửa thông tin lớp học' : 'Thêm lớp học mới'
                 }
             },
             methods: {
                 // Lấy danh sách giáo viên
-                async loadDanhSachGiaoVien() {
+                async loadDanhSachLopHoc() {
                     try {
-                        const response = await axios.get('/api/giaovien')
-                        this.danhSachGiaoVien = response.data
+                        const response = await axios.get('/api/lophoc')
+                        this.dslop = response.data
                     } catch (error) {
-                        alert('Không thể tải danh sách giáo viên')
+                        alert(`Không thể tải danh sách lớp học${error}`)
                     }
                 },
-
+                async loadDanhSachGiaoVien(){
+                    try{
+                        const response = await axios.get('/api/giaovien')
+                        this.dsgiaovien = response.data
+                    } catch (error){
+                        alert(`Không thể tải dánh sách giáo viên${error}`)
+                    }
+                },
                 // Lưu giáo viên (thêm mới hoặc cập nhật)
-                async saveGiaoVien() {
+                async saveLopHoc() {
                     try {
                         if (this.isEditing) {
-                            await axios.put(`/api/giaovien/${this.formData.ma_giao_vien}`, this.formData)
+                            await axios.put(`/api/lophoc${this.formData.ma_lop_hoc}`, this.formData)
                         } else {
-                            await axios.post('/api/giaovien', this.formData)
+                            await axios.post('/api/lophoc', this.formData)
                         }
-                        this.loadDanhSachGiaoVien()
+                        this.loadDanhSachLopHoc()
                         this.resetForm()
                     } catch (error) {
-                        alert('Không thể lưu thông tin giáo viên')
+                        alert('Không thể lưu thông tin lớp<input type="text" class="form-control" v-model="formData.khoi_lop" required>')
                     }
                 },
 
                 // Xóa giáo viên
-                async deleteGiaoVien(id) {
-                    if (confirm('Bạn có chắc muốn xóa giáo viên này?')) {
+                async deleteLopHoc(id) {
+                    if (confirm('Bạn có chắc muốn xóa lớp này?')) {
                         try {
-                            await axios.delete(`/api/giaovien/${id}`)
-                            this.loadDanhSachGiaoVien()
+                            await axios.delete(`/api/lophoc/${id}`)
+                            this.loadDanhSachLopHoc()
                         } catch (error) {
-                            alert('Không thể xóa giáo viên')
+                            alert('Không thể xóa lớp')
                         }
                     }
                 },
 
                 // Chuẩn bị form để sửa
-                editGiaoVien(gv) {
-                    this.formData = { ...gv }
+                editLopHoc(lop) {
+                    this.formData = { ...lop }
                     this.isEditing = true
                     this.isVisible = true
                 },
@@ -144,28 +151,30 @@
                 // Reset form về trạng thái ban đầu
                 resetForm() {
                     this.formData = {
-                        ma_giao_vien: '',
-                        ho_ten: '',
-                        ten_tkb: ''
+                        ma_lop_hoc: '',
+                        ten_lop: '',
+                        khoi_lop: '',
+                        ma_chu_nhiem: '',
+                        ten_chu_nhiem:'',
                     }
                     this.isVisible = false
                     this.isEditing = false
                 },
 
-                newTeacher(){
+                newClass(){
                     this.resetForm()
                     this.isVisible = true
                 },
                 // Xuất Excel
                 async exportExcel() {
                     try {
-                        const response = await axios.get('/api/export/giaovien', {
+                        const response = await axios.get('/api/export/lophoc', {
                             responseType: 'blob'
                         })
                         const url = window.URL.createObjectURL(new Blob([response.data]))
                         const link = document.createElement('a')
                         link.href = url
-                        link.setAttribute('download', 'danh_sach_giao_vien.xlsx')
+                        link.setAttribute('download', 'danh_sach_lop_hoc.xlsx')
                         document.body.appendChild(link)
                         link.click()
                         link.remove()
@@ -183,9 +192,9 @@
                     formData.append('file', file)
 
                     try {
-                        const response = await axios.post('/api/import/giaovien', formData)
+                        const response = await axios.post('/api/import/lophoc', formData)
                         alert(`Nhập dữ liệu thành công!\nĐã cập nhật: ${response.data.updated}\nĐã thêm mới: ${response.data.inserted}`)
-                        this.loadDanhSachGiaoVien()
+                        this.loadDanhSachLopHoc()
                     } catch (error) {
                         alert('Không thể nhập file Excel')
                     }
@@ -193,9 +202,8 @@
                 }
             },
             mounted() {
-                this.loadDanhSachGiaoVien()
+                this.loadDanhSachLopHoc()
             }
         }).mount('#app')
-    </script>
-</body>
-</html>
+</script>
+{{ template "footer.html"}}

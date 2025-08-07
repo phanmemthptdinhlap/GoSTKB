@@ -1,14 +1,16 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF8">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ block "title" . }}Hỗ trợ xếp thời khóa biểu{{ end }}</title>
-    <link rel="stylesheet" href="/static/css/bootstrap.min.css">
-    <link rel="stylesheet" href="/static/css/style.css">
-    {{ block "head" . }}{{ end }}
+    <title>{{ .Title}}</title>
+    <!-- Thêm Vue.js -->
+    <script src="static/js/vue.global.js"></script>
+    <!-- Thêm Axios để gọi API -->
+    <script src="static/js/axios.min.js"></script>
+    <!-- Thêm Bootstrap cho UI -->
+    <link href="static/css/bootstrap.min.css" rel="stylesheet">
 </head>
-<body>
     <header class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container">
             <a class="navbar-brand" href="/">Hỗ trợ xếp thời khóa biểu</a>
@@ -23,21 +25,14 @@
                     <li class="nav-item">
                         <a class="nav-link" href="/lophoc">Lớp học</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/monhoc">Môn học</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/phancong">Phân công</a>
+                    </li>
                 </ul>
             </div>
         </div>
     </header>
-
-    <main class="container mt-4">
-        {{ block "content" . }}{{ end }}
-    </main>
-
-    <footer class="container mt-5">
-        <hr>
-        <p class="text-center">© 2025 Hỗ trợ xếp thời khóa biểu</p>
-    </footer>
-
-    <script src="/static/js/bootstrap.min.js"></script>
-    {{ block "scripts" . }}{{ end }}
-</body>
-</html>
+<main>

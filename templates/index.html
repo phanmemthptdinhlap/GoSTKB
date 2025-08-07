@@ -1,32 +1,29 @@
-{{ template "layouts/base.html" . }}
 
-{{ define "title" }}Trang chủ - Hỗ trợ xếp thời khóa biểu{{ end }}
-
-{{ define "content" }}
+{{ template "header.html" .}}
 <div class="jumbotron">
     <h1 class="display-4">Chào mừng đến với phần mềm hỗ trợ xếp thời khóa biểu</h1>
     <p class="lead">Hệ thống hỗ trợ xếp thời khóa biểu cho trường học</p>
     <hr class="my-4">
-    <p>Chọn một trong các chức năng bên dưới để bắt đầu:</p>
+    
     <div class="row mt-4">
-        <div class="col-md-6">
-            <div class="card">
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
                 <div class="card-body">
                     <h5 class="card-title">Quản lý giáo viên</h5>
                     <p class="card-text">Thêm, sửa, xóa và quản lý thông tin giáo viên</p>
-                    <a href="/giaovien" class="btn btn-primary">Đi đến quản lý giáo viên</a>
+                    <a href="/giaovien" class="btn btn-primary">Quản lý giáo viên</a>
                 </div>
             </div>
         </div>
-        <div class="col-md-6">
-            <div class="card">
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
                 <div class="card-body">
                     <h5 class="card-title">Quản lý lớp học</h5>
                     <p class="card-text">Thêm, sửa, xóa và quản lý thông tin lớp học</p>
-                    <a href="/lophoc" class="btn btn-primary">Đi đến quản lý lớp học</a>
+                    <a href="/lophoc" class="btn btn-primary">Quản lý lớp học</a>
                 </div>
             </div>
         </div>
     </div>
 </div>
-{{ end }}
+{{ template "footer.html" .}}

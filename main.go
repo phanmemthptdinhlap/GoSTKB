@@ -2,7 +2,9 @@ package main
 
 import (
 	"GoSTKB/handlers"
+	"fmt"
 	"log"
+	"net/http"
 	"os"
 
 	// Adjust the import path as necessary
@@ -31,7 +33,13 @@ func main() {
 	//Khởi tạo trình quản lý truy vấn web
 	r := gin.Default()
 	//Tải template
-	r.LoadHTMLGlob("templates/**/*.html")
+	r.LoadHTMLFiles(
+		"templates/components/footer.html",
+		"templates/components/header.html",
+		"templates/index.html",
+		"templates/giaovien.html",
+		"templates/lophoc.html",
+	)
 	//Cấu hình file tĩnh
 	r.Static("static", "./static")
 	//khỏi tạo các thao tác
@@ -40,10 +48,25 @@ func main() {
 
 	//Điều phối truy vấn trang HTML
 	r.GET("/", func(c *gin.Context) {
-		c.HTML(200, "index.html", nil)
+		fmt.Println("readering index.html")
+		c.Header("Cache-Control", "no-cache, no-store, must-revalidate")
+		c.HTML(http.StatusOK, "index.html", gin.H{
+			"Title": "Trang chủ",
+		})
 	})
+
 	r.GET("/giaovien", func(c *gin.Context) {
-		c.HTML(200, "giaovien.html", nil)
+		fmt.Println("readering giaovien.html")
+		c.Header("Cache-Control", "no-cache, no-store, must-revalidate")
+		c.HTML(http.StatusOK, "giaovien.html", gin.H{
+			"Title": "Quản lý giáo viên",
+		})
+	})
+
+	r.GET("/lophoc", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "lophoc.html", gin.H{
+			"Title": "Quản lý lớp học",
+		})
 	})
 
 	//Điều phối cổng dịch vụ
@@ -59,11 +82,11 @@ func main() {
 		api.POST("/import/giaovien", thaotacgiaovien.NhapDanhSachGiaoVien)
 		//Lớp học
 		api.POST("/lophoc", thaotaclophoc.TaoLopHoc)
-		api.GET("/lophoc", thaotacglophoc.DanhSachLopHoc)
-		api.PUT("/lophoc/:id", thaotacglophoc.CapNhatLopHoc)
-		api.DELETE("/lophoc/:id", thaotacglophoc.XoaLopHoc)
-		api.GET("/export/lophoc", thaotacglophoc.XuatDanhSachLopHoc)
-		api.POST("/import/lophoc", thaotacglophoc.NhapDanhSachLopHoc)
+		api.GET("/lophoc", thaotaclophoc.DanhSachLopHoc)
+		api.PUT("/lophoc/:id", thaotaclophoc.CapNhatLopHoc)
+		api.DELETE("/lophoc/:id", thaotaclophoc.XoaLopHoc)
+		api.GET("/export/lophoc", thaotaclophoc.XuatDanhSachLopHoc)
+		api.POST("/import/lophoc", thaotaclophoc.NhapDanhSachLopHoc)
 		//Học sinh
 
 	}

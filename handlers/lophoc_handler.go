@@ -20,32 +20,49 @@ type ThaoTac_LopHoc struct {
 // Lấy danh sách lớp học
 func (h *ThaoTac_LopHoc) DanhSachLopHoc(c *gin.Context) {
 	var lophoc []models.LopHoc
-	sqlcmd := `SELECT l.ma_lop_hoc, l.ten_lop, l.khoi_lop, l.ma_chu_nhiem, g.ho_ten 
-				FROM lophoc l
-				INNER JOIN giaovien g ON l.ma_chu_nhiem = g.ma_giao_vien`
-	rows, err := h.DB.Query(sqlcmd)
+
+	rows, err := h.DB.Query(`SELECT l.ma_lop, l.ten_lop, l.khoi_lop, l.ma_chu_nhiem, g.ho_ten
+						FROM lophoc l
+						RIGHT OUTER JOIN giaovien g 
+						ON l.ma_chu_nhiem=g.ma_giao_vien`)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Không thể truy vấn dữ liệu"})
+		fmt.Printf("Lỗi phần sql\n")
 		return
 	}
 	defer rows.Close()
-
+	columns, err := rows.Columns()
+	if err != nil {
+		fmt.Printf("Lỗi lấy danh sách cột \n")
+		return
+	}
+	fmt.Printf("Columns: %v", columns)
+	var ma, ten, khoi, macn, hoten string
 	for rows.Next() {
+		if err := rows.Scan(&ma, &ten, &khoi, &macn, &hoten); err != nil {
+			fmt.Printf("Lỗi đọc dữ liệu\n")
+			return
+		}
+	}
+
+	/*for rows.Next() {
 		var lh models.LopHoc
-		if err := rows.Scan(&lh.MaLopHoc, &lh.TenLop, &lh.KhoiLop, &lh.MaChuNhiem, &lh.TenChuNhiem); err != nil {
+		if err := rows.Scan(&lh.MaLop, &lh.TenLop, &lh.KhoiLop, &lh.MaChuNhiem, &lh.TenChuNhiem); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Lỗi khi đọc dữ liệu"})
+			fmt.Printf("Lỗi phần đọc dữ liệu\n")
 			return
 		}
 		lophoc = append(lophoc, lh)
-	}
+	}*/
 
 	if err := rows.Err(); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Lỗi khi duyệt dữ liệu"})
+		fmt.Printf("Lỗi phần duyệt dữ liệu\n")
 		return
 	}
 
 	if len(lophoc) == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"message": "Không có lớp học nào"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "Không có lớp học nào"})
 		return
 	}
 
@@ -63,12 +80,12 @@ func (h *ThaoTac_LopHoc) TaoLopHoc(c *gin.Context) {
 	var sqlcmd string
 	var args []interface{}
 
-	if lophoc.MaLopHoc == "" {
-		sqlcmd = "INSERT INTO lophoc (ten_lop_hoc, khoi_lop, ma_chu_nhiem) VALUES (?, ?,?)"
+	if lophoc.MaLop == "" {
+		sqlcmd = "INSERT INTO lophoc (ten_lop, khoi_lop, ma_chu_nhiem) VALUES (?, ?,?)"
 		args = []interface{}{lophoc.TenLop, lophoc.KhoiLop, lophoc.MaChuNhiem}
 	} else {
-		sqlcmd = "INSERT INTO lophoc (ma_lop_hoc, ten_lop, khoi_lop, ma_chu_nhiem) VALUES (?, ?, ?, ?)"
-		args = []interface{}{lophoc.MaLopHoc, lophoc.TenLop, lophoc.KhoiLop, lophoc.MaChuNhiem}
+		sqlcmd = "INSERT INTO lophoc (ma_lop, ten_lop, khoi_lop, ma_chu_nhiem) VALUES (?, ?, ?, ?)"
+		args = []interface{}{lophoc.MaLop, lophoc.TenLop, lophoc.KhoiLop, lophoc.MaChuNhiem}
 	}
 
 	result, err := h.DB.Exec(sqlcmd, args...)
@@ -78,7 +95,7 @@ func (h *ThaoTac_LopHoc) TaoLopHoc(c *gin.Context) {
 	}
 
 	id, _ := result.LastInsertId()
-	lophoc.MaLopHoc = fmt.Sprintf("%d", id)
+	lophoc.MaLop = fmt.Sprintf("%d", id)
 	c.JSON(http.StatusOK, lophoc)
 }
 
@@ -88,8 +105,8 @@ func (h *ThaoTac_LopHoc) CapNhatLopHoc(c *gin.Context) {
 	id := c.Param("id")
 
 	// Kiểm tra lớp học tồn tại
-	row := h.DB.QueryRow("SELECT ma_lop_hoc FROM lophoc WHERE ma_lop_hoc = ?", id)
-	if err := row.Scan(&lophoc.MaLopHoc); err != nil {
+	row := h.DB.QueryRow("SELECT ma_lop FROM lophoc WHERE ma_lop = ?", id)
+	if err := row.Scan(&lophoc.MaLop); err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Không tìm thấy thông tin lớp học này"})
 		return
 	}
@@ -101,8 +118,8 @@ func (h *ThaoTac_LopHoc) CapNhatLopHoc(c *gin.Context) {
 	}
 
 	// Cập nhật thông tin
-	_, err := h.DB.Exec("UPDATE lophoc SET ten_lop_hoc = ?, khoi_lop = ?, ma_chu_nhiem=? WHERE ma_lop_hoc = ?",
-		lophoc.TenLop, lophoc.KhoiLop, lophoc.MaChuNhiem, lophoc.MaLopHoc)
+	_, err := h.DB.Exec("UPDATE lophoc SET ten_lop = ?, khoi_lop = ?, ma_chu_nhiem=? WHERE ma_lop = ?",
+		lophoc.TenLop, lophoc.KhoiLop, lophoc.MaChuNhiem, lophoc.MaLop)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Không thể cập nhật lớp học"})
 		return
@@ -117,14 +134,14 @@ func (h *ThaoTac_LopHoc) XoaLopHoc(c *gin.Context) {
 
 	// Kiểm tra lớp học tồn tại
 	var lophoc models.LopHoc
-	row := h.DB.QueryRow("SELECT ma_lop_hoc FROM lophoc WHERE ma_lop_hoc = ?", id)
-	if err := row.Scan(&lophoc.MaLopHoc); err != nil {
+	row := h.DB.QueryRow("SELECT ma_lop FROM lophoc WHERE ma_lop = ?", id)
+	if err := row.Scan(&lophoc.MaLop); err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Không tìm thấy thông tin lớp học"})
 		return
 	}
 
 	// Xóa lớp học
-	_, err := h.DB.Exec("DELETE FROM lophoc WHERE ma_lop_hoc = ?", id)
+	_, err := h.DB.Exec("DELETE FROM lophoc WHERE ma_lop= ?", id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Không thể xóa lớp học"})
 		return
@@ -161,7 +178,10 @@ func (h *ThaoTac_LopHoc) XuatDanhSachLopHoc(c *gin.Context) {
 	f.SetCellValue(sheetName, "E1", "Tên Chủ Nhiệm")
 
 	// Truy vấn dữ liệu
-	rows, err := h.DB.Query("SELECT ma_lop_hoc, ten_lop, khoi_lop, ma_chu_nhiem FROM lophoc")
+	sqlcmd := `SELECT l.ma_lop, l.ten_lop, l.khoi_lop, l.ma_chu_nhiem, g.ho_ten 
+			FROM lophoc l
+			INNER JOIN giaovien g on l.ma_chu_nhiem = g.ma_giao_gien`
+	rows, err := h.DB.Query(sqlcmd)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Không thể truy vấn dữ liệu"})
 		return
@@ -236,13 +256,14 @@ func (h *ThaoTac_LopHoc) NhapDanhSachLopHoc(c *gin.Context) {
 	// Bỏ qua dòng tiêu đề
 	for i := 1; i < len(rows); i++ {
 		row := rows[i]
-		if len(row) < 3 {
+		if len(row) < 4 {
 			continue // Bỏ qua dòng không đủ dữ liệu
 		}
 
 		maLop := strings.TrimSpace(row[0])
 		tenLop := strings.TrimSpace(row[1])
 		khoiLop := strings.TrimSpace(row[2])
+		maChuNhiem := strings.TrimSpace(row[3])
 
 		// Kiểm tra dữ liệu bắt buộc
 		if tenLop == "" || khoiLop == "" {
@@ -259,23 +280,23 @@ func (h *ThaoTac_LopHoc) NhapDanhSachLopHoc(c *gin.Context) {
 
 			if exists {
 				// Cập nhật nếu đã tồn tại
-				_, err = h.DB.Exec("UPDATE lophoc SET ten_lop = ?, khoi_lop = ? WHERE ma_lop = ?",
-					tenLop, khoiLop, maLop)
+				_, err = h.DB.Exec("UPDATE lophoc SET ten_lop = ?, khoi_lop = ?,ma_chu_nhiem = ? WHERE ma_lop = ?",
+					tenLop, khoiLop, maChuNhiem, maLop)
 				if err == nil {
 					countUpdated++
 				}
 			} else {
 				// Thêm mới với mã lớp được chỉ định
-				_, err = h.DB.Exec("INSERT INTO lophoc (ma_lop, ten_lop, khoi_lop) VALUES (?, ?, ?)",
-					maLop, tenLop, khoiLop)
+				_, err = h.DB.Exec("INSERT INTO lophoc (ma_lop, ten_lop, khoi_lop, ma_chu_nhiem) VALUES (?, ?, ?, ?)",
+					maLop, tenLop, khoiLop, maChuNhiem)
 				if err == nil {
 					countInserted++
 				}
 			}
 		} else {
 			// Thêm mới không có mã lớp
-			_, err = h.DB.Exec("INSERT INTO lophoc (ten_lop, khoi_lop) VALUES (?, ?)",
-				tenLop, khoiLop)
+			_, err = h.DB.Exec("INSERT INTO lophoc (ten_lop, khoi_lop, ma_chu_nhiem) VALUES (?, ?,?)",
+				tenLop, khoiLop, maChuNhiem)
 			if err == nil {
 				countInserted++
 			}
