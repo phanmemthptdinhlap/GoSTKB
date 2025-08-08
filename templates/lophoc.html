@@ -21,11 +21,18 @@
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Giáo viên chủ nhiệm</label><br>
-                    <input type="text" readonly class="form-control-sm" style="width:50px;" v-model="formData.ma_chu_nhiem">
-                    <input type="text" readonly class="form-control-sm" v-model="formData.ten_chu_nhiem">
-                    <button @click="selectgiaovien" class="btn btn-primary">Chọn giáo viên</button>
+                    <select v-model="formData.ma_chu_nhiem" class="form-control-sm" :disabled="loading" >
+                        <option 
+                            v-for="gv in dsgiaovien" 
+                            :key="gv.ma_giao_vien"
+                            :value="gv.ma_giao_vien"
+                            :selected="gv.ma_giao_vien===formData.ma_chu_nhiem" 
+                            v-text="gv.ho_ten"
+                            >
+                        </option>
+                    </select>
                 </div>
-                <button @click="savelophoc" class="btn btn-primary">Lưu</button>
+                <button @click="saveLopHoc" class="btn btn-primary">Lưu</button>
                 <button @click="resetForm" class="btn btn-secondary ms-2">Hủy</button>
             </div>
         </div>
@@ -117,14 +124,14 @@
                 async saveLopHoc() {
                     try {
                         if (this.isEditing) {
-                            await axios.put(`/api/lophoc${this.formData.ma_lop_hoc}`, this.formData)
+                            await axios.put(`/api/lophoc/${this.formData.ma_lop}`, this.formData)
                         } else {
                             await axios.post('/api/lophoc', this.formData)
                         }
                         this.loadDanhSachLopHoc()
                         this.resetForm()
                     } catch (error) {
-                        alert('Không thể lưu thông tin lớp<input type="text" class="form-control" v-model="formData.khoi_lop" required>')
+                        alert(`Không thể lưu thông tin lớp ${this.formData.ten_lop}`)
                     }
                 },
 
@@ -198,10 +205,11 @@
                         alert('Không thể nhập file Excel')
                     }
                     event.target.value = '' // Reset input file
-                }
+                },
             },
             mounted() {
                 this.loadDanhSachLopHoc()
+                this.loadDanhSachGiaoVien()
             }
         }).mount('#app')
 </script>
