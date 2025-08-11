@@ -20,9 +20,10 @@ type ThaoTac_MonHoc struct {
 // Lấy danh sách giáo viên
 func (h *ThaoTac_MonHoc) DanhSachMonHoc(c *gin.Context) {
 	var monhoc []models.MonHoc
-	rows, err := h.DB.Query("SELECT ma_mon_hoc, ten_mon_hoc FROM monhoc")
+	rows, err := h.DB.Query("SELECT ma_mon, ten_mon FROM monhoc")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Không thể truy vấn dữ liệu"})
+		fmt.Printf("Lỗi sql\n")
 		return
 	}
 	defer rows.Close()
@@ -30,16 +31,19 @@ func (h *ThaoTac_MonHoc) DanhSachMonHoc(c *gin.Context) {
 		var mh models.MonHoc
 		if err := rows.Scan(&mh.MaMonHoc, &mh.TenMonHoc); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Lỗi khi đọc dữ liệu"})
+			fmt.Printf("Lỗi Scan\n")
 			return
 		}
 		monhoc = append(monhoc, mh)
 	}
 	if err := rows.Err(); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Lỗi khi duyệt dữ liệu"})
+		fmt.Printf("Lỗi rows error\n")
 		return
 	}
 	if len(monhoc) == 0 {
 		c.JSON(http.StatusNotFound, gin.H{"message": "Không có môn học nào"})
+		fmt.Printf("Lỗi không có môn học\n")
 		return
 	}
 	c.JSON(http.StatusOK, monhoc)
@@ -50,21 +54,23 @@ func (h *ThaoTac_MonHoc) TaoMonHoc(c *gin.Context) {
 	var monhoc models.MonHoc
 	if err := c.ShouldBindJSON(&monhoc); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		fmt.Printf("Lỗi lấy thông tin từ server \n")
 		return
 	}
 	var sqlcmd string
 	var args []interface{}
 	if monhoc.MaMonHoc == "" {
-		sqlcmd = "INSERT INTO monhoc (ten_mon_hoc) VALUES (?)"
+		sqlcmd = "INSERT INTO monhoc (ten_mon) VALUES (?)"
 		args = []interface{}{monhoc.TenMonHoc}
 	} else {
 
-		sqlcmd = "INSERT INTO monhoc (ma_monhoc, ten_mon_hoc) VALUES (?, ?)"
+		sqlcmd = "INSERT INTO monhoc (ma_mon, ten_mon) VALUES (?, ?)"
 		args = []interface{}{monhoc.MaMonHoc, monhoc.TenMonHoc}
 	}
 	result, err := h.DB.Exec(sqlcmd, args...)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Không thể thêm giáo viên"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Không thể thêm môn học"})
+		fmt.Printf("Lỗi SQL \n")
 		return
 	}
 	id, _ := result.LastInsertId()
@@ -76,10 +82,11 @@ func (h *ThaoTac_MonHoc) TaoMonHoc(c *gin.Context) {
 func (h *ThaoTac_MonHoc) CapNhatMonHoc(c *gin.Context) {
 	var monhoc models.MonHoc
 	id := c.Param("id")
-	row := h.DB.QueryRow("SELECT ma_mon_hoc, ten_mon_hoc FROM monhoc WHERE ma_mon_hoc = ?", id)
+	row := h.DB.QueryRow("SELECT ma_mon, ten_mon FROM monhoc WHERE ma_mon = ?", id)
 	if err := row.Scan(&monhoc); err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
-			"error": "Không tìm thấy thông tin giáo viên này"})
+			"error": "Không tìm thấy thông tin môn học này"})
+		fmt.Printf("Lỗi không tìm thấy thông tin môn học\n")
 		return
 	}
 	if err := c.ShouldBindJSON(&monhoc); err != nil {
@@ -89,7 +96,8 @@ func (h *ThaoTac_MonHoc) CapNhatMonHoc(c *gin.Context) {
 	}
 	_, err := h.DB.Exec("UPDATE monhoc SET ten_mon = ? WHERE ma_mon = ?", monhoc.TenMonHoc, monhoc.MaMonHoc)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Không thể cập nhật giáo viên"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Không thể cập nhật môn học"})
+		fmt.Printf("Lỗi SQL \n")
 		return
 	}
 	c.JSON(http.StatusOK, monhoc)

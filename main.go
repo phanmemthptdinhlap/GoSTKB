@@ -39,12 +39,14 @@ func main() {
 		"templates/index.html",
 		"templates/giaovien.html",
 		"templates/lophoc.html",
+		"templates/monhoc.html",
 	)
 	//Cấu hình file tĩnh
 	r.Static("static", "./static")
 	//khỏi tạo các thao tác
 	thaotacgiaovien := &handlers.ThaoTac_GiaoVien{DB: db}
 	thaotaclophoc := &handlers.ThaoTac_LopHoc{DB: db}
+	thaotacmonhoc := &handlers.ThaoTac_MonHoc{DB: db}
 
 	//Điều phối truy vấn trang HTML
 	r.GET("/", func(c *gin.Context) {
@@ -69,6 +71,11 @@ func main() {
 		})
 	})
 
+	r.GET("/monhoc", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "monhoc.html", gin.H{
+			"Title": "Quản lý môn học",
+		})
+	})
 	//Điều phối cổng dịch vụ
 	api := r.Group("/api")
 
@@ -87,7 +94,13 @@ func main() {
 		api.DELETE("/lophoc/:id", thaotaclophoc.XoaLopHoc)
 		api.GET("/export/lophoc", thaotaclophoc.XuatDanhSachLopHoc)
 		api.POST("/import/lophoc", thaotaclophoc.NhapDanhSachLopHoc)
-		//Học sinh
+		//Môn học
+		api.POST("/monhoc", thaotacmonhoc.TaoMonHoc)
+		api.GET("/monhoc", thaotacmonhoc.DanhSachMonHoc)
+		api.PUT("/monhoc/:id", thaotacmonhoc.CapNhatMonHoc)
+		api.DELETE("/monhoc/:id", thaotacmonhoc.XoaMonHoc)
+		api.GET("/export/monhoc", thaotacmonhoc.XuatDanhSachMonHoc)
+		api.POST("/import/monhoc", thaotacmonhoc.NhapDanhSachMonHoc)
 
 	}
 
