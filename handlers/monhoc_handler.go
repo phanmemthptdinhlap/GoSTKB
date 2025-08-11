@@ -68,45 +68,45 @@ func (h *ThaoTac_MonHoc) TaoMonHoc(c *gin.Context) {
 		return
 	}
 	id, _ := result.LastInsertId()
-	giaovien.MaGiaoVien = fmt.Sprintf("%d", id)
-	c.JSON(http.StatusOK, giaovien)
+	monhoc.MaMonHoc = fmt.Sprintf("%d", id)
+	c.JSON(http.StatusOK, monhoc)
 }
 
 // Cập nhật giáo viên
-func (h *ThaoTac_GiaoVien) CapNhatGiaoVien(c *gin.Context) {
-	var giaovien models.GiaoVien
+func (h *ThaoTac_MonHoc) CapNhatMonHoc(c *gin.Context) {
+	var monhoc models.MonHoc
 	id := c.Param("id")
-	row := h.DB.QueryRow("SELECT ma_giao_vien, ho_ten, ten_tkb FROM giaovien WHERE ma_giao_vien = ?", id)
-	if err := row.Scan(&giaovien.MaGiaoVien, &giaovien.HoTen, &giaovien.TenTKB); err != nil {
+	row := h.DB.QueryRow("SELECT ma_mon_hoc, ten_mon_hoc FROM monhoc WHERE ma_mon_hoc = ?", id)
+	if err := row.Scan(&monhoc); err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error": "Không tìm thấy thông tin giáo viên này"})
 		return
 	}
-	if err := c.ShouldBindJSON(&giaovien); err != nil {
+	if err := c.ShouldBindJSON(&monhoc); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error()})
 		return
 	}
-	_, err := h.DB.Exec("UPDATE giaovien SET ho_ten = ?, ten_tkb = ? WHERE ma_giao_vien = ?", giaovien.HoTen, giaovien.TenTKB, giaovien.MaGiaoVien)
+	_, err := h.DB.Exec("UPDATE monhoc SET ten_mon = ? WHERE ma_mon = ?", monhoc.TenMonHoc, monhoc.MaMonHoc)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Không thể cập nhật giáo viên"})
 		return
 	}
-	c.JSON(http.StatusOK, giaovien)
+	c.JSON(http.StatusOK, monhoc)
 }
 
 // Xóa giáo viên khỏi danh sách
-func (h *ThaoTac_GiaoVien) XoaGiaoVien(c *gin.Context) {
+func (h *ThaoTac_MonHoc) XoaMonHoc(c *gin.Context) {
 	id := c.Param("id")
 	fmt.Printf("ID: %s", id)
-	var giaovien models.GiaoVien
-	row := h.DB.QueryRow("SELECT ma_giao_vien, ho_ten, ten_tkb FROM giaovien WHERE ma_giao_vien = ?", id)
-	if err := row.Scan(&giaovien.MaGiaoVien, &giaovien.HoTen, &giaovien.TenTKB); err != nil {
+	var monhoc models.MonHoc
+	row := h.DB.QueryRow("SELECT ma_mon, , ten_mon FROM monhoc WHERE ma_mon = ?", id)
+	if err := row.Scan(&monhoc.MaMonHoc, &monhoc.TenMonHoc); err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
-			"error": "Không tìm thấy thông tin giáo viên"})
+			"error": "Không tìm thấy Môn học"})
 		return
 	}
-	_, err := h.DB.Exec("DELETE FROM giaovien WHERE ma_giao_vien = ?", id)
+	_, err := h.DB.Exec("DELETE FROM MonHoc WHERE ma_mon = ?", id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Không thể xóa giáo viên"})
@@ -115,14 +115,10 @@ func (h *ThaoTac_GiaoVien) XoaGiaoVien(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Xóa giáo viên thành công"})
 }
-func (h *ThaoTac_GiaoVien) TestGiaoVien(c *gin.Context) {
-	fmt.Print("test giao vien")
-	c.JSON(http.StatusNotFound, gin.H{"message": "Test GIao VIên"})
-}
 
 // Thêm vào file hiện tại
 
-func (h *ThaoTac_GiaoVien) NhapDanhSachGiaoVien(c *gin.Context) {
+func (h *ThaoTac_MonHoc) NhapDanhSachMonHoc(c *gin.Context) {
 	// Nhận file từ form
 	file, err := c.FormFile("file")
 	if err != nil {
@@ -168,43 +164,39 @@ func (h *ThaoTac_GiaoVien) NhapDanhSachGiaoVien(c *gin.Context) {
 			continue // Bỏ qua dòng không đủ dữ liệu
 		}
 
-		maGiaoVien := strings.TrimSpace(row[0])
-		hoTen := strings.TrimSpace(row[1])
-		tenTKB := strings.TrimSpace(row[2])
-		fmt.Printf("Mã giáo viên: %s, Họ tên: %s, Tên TKB: %s\n", maGiaoVien, hoTen, tenTKB)
+		ma := strings.TrimSpace(row[0])
+		ten := strings.TrimSpace(row[1])
+		fmt.Printf("Mã Môn học: %s, Tên môn học: %s\n", ma, ten)
 
 		// Kiểm tra dữ liệu bắt buộc
-		if hoTen == "" || tenTKB == "" {
+		if ten == "" {
 			continue // Bỏ qua nếu thiếu thông tin bắt buộc
 		}
 
-		if maGiaoVien != "" {
+		if ma != "" {
 			// Kiểm tra xem giáo viên đã tồn tại chưa
 			var exists bool
-			err := h.DB.QueryRow("SELECT EXISTS(SELECT 1 FROM giaovien WHERE ma_giao_vien = ?)", maGiaoVien).Scan(&exists)
+			err := h.DB.QueryRow("SELECT EXISTS(SELECT 1 FROM monhoc WHERE ma_mon = ?)", ma).Scan(&exists)
 			if err != nil {
 				continue
 			}
 
 			if exists {
 				// Cập nhật nếu đã tồn tại
-				_, err = h.DB.Exec("UPDATE giaovien SET ho_ten = ?, ten_tkb = ? WHERE ma_giao_vien = ?",
-					hoTen, tenTKB, maGiaoVien)
+				_, err = h.DB.Exec("UPDATE monhoc SET ten_mon = ? WHERE ma_mon = ?", ten, ma)
 				if err == nil {
 					countUpdated++
 				}
 			} else {
 				// Thêm mới với mã giáo viên được chỉ định
-				_, err = h.DB.Exec("INSERT INTO giaovien (ma_giao_vien, ho_ten, ten_tkb) VALUES (?, ?, ?)",
-					maGiaoVien, hoTen, tenTKB)
+				_, err = h.DB.Exec("INSERT INTO monhoc (ma_mon, ten_mon) VALUES (?, ?)", ma, ten)
 				if err == nil {
 					countInserted++
 				}
 			}
 		} else {
 			// Thêm mới không có mã giáo viên
-			_, err = h.DB.Exec("INSERT INTO giaovien (ho_ten, ten_tkb) VALUES (?, ?)",
-				hoTen, tenTKB)
+			_, err = h.DB.Exec("INSERT INTO MonHoc (ten_mon) VALUES (?)", ten)
 			if err == nil {
 				countInserted++
 			}
@@ -218,7 +210,7 @@ func (h *ThaoTac_GiaoVien) NhapDanhSachGiaoVien(c *gin.Context) {
 	})
 }
 
-func (h *ThaoTac_GiaoVien) XuatDanhSachGiaoVien(c *gin.Context) {
+func (h *ThaoTac_MonHoc) XuatDanhSachMonHoc(c *gin.Context) {
 	// Tạo file Excel mới
 	f := excelize.NewFile()
 	defer func() {
@@ -229,7 +221,7 @@ func (h *ThaoTac_GiaoVien) XuatDanhSachGiaoVien(c *gin.Context) {
 	}()
 	shellnameold := f.GetSheetName(0)
 	// Tạo sheet mới
-	sheetName := "Danh sách giáo viên"
+	sheetName := "Danh sách Môn học"
 	if err := f.SetSheetName(shellnameold, sheetName); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Không thể tạo sheet"})
 		return
@@ -241,12 +233,11 @@ func (h *ThaoTac_GiaoVien) XuatDanhSachGiaoVien(c *gin.Context) {
 	}
 
 	// Đặt tiêu đề các cột
-	f.SetCellValue(sheetName, "A1", "Mã giáo viên")
-	f.SetCellValue(sheetName, "B1", "Họ và tên")
-	f.SetCellValue(sheetName, "C1", "Tên trên TKB")
+	f.SetCellValue(sheetName, "A1", "Mã môn học")
+	f.SetCellValue(sheetName, "B1", "Tên môn học")
 
 	// Truy vấn dữ liệu từ database
-	rows, err := h.DB.Query("SELECT ma_giao_vien, ho_ten, ten_tkb FROM giaovien")
+	rows, err := h.DB.Query("SELECT ma_mon, ten_mon FROM monhoc")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Không thể truy vấn dữ liệu"})
 		return
@@ -257,15 +248,14 @@ func (h *ThaoTac_GiaoVien) XuatDanhSachGiaoVien(c *gin.Context) {
 	rowIndex := 2
 	for rows.Next() {
 		var id int
-		var hoten, tentkb string
-		if err := rows.Scan(&id, &hoten, &tentkb); err != nil {
+		var ten string
+		if err := rows.Scan(&id, &ten); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 
 		f.SetCellValue(sheetName, fmt.Sprintf("A%d", rowIndex), id)
-		f.SetCellValue(sheetName, fmt.Sprintf("B%d", rowIndex), hoten)
-		f.SetCellValue(sheetName, fmt.Sprintf("C%d", rowIndex), tentkb)
+		f.SetCellValue(sheetName, fmt.Sprintf("B%d", rowIndex), ten)
 		rowIndex++
 	}
 
@@ -273,7 +263,7 @@ func (h *ThaoTac_GiaoVien) XuatDanhSachGiaoVien(c *gin.Context) {
 
 	// Thiết lập header cho response
 	c.Header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-	c.Header("Content-Disposition", "attachment; filename=danh_sach_giao_vien.xlsx")
+	c.Header("Content-Disposition", "attachment; filename=danh_sach_môn_hoc.xlsx")
 
 	// Ghi file Excel vào response
 	if err := f.Write(c.Writer); err != nil {
