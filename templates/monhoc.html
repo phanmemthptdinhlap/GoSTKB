@@ -1,0 +1,180 @@
+
+{{ template "header.html" }}
+    <div id="app" class="container mt-4">
+        <h2 class="mb-4">Quản lý môn học</h2>
+        
+        <!-- Form thêm/sửa môn học -->
+        <div class="card mb-4" v-if="isVisible">
+            <div class="card-body">
+                <h5 class="card-title" v-text="formTitle"></h5>
+                <div class="mb-3">
+                    <label class="form-label">Mã môn học</label>
+                    <input type="text" class="form-control" v-model="formData.id">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Tên môn học</label>
+                    <input type="text" class="form-control" v-model="formData.name" required>
+                </div>
+                <button @click="saveForm" class="btn btn-primary">Lưu</button>
+                <button @click="resetForm" class="btn btn-secondary ms-2">Hủy</button>
+            </div>
+        </div>
+
+        <!-- Bảng danh sách môn học -->
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-3">
+                    <h5 class="card-title">Danh sách môn học</h5>
+                    <div>
+                        <button @click="newItem" class="btn btn-primary me-2">Thêm mới môn học</button>
+                        <label class="btn btn-info me-2">
+                            Nhập Excel
+                            <input type="file" @change="importExcel" class="d-none" accept=".xlsx,.xls">
+                        </label>
+                        <button @click="exportExcel" class="btn btn-success">Xuất Excel</button>
+                    </div>
+                </div>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Mã môn học</th>
+                            <th>Tên môn học</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="item in Items" :key="item.id">
+                            <td v-text="item.id"></td>
+                            <td v-text="item.name"></td>
+                            <td>
+                                <button @click="editItem(item)" class="btn btn-sm btn-warning me-2">Sửa</button>
+                                <button @click="deleteItem(item.id)" class="btn btn-sm btn-danger">Xóa</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp } = Vue
+
+        createApp({
+            data() {
+                return {
+                    Items: [],
+                    formData: {
+                        id: '',
+                        name: '',
+                    },
+                    isVisible: false,
+                    isEditing: false
+                }
+            },
+            computed: {
+                formTitle() {
+                    return this.isEditing ? 'Sửa thông tin môn học' : 'Thêm môn học mới'
+                }
+            },
+            methods: {
+                // Lấy danh sách môn học
+                async loadItems() {
+                    try {
+                        const response = await axios.get('/api/monhoc')
+                        this.danhSachGiaoVien = response.data
+                    } catch (error) {
+                        alert('Không thể tải danh sách môn học')
+                    }
+                },
+
+                // Lưu giáo viên (thêm mới hoặc cập nhật)
+                async saveForm() {
+                    try {
+                        if (this.isEditing) {
+                            await axios.put(`/api/monhoc/${this.formData.ma_giao_vien}`, this.formData)
+                        } else {
+                            await axios.post('/api/monhoc', this.formData)
+                        }
+                        this.loadDanhSachGiaoVien()
+                        this.resetForm()
+                    } catch (error) {
+                        alert('Không thể lưu thông tin môn học')
+                    }
+                },
+
+                // Xóa môn học
+                async deleteItem(id) {
+                    if (confirm('Bạn có chắc muốn xóa môn học này?')) {
+                        try {
+                            await axios.delete(`/api/monhoc/${id}`)
+                            this.loadItems()
+                        } catch (error) {
+                            alert('Không thể xóa môn học')
+                        }
+                    }
+                },
+
+                // Chuẩn bị form để sửa
+                editItem(item) {
+                    this.formData = { ...item }
+                    this.isEditing = true
+                    this.isVisible = true
+                },
+
+                // Reset form về trạng thái ban đầu
+                resetForm() {
+                    this.formData = {
+                        id: '',
+                        name: '',
+                    }
+                    this.isVisible = false
+                    this.isEditing = false
+                },
+
+                newItem(){
+                    this.resetForm()
+                    this.isVisible = true
+                },
+                // Xuất Excel
+                async exportExcel() {
+                    try {
+                        const response = await axios.get('/api/export/monhoc', {
+                            responseType: 'blob'
+                        })
+                        const url = window.URL.createObjectURL(new Blob([response.data]))
+                        const link = document.createElement('a')
+                        link.href = url
+                        link.setAttribute('download', 'danh_sach_mon_hoc.xlsx')
+                        document.body.appendChild(link)
+                        link.click()
+                        link.remove()
+                    } catch (error) {
+                        alert('Không thể xuất file Excel')
+                    }
+                },
+
+                // Nhập Excel
+                async importExcel(event) {
+                    const file = event.target.files[0]
+                    if (!file) return
+
+                    const formData = new FormData()
+                    formData.append('file', file)
+
+                    try {
+                        const response = await axios.post('/api/import/monhoc', formData)
+                        alert(`Nhập dữ liệu thành công!\nĐã cập nhật: ${response.data.updated}\nĐã thêm mới: ${response.data.inserted}`)
+                        this.loadItems()
+                    } catch (error) {
+                        alert('Không thể nhập file Excel')
+                    }
+                    event.target.value = '' // Reset input file
+                }
+            },
+            mounted() {
+                this.loadItems()
+            }
+        }).mount('#app')
+</script>
+{{ template "footer.html"}}
