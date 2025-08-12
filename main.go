@@ -76,6 +76,13 @@ func main() {
 			"Title": "Quản lý môn học",
 		})
 	})
+	//Cổng giao diện
+	layout := r.Group("/view")
+	{
+		layout.GET("/giaovien", thaotacgiaovien.DanhSachGiaoVien)
+		layout.GET("/lophoc", thaotaclophoc.DanhSachLopHoc)
+		layout.GET("/monhoc", thaotacmonhoc.DanhSachMonHoc)
+	}
 	//Điều phối cổng dịch vụ
 	api := r.Group("/api")
 

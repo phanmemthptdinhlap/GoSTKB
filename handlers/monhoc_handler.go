@@ -178,6 +178,7 @@ func (h *ThaoTac_MonHoc) NhapDanhSachMonHoc(c *gin.Context) {
 
 		// Kiểm tra dữ liệu bắt buộc
 		if ten == "" {
+			fmt.Printf("Thiếu tên môn\n")
 			continue // Bỏ qua nếu thiếu thông tin bắt buộc
 		}
 
@@ -186,6 +187,7 @@ func (h *ThaoTac_MonHoc) NhapDanhSachMonHoc(c *gin.Context) {
 			var exists bool
 			err := h.DB.QueryRow("SELECT EXISTS(SELECT 1 FROM monhoc WHERE ma_mon = ?)", ma).Scan(&exists)
 			if err != nil {
+				fmt.Printf("Lỗi SQL: %v\n", err)
 				continue
 			}
 
@@ -204,7 +206,7 @@ func (h *ThaoTac_MonHoc) NhapDanhSachMonHoc(c *gin.Context) {
 			}
 		} else {
 			// Thêm mới không có mã giáo viên
-			_, err = h.DB.Exec("INSERT INTO MonHoc (ten_mon) VALUES (?)", ten)
+			_, err = h.DB.Exec("INSERT INTO monhoc (ten_mon) VALUES (?)", ten)
 			if err == nil {
 				countInserted++
 			}

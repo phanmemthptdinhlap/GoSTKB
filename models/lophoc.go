@@ -1,9 +1,9 @@
 package models
 
 type LopHoc struct {
-	MaLop       string `json:"ma_lop"`
-	TenLop      string `json:"ten_lop"`
-	KhoiLop     string `json:"khoi_lop"`
-	MaChuNhiem  string `json:"ma_chu_nhiem"`
-	TenChuNhiem string `json:"ten_chu_nhiem"`
+	MaLop       string `json:"ma" label:"Mã lớp học"`
+	TenLop      string `json:"ten" label:"Tên lớp học"`
+	KhoiLop     string `json:"khoi" label:"Khối lớp"`
+	MaChuNhiem  string `json:"ma_cn" label:"Mã chủ nhiệm"`
+	TenChuNhiem string `json:"ten_cn" label:"Tên chủ nhiệm"`
 }
