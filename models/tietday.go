@@ -2,11 +2,11 @@ package models
 
 // Tiết học
 type TietDay struct {
-	MaTietDay        string `json:"ma_tiet_day"`
-	MaPhanCong       string `json:"ma_phan_cong"`
-	TuanHoc          string `json:"tuan_hoc"`
-	TongTietPhanCong string `json:"tong_tiet_phan_cong"`
-	TietSang         string `json:"tiet_sang"`
-	TietChieu        string `json:"tiet_chieu"`
-	TietTuanTruoc    string `json:"tiet_tuan_truoc"`
+	MaTietDay        string `json:"ma" label:"Mã tiết dạy"`
+	MaPhanCong       string `json:"ma_pc" label:"Mã phân công"`
+	TuanHoc          string `json:"tuan" label:"Tuần học"`
+	TongTietPhanCong string `json:"tong_tiet" label:"Tổng tiết được phân công"`
+	TietSang         string `json:"sang" label:"Tiết buổi sáng"`
+	TietChieu        string `json:"chieu" label:"Tiết buổi chiều"`
+	TietTuanTruoc    string `json:"tuan_truoc" label:"Tiết còn lại tuần trước"`
 }
