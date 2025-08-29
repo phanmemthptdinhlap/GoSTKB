@@ -1,191 +1,29 @@
 
-{{ template "header.html" }}
-    <div id="app" class="container mt-4">
-        <h2 class="mb-4" v-text="headTitle"></h2>
-        
-        <!-- Form thêm/sửa -->
-        <div class="card mb-4" v-if="isVisible">
-            <div class="card-body">
-                <h5 class="card-title" v-text="formTitle"></h5>
-                <div class="mb-3" v-for="field in fields" :key="field.Name">
-                    <label class="form-label" v-text="field.Label"></label><br>
-                    <input v-if ="field.Type === 'text'" type="text" class="form-control-sm" v-model="formData[field.Name]">
-                    <select v-else-if="field.Type === 'select'" v-model="formData[field.Name]" class="form-control-sm" :disabled="loading" >
-                        <option v-for="(option, index) in field.Options" 
-                            :key="index" 
-                            :value="option.Value" 
-                            :selected="option.Value===formData[field.Name]"
-                            v-text="option.Text">
-                        </option>
-                    </select>
+{{ template "header.html" .}}
+<div class="jumbotron">
+    <h1 class="display-4">Chào mừng đến với phần mềm hỗ trợ xếp thời khóa biểu</h1>
+    <p class="lead">Hệ thống hỗ trợ xếp thời khóa biểu cho trường học</p>
+    <hr class="my-4">
+    
+    <div class="row mt-4">
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Quản lý giáo viên</h5>
+                    <p class="card-text">Thêm, sửa, xóa và quản lý thông tin giáo viên</p>
+                    <a href="/giaovien" class="btn btn-primary">Quản lý giáo viên</a>
                 </div>
-                <button @click="saveItem" class="btn btn-primary">Lưu</button>
-                <button @click="resetForm" class="btn btn-secondary ms-2">Hủy</button>
             </div>
         </div>
-
-        <!-- Bảng danh sách lớp học -->
-        <div class="card">
-            <div class="card-body">
-                <div class="d-flex justify-content-between mb-3">
-                    <h5 class="card-title" v-text="tableTitle"></h5>
-                    <div>
-                        <button @click="newClass" class="btn btn-primary me-2">Thêm mới</button>
-                        <label class="btn btn-info me-2">
-                            Nhập Excel
-                            <input type="file" @change="importExcel" class="d-none" accept=".xlsx,.xls">
-                        </label>
-                        <button @click="exportExcel" class="btn btn-success">Xuất Excel</button>
-                    </div>
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Quản lý lớp học</h5>
+                    <p class="card-text">Thêm, sửa, xóa và quản lý thông tin lớp học</p>
+                    <a href="/lophoc" class="btn btn-primary">Quản lý lớp học</a>
                 </div>
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th v-for="field in fields" :key="field.Name" v-text="field.Label"></th>
-                            <th>Thao tác</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="item in items" :key="item[fields[0].Name]">
-                            <td v-for="field in fields" :key="field.Name" v-text="item[field.Name]"></td>
-                            <td :key="table_action">
-                                <button @click="editItem(item)" class="btn btn-sm btn-warning me-2">Sửa</button>
-                                <button @click="deleteItem(item[fields[0].Name])" class="btn btn-sm btn-danger">Xóa</button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
             </div>
         </div>
     </div>
-
-    <script>
-        const { createApp } = Vue
-
-        createApp({
-            data() {
-                return {
-                    lname:'',
-                    tname:'',
-                    fields: [],
-                    items:[],
-                    formData: {},
-                    isVisible: false,
-                    isEditing: false
-                }
-            },
-            computed: {
-                headTitle(){
-                    return `Quản lý thông tin ${this.lname}`
-                },
-                formTitle() {
-                    return this.isEditing ? `Sửa thông tin ${this.lname}` : `Thêm ${this.lname} mới`
-                },
-                tableTitle(){
-                    return `Danh sách ${this.lname}`
-                }
-            },
-            methods: {
-                // Lấy danh sách giáo viên
-                async loadItems() {
-                    try {
-                        const response = await axios.get(`/api/${this.tname}`)
-                        this.dslop = response.data
-                    } catch (error) {
-                        alert(`Không thể tải danh sách ${this.tname} lỗi: ${error}`)
-                    }
-                },
-                // Lưu giáo viên (thêm mới hoặc cập nhật)
-                async saveItem() {
-                    try {
-                        if (this.isEditing) {
-                            await axios.put(`/api/${this.tname}/${this.formData.id}`, this.formData)
-                        } else {
-                            await axios.post(`/api/${this.tname}`, this.formData)
-                        }
-                        this.loadItems(this.tname)
-                        this.resetForm()
-                    } catch (error) {
-                        alert(`Không thể lưu thông tin lớp ${this.formData.ten_lop}`)
-                    }
-                },
-
-                // Xóa giáo viên
-                async deleteItem(id) {
-                    if (confirm(`Bạn có chắc muốn xóa ${this.tname} này?`)) {
-                        try {
-                            await axios.delete(`/api/${this.tname}/${id}`)
-                            this.loadDanhSachLopHoc()
-                        } catch (error) {
-                            alert(`Không thể xóa ${this.tname}`)
-                        }
-                    }
-                },
-
-                // Chuẩn bị form để sửa
-                editItem(item) {
-                    this.formData = { ...item }
-                    this.isEditing = true
-                    this.isVisible = true
-                },
-
-                // Reset form về trạng thái ban đầu
-                resetForm() {
-                    this.formData = {}
-                    Object.keys(this.items).forEach((key) => {
-                        this.formData[key] = {
-                            value:items[key],
-                            type: typeof items[key]
-                        }
-                    })
-                    this.isVisible = false
-                    this.isEditing = false
-                },
-
-                newItem(){
-                    this.resetForm()
-                    this.isVisible = true
-                },
-                // Xuất Excel
-                async exportExcel() {
-                    try {
-                        const response = await axios.get(`/api/export/${this.tname}`, {
-                            responseType: 'blob'
-                        })
-                        const url = window.URL.createObjectURL(new Blob([response.data]))
-                        const link = document.createElement('a')
-                        link.href = url
-                        link.setAttribute('download', `danh_sach_${this.tname}.xlsx`)
-                        document.body.appendChild(link)
-                        link.click()
-                        link.remove()
-                    } catch (error) {
-                        alert('Không thể xuất file Excel')
-                    }
-                },
-
-                // Nhập Excel
-                async importExcel(event) {
-                    const file = event.target.files[0]
-                    if (!file) return
-
-                    const formData = new FormData()
-                    formData.append('file', file)
-
-                    try {
-                        const response = await axios.post(`/api/import/${this.tname}`, formData)
-                        alert(`Nhập dữ liệu thành công!\nĐã cập nhật: ${response.data.updated}\nĐã thêm mới: ${response.data.inserted}`)
-                        this.loadDanhSachLopHoc()
-                    } catch (error) {
-                        alert('Không thể nhập file Excel')
-                    }
-                    event.target.value = '' // Reset input file
-                },
-            },
-            mounted() {
-                this.loadFields()
-                this.loadItems()
-            }
-        }).mount('#app')
-</script>
-{{ template "footer.html"}}
+</div>
+{{ template "footer.html" .}}

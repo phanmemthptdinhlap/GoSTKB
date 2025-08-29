@@ -103,10 +103,16 @@
                         } else {
                             await axios.post('/api/giaovien', this.formData)
                         }
-                        this.loadDanhSachGiaoVien()
-                        this.resetForm()
+                        if (response.status===200||response.status===201){
+                            this.loadDanhSachGiaoVien()
+                            this.resetForm()
+                        }else{
+                            throw new Error (`${response.data?.error}`);
+                        }
+
                     } catch (error) {
-                        alert('Không thể lưu thông tin giáo viên')
+
+                        alert(`Không thể lưu thông tin giáo viên ${this.formData.ho_ten} lỗi: ${error.response?.data?.error||error.message||'Không xác định'}`)
                     }
                 },
 

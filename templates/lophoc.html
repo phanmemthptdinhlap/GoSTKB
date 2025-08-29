@@ -122,16 +122,23 @@
                 },
                 // Lưu giáo viên (thêm mới hoặc cập nhật)
                 async saveLopHoc() {
+                    let response
                     try {
                         if (this.isEditing) {
-                            await axios.put(`/api/lophoc/${this.formData.ma_lop}`, this.formData)
+                            response = await axios.put(`/api/lophoc/${this.formData.ma_lop}`, this.formData)
                         } else {
-                            await axios.post('/api/lophoc', this.formData)
+                            response = await axios.post('/api/lophoc', this.formData)
                         }
-                        this.loadDanhSachLopHoc()
-                        this.resetForm()
+                        if (response.status===200||response.status===201){
+                            this.loadDanhSachLopHoc()
+                            this.resetForm()
+                        }else{
+                            throw new Error (`${response.data?.error}`);
+                        }
+
                     } catch (error) {
-                        alert(`Không thể lưu thông tin lớp ${this.formData.ten_lop}`)
+
+                        alert(`Không thể lưu thông tin lớp ${this.formData.ten_lop} lỗi: ${error.response?.data?.error||error.message||'Không xác định'}`)
                     }
                 },
 
@@ -146,7 +153,6 @@
                         }
                     }
                 },
-
                 // Chuẩn bị form để sửa
                 editLopHoc(lop) {
                     this.formData = { ...lop }

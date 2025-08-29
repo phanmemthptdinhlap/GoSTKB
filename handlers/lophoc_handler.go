@@ -127,7 +127,7 @@ func (h *ThaoTac_LopHoc) XoaLopHoc(c *gin.Context) {
 	}
 
 	// Xóa lớp học
-	_, err := h.DB.Exec("DELETE FROM lophoc WHERE ma_lop= ?", id)
+	_, err := h.DB.Exec("DELETE FROM lophoc WHERE ma_lop_hoc= ?", id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Không thể xóa lớp học"})
 		return
@@ -284,7 +284,7 @@ func (h *ThaoTac_LopHoc) NhapDanhSachLopHoc(c *gin.Context) {
 			}
 		} else {
 			// Thêm mới không có mã lớp
-			_, err = h.DB.Exec("INSERT INTO lophoc (ten_lop, khoi_lop, ma_chu_nhiem) VALUES (?, ?,?)",
+			_, err = h.DB.Exec("INSERT INTO lophoc (ten_lop, khoi_lop, ma_chu_nhiem) VALUES (?, ?, ?)",
 				tenLop, khoiLop, maChuNhiem)
 			if err == nil {
 				countInserted++
