@@ -40,6 +40,7 @@ func main() {
 		"templates/giaovien.html",
 		"templates/lophoc.html",
 		"templates/monhoc.html",
+		"templates/phancong.html",
 		"templates/test.html",
 	)
 	//Cấu hình file tĩnh
@@ -49,6 +50,7 @@ func main() {
 	thaotacgiaovien := &handlers.ThaoTac_GiaoVien{DB: db}
 	thaotaclophoc := &handlers.ThaoTac_LopHoc{DB: db}
 	thaotacmonhoc := &handlers.ThaoTac_MonHoc{DB: db}
+	thaotacphancong := &handlers.ThaoTac_PhanCong{DB: db}
 
 	//Điều phối truy vấn trang HTML
 	r.GET("/", func(c *gin.Context) {
@@ -76,6 +78,11 @@ func main() {
 	r.GET("/monhoc", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "monhoc.html", gin.H{
 			"Title": "Quản lý môn học",
+		})
+	})
+	r.GET("/phancong", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "phancong.html", gin.H{
+			"Title": "Quản lý phân công giảng dạy",
 		})
 	})
 	r.GET("/test", func(c *gin.Context) {
@@ -108,6 +115,13 @@ func main() {
 		api.DELETE("/monhoc/:id", thaotacmonhoc.XoaMonHoc)
 		api.GET("/export/monhoc", thaotacmonhoc.XuatDanhSachMonHoc)
 		api.POST("/import/monhoc", thaotacmonhoc.NhapDanhSachMonHoc)
+		//Phân công
+		api.POST("/phancong", thaotacphancong.TaoPhanCong)
+		api.GET("/phancong", thaotacphancong.DanhSachPhanCong)
+		api.PUT("/phancong/:id", thaotacphancong.CapNhatPhanCong)
+		api.DELETE("/phancong/:id", thaotacphancong.XoaPhanCong)
+		api.GET("/export/phancong", thaotacphancong.XuatDanhSachPhanCong)
+		api.POST("/import/phancong", thaotacphancong.NhapDanhSachPhanCong)
 
 	}
 
