@@ -40,9 +40,11 @@ func main() {
 		"templates/giaovien.html",
 		"templates/lophoc.html",
 		"templates/monhoc.html",
+		"templates/test.html",
 	)
 	//Cấu hình file tĩnh
 	r.Static("static", "./static")
+	r.StaticFile("/favicon.ico", "static/images/favicon.ico")
 	//khỏi tạo các thao tác
 	thaotacgiaovien := &handlers.ThaoTac_GiaoVien{DB: db}
 	thaotaclophoc := &handlers.ThaoTac_LopHoc{DB: db}
@@ -76,13 +78,11 @@ func main() {
 			"Title": "Quản lý môn học",
 		})
 	})
-	//Cổng giao diện
-	layout := r.Group("/view")
-	{
-		layout.GET("/giaovien", thaotacgiaovien.DanhSachGiaoVien)
-		layout.GET("/lophoc", thaotaclophoc.DanhSachLopHoc)
-		layout.GET("/monhoc", thaotacmonhoc.DanhSachMonHoc)
-	}
+	r.GET("/test", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "test.html", gin.H{
+			"Title": "Test trang web",
+		})
+	})
 	//Điều phối cổng dịch vụ
 	api := r.Group("/api")
 

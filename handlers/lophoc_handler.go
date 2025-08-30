@@ -127,7 +127,7 @@ func (h *ThaoTac_LopHoc) XoaLopHoc(c *gin.Context) {
 	}
 
 	// Xóa lớp học
-	_, err := h.DB.Exec("DELETE FROM lophoc WHERE ma_lop_hoc= ?", id)
+	_, err := h.DB.Exec("DELETE FROM lophoc WHERE ma_lop= ?", id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Không thể xóa lớp học"})
 		return

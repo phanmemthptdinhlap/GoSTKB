@@ -9,11 +9,11 @@
                 <h5 class="card-title" v-text="formTitle"></h5>
                 <div class="mb-3">
                     <label class="form-label">Mã môn học</label>
-                    <input type="text" class="form-control" v-model="formData.id">
+                    <input type="text" class="form-control" v-model="formData.ma_mon">
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Tên môn học</label>
-                    <input type="text" class="form-control" v-model="formData.name" required>
+                    <input type="text" class="form-control" v-model="formData.ten_mon" required>
                 </div>
                 <button @click="saveForm" class="btn btn-primary">Lưu</button>
                 <button @click="resetForm" class="btn btn-secondary ms-2">Hủy</button>
@@ -43,12 +43,12 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="item in Items" :key="item.id">
-                            <td v-text="item.id"></td>
-                            <td v-text="item.name"></td>
+                        <tr v-for="mon in Items" :key="mon.ma_mon">
+                            <td v-text="mon.ma_mon"></td>
+                            <td v-text="mon.ten_mon"></td>
                             <td>
-                                <button @click="editItem(item)" class="btn btn-sm btn-warning me-2">Sửa</button>
-                                <button @click="deleteItem(item.id)" class="btn btn-sm btn-danger">Xóa</button>
+                                <button @click="editItem(mon)" class="btn btn-sm btn-warning me-2">Sửa</button>
+                                <button @click="deleteItem(mon.ma_mon)" class="btn btn-sm btn-danger">Xóa</button>
                             </td>
                         </tr>
                     </tbody>
@@ -57,16 +57,16 @@
         </div>
     </div>
 
-    <script>
-        const { createApp } = Vue
+    <script type="module">
+        import { createVueApp } from '/static/js/vue-config.js';
 
-        createApp({
+        const app = createVueApp({
             data() {
                 return {
                     Items: [],
                     formData: {
-                        id: '',
-                        name: '',
+                        ma_mon: '',
+                        ten_mon: '',
                     },
                     isVisible: false,
                     isEditing: false
@@ -81,25 +81,35 @@
                 // Lấy danh sách môn học
                 async loadItems() {
                     try {
-                        const response = await axios.get('/api/monhoc')
-                        this.danhSachGiaoVien = response.data
+                        const response = await axios.get('/api/monhoc');
+                        this.Items = response.data;
+                        if(response.status!=200&&response.status!=201){
+                            this.$toast.error(this.getInfoMessage(response));
+                        }
                     } catch (error) {
-                        alert('Không thể tải danh sách môn học')
+                        this.$toast.error(this.getErrorMessage(error));
+                    }finally
+                    {
+                        this.$toast.success("Tải xong danh sách môn học!");
                     }
                 },
 
                 // Lưu giáo viên (thêm mới hoặc cập nhật)
                 async saveForm() {
                     try {
+                        let response
                         if (this.isEditing) {
-                            await axios.put(`/api/monhoc/${this.formData.ma_giao_vien}`, this.formData)
+                            response=await axios.put(`/api/monhoc/${this.formData.ma_mon}`, this.formData)
                         } else {
-                            await axios.post('/api/monhoc', this.formData)
+                            response=await axios.post('/api/monhoc', this.formData)
                         }
-                        this.loadDanhSachGiaoVien()
-                        this.resetForm()
+                        if(response.status===200||response.status===201){
+                            this.$toast.success(this.getInfoMessage(response));
+                            this.loadItems()
+                            this.resetForm()
+                        }
                     } catch (error) {
-                        alert('Không thể lưu thông tin môn học')
+                        this.$toast.error(this.getErrorMessage(error));
                     }
                 },
 
@@ -107,10 +117,13 @@
                 async deleteItem(id) {
                     if (confirm('Bạn có chắc muốn xóa môn học này?')) {
                         try {
-                            await axios.delete(`/api/monhoc/${id}`)
-                            this.loadItems()
+                            const response=await axios.delete(`/api/monhoc/${id}`)
+                            if(response.status===200||response.status===201){
+                                this.$toast.success(this.getInfoMessage(response));
+                                this.loadItems()
+                            }
                         } catch (error) {
-                            alert('Không thể xóa môn học')
+                            this.$toast.error(this.getErrorMessage(error));
                         }
                     }
                 },
@@ -150,7 +163,7 @@
                         link.click()
                         link.remove()
                     } catch (error) {
-                        alert('Không thể xuất file Excel')
+                        this.$toast.error(this.getErrorMessage(error));
                     }
                 },
 
@@ -164,17 +177,26 @@
 
                     try {
                         const response = await axios.post('/api/import/monhoc', formData)
-                        alert(`Nhập dữ liệu thành công!\nĐã cập nhật: ${response.data.updated}\nĐã thêm mới: ${response.data.inserted}`)
-                        this.loadItems()
+                        if(response.status===200||response.status===201){
+                            const mess=`Nhập dữ liệu thành công!\nĐã cập nhật: ${response.data.updated}\nĐã thêm mới: ${response.data.inserted}`;
+                            this.$toast.success(mess);
+                            this.loadItems();
+                        }
                     } catch (error) {
-                        alert('Không thể nhập file Excel')
+                        this.$toast.error(this.getErrorMessage(error));
                     }
                     event.target.value = '' // Reset input file
+                },
+                getErrorMessage(error) {
+                    return `Lỗi: ${error.response?.data?.error || error.message || 'Không xác định'}`;
+                },
+                getInfoMessage(response) {
+                    return `Thông báo: ${response?.data?.message || response?.message || 'Không có thông tin'}`;
                 }
             },
             mounted() {
-                this.loadItems()
+                this.loadItems();
             }
-        }).mount('#app')
+        }).mount('#app');
 </script>
 {{ template "footer.html"}}

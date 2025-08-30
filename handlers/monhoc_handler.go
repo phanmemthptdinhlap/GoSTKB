@@ -82,11 +82,10 @@ func (h *ThaoTac_MonHoc) TaoMonHoc(c *gin.Context) {
 func (h *ThaoTac_MonHoc) CapNhatMonHoc(c *gin.Context) {
 	var monhoc models.MonHoc
 	id := c.Param("id")
-	row := h.DB.QueryRow("SELECT ma_mon, ten_mon FROM monhoc WHERE ma_mon = ?", id)
-	if err := row.Scan(&monhoc); err != nil {
+	row := h.DB.QueryRow("SELECT ma_mon FROM monhoc WHERE ma_mon = ?", id)
+	if err := row.Scan(&monhoc.MaMonHoc); err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error": "Không tìm thấy thông tin môn học này"})
-		fmt.Printf("Lỗi không tìm thấy thông tin môn học\n")
 		return
 	}
 	if err := c.ShouldBindJSON(&monhoc); err != nil {
@@ -108,7 +107,7 @@ func (h *ThaoTac_MonHoc) XoaMonHoc(c *gin.Context) {
 	id := c.Param("id")
 	fmt.Printf("ID: %s", id)
 	var monhoc models.MonHoc
-	row := h.DB.QueryRow("SELECT ma_mon, , ten_mon FROM monhoc WHERE ma_mon = ?", id)
+	row := h.DB.QueryRow("SELECT ma_mon, ten_mon FROM monhoc WHERE ma_mon = ?", id)
 	if err := row.Scan(&monhoc.MaMonHoc, &monhoc.TenMonHoc); err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error": "Không tìm thấy Môn học"})
@@ -263,7 +262,6 @@ func (h *ThaoTac_MonHoc) XuatDanhSachMonHoc(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-
 		f.SetCellValue(sheetName, fmt.Sprintf("A%d", rowIndex), id)
 		f.SetCellValue(sheetName, fmt.Sprintf("B%d", rowIndex), ten)
 		rowIndex++

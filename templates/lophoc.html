@@ -78,145 +78,187 @@
         </div>
     </div>
 
-    <script>
-        const { createApp } = Vue
+<script type="module">
+    import { createVueApp } from '/static/js/vue-config.js';
 
-        createApp({
-            data() {
-                return {
-                    dslop: [],
-                    dsgiaovien:[],
-                    formData: {
-                        ma_lop: '',
-                        ten_lop: '',
-                        khoi_lop: '',
-                        ma_chu_nhiem: '',
-                        ten_chu_nhiem:''
-                    },
-                    isVisible: false,
-                    isEditing: false
-                }
-            },
-            computed: {
-                formTitle() {
-                    return this.isEditing ? 'Sửa thông tin lớp học' : 'Thêm lớp học mới'
-                }
-            },
-            methods: {
-                // Lấy danh sách giáo viên
-                async loadDanhSachLopHoc() {
-                    try {
-                        const response = await axios.get('/api/lophoc')
-                        this.dslop = response.data
-                    } catch (error) {
-                        alert(`Không thể tải danh sách lớp học${error}`)
-                    }
+    const app = createVueApp({
+        data() {
+            return {
+                dslop: [],
+                dsgiaovien: [],
+                formData: {
+                    ma_lop: '',
+                    ten_lop: '',
+                    khoi_lop: '',
+                    ma_chu_nhiem: '',
+                    ten_chu_nhiem: ''
                 },
-                async loadDanhSachGiaoVien(){
-                    try{
-                        const response = await axios.get('/api/giaovien')
-                        this.dsgiaovien = response.data
-                    } catch (error){
-                        alert(`Không thể tải dánh sách giáo viên${error}`)
-                    }
-                },
-                // Lưu giáo viên (thêm mới hoặc cập nhật)
-                async saveLopHoc() {
-                    let response
-                    try {
-                        if (this.isEditing) {
-                            response = await axios.put(`/api/lophoc/${this.formData.ma_lop}`, this.formData)
-                        } else {
-                            response = await axios.post('/api/lophoc', this.formData)
-                        }
-                        if (response.status===200||response.status===201){
-                            this.loadDanhSachLopHoc()
-                            this.resetForm()
-                        }else{
-                            throw new Error (`${response.data?.error}`);
-                        }
-
-                    } catch (error) {
-
-                        alert(`Không thể lưu thông tin lớp ${this.formData.ten_lop} lỗi: ${error.response?.data?.error||error.message||'Không xác định'}`)
-                    }
-                },
-
-                // Xóa giáo viên
-                async deleteLopHoc(id) {
-                    if (confirm('Bạn có chắc muốn xóa lớp này?')) {
-                        try {
-                            await axios.delete(`/api/lophoc/${id}`)
-                            this.loadDanhSachLopHoc()
-                        } catch (error) {
-                            alert('Không thể xóa lớp')
-                        }
-                    }
-                },
-                // Chuẩn bị form để sửa
-                editLopHoc(lop) {
-                    this.formData = { ...lop }
-                    this.isEditing = true
-                    this.isVisible = true
-                },
-
-                // Reset form về trạng thái ban đầu
-                resetForm() {
-                    this.formData = {
-                        ma_lop: '',
-                        ten_lop: '',
-                        khoi_lop: '',
-                        ma_chu_nhiem: '',
-                        ten_chu_nhiem:'',
-                    }
-                    this.isVisible = false
-                    this.isEditing = false
-                },
-
-                newClass(){
-                    this.resetForm()
-                    this.isVisible = true
-                },
-                // Xuất Excel
-                async exportExcel() {
-                    try {
-                        const response = await axios.get('/api/export/lophoc', {
-                            responseType: 'blob'
-                        })
-                        const url = window.URL.createObjectURL(new Blob([response.data]))
-                        const link = document.createElement('a')
-                        link.href = url
-                        link.setAttribute('download', 'danh_sach_lop_hoc.xlsx')
-                        document.body.appendChild(link)
-                        link.click()
-                        link.remove()
-                    } catch (error) {
-                        alert('Không thể xuất file Excel')
-                    }
-                },
-
-                // Nhập Excel
-                async importExcel(event) {
-                    const file = event.target.files[0]
-                    if (!file) return
-
-                    const formData = new FormData()
-                    formData.append('file', file)
-
-                    try {
-                        const response = await axios.post('/api/import/lophoc', formData)
-                        alert(`Nhập dữ liệu thành công!\nĐã cập nhật: ${response.data.updated}\nĐã thêm mới: ${response.data.inserted}`)
-                        this.loadDanhSachLopHoc()
-                    } catch (error) {
-                        alert('Không thể nhập file Excel')
-                    }
-                    event.target.value = '' // Reset input file
-                },
-            },
-            mounted() {
-                this.loadDanhSachLopHoc()
-                this.loadDanhSachGiaoVien()
+                isVisible: false,
+                isEditing: false,
+            };
+        },
+        computed: {
+            formTitle() {
+                return this.isEditing ? 'Sửa thông tin lớp học' : 'Thêm lớp học mới';
             }
-        }).mount('#app')
+        },
+        methods: {
+            // Lấy danh sách lớp học
+            async loadDanhSachLopHoc() {
+                try {
+                    const response = await axios.get('/api/lophoc');
+                    this.dslop = response.data;
+                } catch (error) {
+                    this.$toast.error(this.getErrorMessage(error));
+                } finally {
+                    
+                }
+            },
+
+            // Lấy danh sách giáo viên
+            async loadDanhSachGiaoVien() {
+                try {
+                    const response = await axios.get('/api/giaovien');
+                    this.dsgiaovien = response.data;
+                } catch (error) {
+                    this.$toast.error(this.getErrorMessage(error));
+                } finally {
+             
+                }
+            },
+
+            // Lưu lớp học
+            async saveLopHoc() {
+                try {
+                    let response;
+                    
+                    if (!this.formData.ten_lop || !this.formData.khoi_lop) {
+                        throw new Error('Vui lòng điền đầy đủ thông tin');
+                    }
+                    if (this.isEditing) {
+                        response = await axios.put(`/api/lophoc/${this.formData.ma_lop}`, this.formData);
+                    } else {
+                        response = await axios.post('/api/lophoc', this.formData);
+                    }
+
+                    if (response.status === 200 || response.status === 201) {
+                        this.$toast.success(this.getInfoMessage(response));
+                        await this.loadDanhSachLopHoc();
+                        this.resetForm();
+                    } else {
+                        throw new Error(response.data?.error || 'Lỗi không xác định');
+                    }
+                } catch (error) {
+                    this.$toast.error(this.getErrorMessage(error));
+                } finally {
+
+                }
+            },
+
+            // Xóa lớp học
+            async deleteLopHoc(id) {
+                if (!confirm('Bạn có chắc muốn xóa lớp này?')) return;
+                try {
+                    const response = await axios.delete(`/api/lophoc/${id}`);
+                    
+                    if (response.status === 200) {
+                        this.$toast.success(this.getInfoMessage(response));
+                        await this.loadDanhSachLopHoc();
+                    } else {
+                        throw new Error(response.data?.error || 'Lỗi không xác định');
+                    }
+                } catch (error) {
+                    this.$toast.error(this.getErrorMessage(error));
+                } finally {
+
+                }
+            },
+
+            // Sửa lớp học
+            editLopHoc(lop) {
+                this.formData = { ...lop };
+                this.isEditing = true;
+                this.isVisible = true;
+            },
+
+            // Reset form
+            resetForm() {
+                this.formData = {
+                    ma_lop: '',
+                    ten_lop: '',
+                    khoi_lop: '',
+                    ma_chu_nhiem: '',
+                    ten_chu_nhiem: ''
+                };
+                this.isVisible = false;
+                this.isEditing = false;
+            },
+
+            // Thêm mới lớp
+            newClass() {
+                this.resetForm();
+                this.isVisible = true;
+            },
+
+            // Xuất Excel
+            async exportExcel() {
+                try {
+                    const response = await axios.get('/api/export/lophoc', {
+                        responseType: 'blob'
+                    });
+                    const url = window.URL.createObjectURL(new Blob([response.data]));
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.setAttribute('download', 'danh_sach_lop_hoc.xlsx');
+                    document.body.appendChild(link);
+                    link.click();
+                    link.remove();
+                } catch (error) {
+                    this.$toast.error(this.getErrorMessage(error));
+                } finally {
+                    
+                }
+            },
+
+            // Nhập Excel
+            async importExcel(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+                try {
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    const response = await axios.post('/api/import/lophoc', formData);
+                    this.$toast.success(`Nhập dữ liệu thành công!\nĐã cập nhật: ${response.data?.updated}\nĐã thêm mới: ${response.data?.inserted}`);
+                    await this.loadDanhSachLopHoc();
+                } catch (error) {
+                    this.$toast.error(this.getErrorMessage(error));
+                } finally {
+                    event.target.value = ''; // Reset input file
+                }
+            },
+
+            // Hàm xử lý thông báo lỗi
+            getErrorMessage(error) {
+                return `Lỗi: ${error.response?.data?.error || error.message || 'Không xác định'}`;
+            },
+            getInfoMessage(response) {
+                return `Thông báo: ${response?.data?.message || response?.message || 'Không có thông tin'}`;
+            }
+        },
+        async mounted() {
+            try {
+                await Promise.all([
+                    this.loadDanhSachLopHoc(),
+                    this.loadDanhSachGiaoVien()
+                ]);
+            } catch (error) {
+                this.$toast.error(this.getErrorMessage(error));
+            } finally {
+                this.$toast.success("Hoàn thành tải dữ liệu");
+            }
+        }
+    });
+
+    app.mount('#app');
 </script>
 {{ template "footer.html"}}

@@ -63,10 +63,10 @@
         </div>
     </div>
 
-    <script>
-        const { createApp } = Vue
+    <script type="module">
+        import { createVueApp } from '/static/js/vue-config.js';
 
-        createApp({
+        createVueApp({
             data() {
                 return {
                     danhSachGiaoVien: [],
@@ -81,17 +81,20 @@
             },
             computed: {
                 formTitle() {
-                    return this.isEditing ? 'Sửa thông tin giáo viên' : 'Thêm giáo viên mới'
+                    return this.isEditing ? 'Sửa thông tin giáo viên' : 'Thêm giáo viên mới';
                 }
             },
             methods: {
                 // Lấy danh sách giáo viên
                 async loadDanhSachGiaoVien() {
                     try {
-                        const response = await axios.get('/api/giaovien')
-                        this.danhSachGiaoVien = response.data
+                        const response = await axios.get('/api/giaovien');
+                        this.danhSachGiaoVien = response.data;
                     } catch (error) {
-                        alert('Không thể tải danh sách giáo viên')
+                        this.$toast.error(this.getErrorMessage(error));
+                    }finally
+                    {
+                        this.$toast.success("Tải xong danh sách giáo viên!");
                     }
                 },
 
@@ -99,20 +102,20 @@
                 async saveGiaoVien() {
                     try {
                         if (this.isEditing) {
-                            await axios.put(`/api/giaovien/${this.formData.ma_giao_vien}`, this.formData)
+                            await axios.put(`/api/giaovien/${this.formData.ma_giao_vien}`, this.formData);
                         } else {
-                            await axios.post('/api/giaovien', this.formData)
+                            await axios.post('/api/giaovien', this.formData);
                         }
                         if (response.status===200||response.status===201){
-                            this.loadDanhSachGiaoVien()
-                            this.resetForm()
+                            this.$toast.success(this.getInfoMessage(response));
+                            this.loadDanhSachGiaoVien();
+                            this.resetForm();
                         }else{
                             throw new Error (`${response.data?.error}`);
                         }
 
                     } catch (error) {
-
-                        alert(`Không thể lưu thông tin giáo viên ${this.formData.ho_ten} lỗi: ${error.response?.data?.error||error.message||'Không xác định'}`)
+                        this.$toast.error(this.getErrorMessage(error));
                     }
                 },
 
@@ -121,9 +124,12 @@
                     if (confirm('Bạn có chắc muốn xóa giáo viên này?')) {
                         try {
                             await axios.delete(`/api/giaovien/${id}`)
-                            this.loadDanhSachGiaoVien()
+                            if(response.status===200||response.status===201){
+                                this.$toast.success(this.getInfoMessage(response));
+                                this.loadDanhSachGiaoVien()
+                            }
                         } catch (error) {
-                            alert('Không thể xóa giáo viên')
+                            this.$toast.error(this.getErrorMessage(error));
                         }
                     }
                 },
@@ -164,7 +170,7 @@
                         link.click()
                         link.remove()
                     } catch (error) {
-                        alert('Không thể xuất file Excel')
+                        this.$toast.error(this.getErrorMessage(error));
                     }
                 },
 
@@ -178,12 +184,22 @@
 
                     try {
                         const response = await axios.post('/api/import/giaovien', formData)
-                        alert(`Nhập dữ liệu thành công!\nĐã cập nhật: ${response.data.updated}\nĐã thêm mới: ${response.data.inserted}`)
-                        this.loadDanhSachGiaoVien()
+                        if(response.status===200||response.status===201){
+                            const mess=`Nhập dữ liệu thành công!\nĐã cập nhật: ${response.data.updated}\nĐã thêm mới: ${response.data.inserted}`;
+                            this.$toast.success(mess);
+                            this.loadDanhSachGiaoVien();
+                        }
                     } catch (error) {
-                        alert('Không thể nhập file Excel')
+                        this.$toast.error(this.getErrorMessage(error));
                     }
                     event.target.value = '' // Reset input file
+                },
+                            // Hàm xử lý thông báo lỗi
+                getErrorMessage(error) {
+                    return `Lỗi: ${error.response?.data?.error || error.message || 'Không xác định'}`;
+                },
+                getInfoMessage(response) {
+                    return `Thông báo: ${response?.data?.message || response?.message || 'Không có thông tin'}`;
                 }
             },
             mounted() {

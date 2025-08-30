@@ -1,0 +1,32 @@
+{{ template "header.html" }}
+    <div id="app" class="container mt-4">
+        <h1>Chạy thử các hàm vue</h1>
+        <div class="mt-3">
+            <button @click="showSuccessToast" class="btn btn-success me-2">Thông báo thành công</button>
+            <button @click="showErrorToast" class="btn btn-danger me-2">Thông báo lỗi</button>
+            <button @click="showInfoToast" class="btn btn-info">Thông báo thông tin</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { createVueApp } from '/static/js/vue-config.js';
+        const app = createVueApp({
+            methods: {
+                showSuccessToast() {
+                    this.$toast.success("Thao tác thành công!");
+                },
+                showErrorToast() {
+                    this.$toast.error("Có lỗi xảy ra!");
+                },
+                showInfoToast() {
+                    this.$toast.info("Đây là thông tin!");
+                }
+            },
+            mounted() {
+                this.$toast.success("Ứng dụng đã khởi động!");
+            }
+        });
+
+        app.mount("#app");
+    </script>
+{{ template "footer.html"}}

@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS phancong (
 CREATE TABLE IF NOT EXISTS tietday(
 	ma_tiet_day INTEGER PRIMARY KEY	AUTOINCREMENT,
 	ma_phan_cong INTEGER REFERENCES phancong(ma_phan_cong),
-	tuan_hoc INTEGER NOT NULL,
+	tuan INTEGER NOT NULL,
 	tong_tiet_duoc_phan_cong INTEGER NOT NULL,
 	tiet_sang INTEGER NOT NULL,
 	tiet_chieu INTEGER NOT NULL,
