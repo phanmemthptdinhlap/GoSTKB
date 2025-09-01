@@ -11,7 +11,24 @@
     <script type="module">
         import { createVueApp } from '/static/js/vue-config.js';
         const app = createVueApp({
+            data() {
+                return { info: { message: 'Chưa có dữ liệu' } }
+            },
+            computed: {
+                jsonInfo() { return JSON.stringify(this.info, null, 2) }
+            },
             methods: {
+                async loadFromApi() {
+                    try {
+                        const res = await fetch('/api/phancong/maphancong/10A1/TOAN')
+                        if (!res.ok) throw new Error(await res.text())
+                        this.info = await res.json()
+                        this.$toast.success('Dữ liệu đã tải')
+                    } catch (err) {
+                        this.$toast.error(`Lỗi tải dữ liệu: ${err.error||err.message}`)
+                        console.error(err)
+                    }
+                },
                 showSuccessToast() {
                     this.$toast.success("Thao tác thành công!");
                 },
@@ -24,6 +41,7 @@
             },
             mounted() {
                 this.$toast.success("Ứng dụng đã khởi động!");
+                this.loadFromApi(); // nếu muốn tự động tải
             }
         });
 

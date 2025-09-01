@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS lophoc (
 		ma_lop INTEGER PRIMARY KEY AUTOINCREMENT,
 		ten_lop TEXT NOT NULL,
 		khoi_lop TEXT NOT NULL,
-		ma_chu_nhiem INTEGER
+		ma_chu_nhiem INTEGER REFERENCES giaovien(ma_giao_vien)
 );
 CREATE TABLE IF NOT EXISTS phancong (
 		ma_phan_cong INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -20,11 +20,11 @@ CREATE TABLE IF NOT EXISTS phancong (
 		ma_lop INTEGER REFERENCES lophoc(ma_lop_hoc)
 );
 CREATE TABLE IF NOT EXISTS tietday(
-	ma_tiet_day INTEGER PRIMARY KEY	AUTOINCREMENT,
-	ma_phan_cong INTEGER REFERENCES phancong(ma_phan_cong),
-	tuan INTEGER NOT NULL,
-	tong_tiet_duoc_phan_cong INTEGER NOT NULL,
-	tiet_sang INTEGER NOT NULL,
-	tiet_chieu INTEGER NOT NULL,
-	tiet_tuan_truoc INTEGER NOT NULL
+		ma_tiet_day INTEGER PRIMARY KEY	AUTOINCREMENT,
+		ma_phan_cong INTEGER REFERENCES phancong(ma_phan_cong),
+		tuan INTEGER NOT NULL,
+		tong_tiet_duoc_phan_cong INTEGER NOT NULL,
+		tiet_sang INTEGER,
+		tiet_chieu INTEGER,
+		tiet_no INTEGER
 );

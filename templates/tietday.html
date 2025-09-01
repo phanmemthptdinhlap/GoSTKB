@@ -1,0 +1,310 @@
+
+{{ template "header.html" }}
+    <div id="app" class="container mt-4">
+        <h2 class="mb-4">Quản lý Phân công giảng dạy</h2>
+        
+        <!-- Form thêm/sửa lớp học -->
+        <div class="card mb-4" v-if="isVisible">
+            <div class="card-body">
+                <h5 class="card-title" v-text="formTitle"></h5>
+                <div class="mb-3">
+                    <label class="form-label">Mã phân công</label><br>
+                    <input type="text" class="form-control-sm" v-model="formData.ma_phan_cong">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Giáo viên </label><br>
+                    <select v-model="formData.ma_giao_vien" class="form-control-sm" :disabled="loading" >
+                        <option 
+                            v-for="gv in dsgiaovien" 
+                            :key="gv.ma_giao_vien"
+                            :value="gv.ma_giao_vien"
+                            :selected="gv.ma_giao_vien===formData.ma_giao_vien" 
+                            v-text="gv.ho_ten"
+                            >
+                        </option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Môn học </label><br>
+                    <select v-model="formData.ma_mon" class="form-control-sm" :disabled="loading" >
+                        <option 
+                            v-for="mh in dsmon" 
+                            :key="mh.ma_mon"
+                            :value="mh.ma_mon"
+                            :selected="mh.ma_mon===formData.ma_mon" 
+                            v-text="mh.ten_mon"
+                            >
+                        </option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Lớp học </label><br>
+                    <select v-model="formData.ma_lop" class="form-control-sm" :disabled="loading" >
+                        <option 
+                            v-for="lh in dslop" 
+                            :key="lh.ma_lop"
+                            :value="lh.ma_lop"
+                            :selected="lh.ma_lop===formData.ma_lop" 
+                            v-text="lh.ten_lop"
+                            >
+                        </option>
+                    </select>
+                </div>
+                <button @click="saveItem" class="btn btn-primary">Lưu</button>
+                <button @click="resetForm" class="btn btn-secondary ms-2">Hủy</button>
+            </div>
+        </div>
+
+        <!-- Bảng danh sách lớp học -->
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-3">
+                    <h5 class="card-title">Danh sách phân công</h5>
+                    <div>
+                        <button @click="newItem" class="btn btn-primary me-2">Thêm mới phân công</button>
+                        <label class="btn btn-info me-2">
+                            Nhập Excel
+                            <input type="file" @change="importExcel" class="d-none" accept=".xlsx,.xls">
+                        </label>
+                        <button @click="exportExcel" class="btn btn-success">Xuất Excel</button>
+                    </div>
+                </div>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Mã phân công</th>
+                            <th>Mã giáo viên</th>
+                            <th>Tên giáo viên</th>
+                            <th>Mã môn học</th>
+                            <th>Tên môn học</th>
+                            <th>Mã lớp học</th>
+                            <th>Tên lớp học</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="item in Items" :key="item.ma_phan_cong">
+                            <td v-text="item.ma_phan_cong"></td>
+                            <td v-text="item.ma_giao_vien"></td>
+                            <td v-text="item.ten_giao_vien"></td>
+                            <td v-text="item.ma_mon"></td>
+                            <td v-text="item.ten_mon"></td>
+                            <td v-text="item.ma_lop"></td>
+                            <td v-text="item.ten_lop"></td>
+                            <td>
+                                <button @click="editItem(item)" class="btn btn-sm btn-warning me-2">Sửa</button>
+                                <button @click="deleteItem(item.ma_phan_cong)" class="btn btn-sm btn-danger">Xóa</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+<script type="module">
+    import { createVueApp } from '/static/js/vue-config.js';
+
+    const app = createVueApp({
+        data() {
+            return {
+                Items:[],
+                dslop: [],
+                dsgiaovien: [],
+                dsmon:[],
+                formData: {
+                    ma_phan_cong: '',
+                    ma_giao_vien: '',
+                    ma_mon: '',
+                    ma_lop: ''
+                },
+                isVisible: false,
+                isEditing: false,
+            };
+        },
+        computed: {
+            formTitle() {
+                return this.isEditing ? 'Sửa thông tin lớp học' : 'Thêm lớp học mới';
+            }
+        },
+        methods: {
+            async loadItems(){
+                try {
+                    const response = await axios.get('/api/phancong');
+                    this.Items = response.data;
+                } catch (error) {
+                    this.$toast.error(this.getErrorMessage(error));
+                } finally {
+                    
+                }
+            },
+            // Lấy danh sách lớp học
+            async loadDanhSachLopHoc() {
+                try {
+                    const response = await axios.get('/api/lophoc');
+                    this.dslop = response.data;
+                } catch (error) {
+                    this.$toast.error(this.getErrorMessage(error));
+                } finally {
+                    
+                }
+            },
+
+            // Lấy danh sách giáo viên
+            async loadDanhSachGiaoVien() {
+                try {
+                    const response = await axios.get('/api/giaovien');
+                    this.dsgiaovien = response.data;
+                } catch (error) {
+                    this.$toast.error(this.getErrorMessage(error));
+                } finally {
+             
+                }
+            },
+             async loadDanhMonHoc() {
+                try {
+                    const response = await axios.get('/api/monhoc');
+                    this.dsmon = response.data;
+                } catch (error) {
+                    this.$toast.error(this.getErrorMessage(error));
+                } finally {
+             
+                }
+            },
+
+            // Lưu lớp học
+            async saveItem() {
+                try {
+                    let response;
+                    
+                    if (!this.formData.ma_giao_vien || !this.formData.ma_mon||!this.formData.ma_lop) {
+                        throw new Error('Vui lòng điền đầy đủ thông tin');
+                    }
+                    if (this.isEditing) {
+                        response = await axios.put(`/api/phancong/${this.formData.ma_phan_cong}`, this.formData);
+                    } else {
+                        response = await axios.post('/api/phancong', this.formData);
+                    }
+
+                    if (response.status === 200 || response.status === 201) {
+                        this.$toast.success(this.getInfoMessage(response));
+                        await this.loadItems();
+                        this.resetForm();
+                    } else {
+                        throw new Error(response.data?.error || 'Lỗi không xác định');
+                    }
+                } catch (error) {
+                    this.$toast.error(this.getErrorMessage(error));
+                } finally {
+
+                }
+            },
+
+            // Xóa lớp học
+            async deleteItem(id) {
+                if (!confirm('Bạn có chắc muốn xóa lớp này?')) return;
+                try {
+                    const response = await axios.delete(`/api/phancong/${id}`);
+                    
+                    if (response.status === 200) {
+                        this.$toast.success(this.getInfoMessage(response));
+                        await this.loadItems();
+                    } else {
+                        throw new Error(response.data?.error || 'Lỗi không xác định');
+                    }
+                } catch (error) {
+                    this.$toast.error(this.getErrorMessage(error));
+                } finally {
+
+                }
+            },
+
+            // Sửa lớp học
+            editItem(item) {
+                this.formData = { ...item };
+                this.isEditing = true;
+                this.isVisible = true;
+            },
+
+            // Reset form
+            resetForm() {
+                this.formData = {
+                    ma_phan_cong: '',
+                    ma_giao_vien: '',
+                    ma_mon: '',
+                    ma_lop: ''
+                };
+                this.isVisible = false;
+                this.isEditing = false;
+            },
+
+            // Thêm mới lớp
+            newItem() {
+                this.resetForm();
+                this.isVisible = true;
+            },
+
+            // Xuất Excel
+            async exportExcel() {
+                try {
+                    const response = await axios.get('/api/export/phancong', {
+                        responseType: 'blob'
+                    });
+                    const url = window.URL.createObjectURL(new Blob([response.data]));
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.setAttribute('download', 'danh_sach_phan_cong.xlsx');
+                    document.body.appendChild(link);
+                    link.click();
+                    link.remove();
+                } catch (error) {
+                    this.$toast.error(this.getErrorMessage(error));
+                } finally {
+                    
+                }
+            },
+
+            // Nhập Excel
+            async importExcel(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+                try {
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    const response = await axios.post('/api/import/phancong', formData);
+                    this.$toast.success(`Nhập dữ liệu thành công!\nĐã cập nhật: ${response.data?.updated}\nĐã thêm mới: ${response.data?.inserted}`);
+                    await this.loadItems();
+                } catch (error) {
+                    this.$toast.error(this.getErrorMessage(error));
+                } finally {
+                    event.target.value = ''; // Reset input file
+                }
+            },
+
+            // Hàm xử lý thông báo lỗi
+            getErrorMessage(error) {
+                return `Lỗi: ${error.response?.data?.error || error.message || 'Không xác định'}`;
+            },
+            getInfoMessage(response) {
+                return `Thông báo: ${response?.data?.message || response?.message || 'Không có thông tin'}`;
+            }
+        },
+        async mounted() {
+            try {
+                await Promise.all([
+                    this.loadDanhMonHoc(),
+                    this.loadDanhSachLopHoc(),
+                    this.loadDanhSachGiaoVien(),
+                    this.loadItems()
+                ]);
+            } catch (error) {
+                this.$toast.error(this.getErrorMessage(error));
+            } finally {
+                this.$toast.success("Hoàn thành tải dữ liệu");
+            }
+        }
+    });
+
+    app.mount('#app');
+</script>
+{{ template "footer.html"}}

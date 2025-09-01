@@ -8,5 +8,5 @@ type TietDay struct {
 	TongTietPhanCong string `json:"tong_tiet_duoc_phan_cong"`
 	TietSang         string `json:"tiet_sang"`
 	TietChieu        string `json:"tiet_chieu"`
-	TietTuanTruoc    string `json:"tiet_tuan_truoc"`
+	TietTuanTruoc    string `json:"tiet_no"`
 }

@@ -122,6 +122,7 @@ func main() {
 		api.DELETE("/phancong/:id", thaotacphancong.XoaPhanCong)
 		api.GET("/export/phancong", thaotacphancong.XuatDanhSachPhanCong)
 		api.POST("/import/phancong", thaotacphancong.NhapDanhSachPhanCong)
+	api.GET("/phancong/maphancong/:lop/:mon", thaotacphancong.LayMaPhanCongTheoLop_Mon)
 
 	}
 
