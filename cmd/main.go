@@ -16,8 +16,6 @@ type WebPage struct {
 		SetPageAssignment	func()
 		SetPageAdmin		func()
 		SetPageAbout		func()
-		SetPageContact	func()
-
 }
 
 func (p *WebPage) init(mux *http.ServeMux) {
@@ -45,9 +43,6 @@ func (p *WebPage) init(mux *http.ServeMux) {
 		}
 		if p.SetPageAbout != nil {
 			p.SetPageAbout()
-		}
-		if p.SetPageContact != nil {
-			p.SetPageContact()
 		}
 }
 

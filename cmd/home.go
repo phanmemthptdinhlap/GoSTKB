@@ -11,6 +11,7 @@ func init(){
 			// Lưu ý: Đường dẫn tính từ nơi bạn chạy lệnh "go run"
 			tmpl, err := template.ParseFiles("templates/base.html", "templates/home.html")
 			if err != nil {
+				panic(err)
 				http.Error(w, "Lỗi tải giao diện: "+err.Error(), http.StatusInternalServerError)
 				return
 			}
@@ -25,6 +26,7 @@ func init(){
 			// 3. Thực thi template có tên là "base" và truyền data vào
 			err = tmpl.ExecuteTemplate(w, "base", data)
 			if err != nil {
+				panic(err)
 				http.Error(w, "Lỗi render: "+err.Error(), http.StatusInternalServerError)
 			}
 		})
