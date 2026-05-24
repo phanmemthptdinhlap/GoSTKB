@@ -1,0 +1,32 @@
+{{define "base"}}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <!-- Biến .Title sẽ được truyền từ mã Go vào đây -->
+    <title>{{.Title}}</title>
+</head>
+<body>
+    <header>
+        <nav>
+            <a href="/">Trang chủ</a> |
+            <a href="/teacher">Giáo viên</a> |
+            <a href="/class">Lớp học</a> |
+            <a href="/subject">Môn học</a> |
+            <a href="/assignment">Phân phối</a> |
+            <a href="/about">Giới thiệu</a> | 
+            <a href="/contact">Liên hệ</a>
+        </nav>
+    </header>
+
+    <main>
+        <!-- Đây là "lỗ hổng". Nội dung của file con sẽ chèn vào đây -->
+        {{template "content" .}}
+    </main>
+
+    <footer>
+        <p>&copy; 2026 Bản quyền thuộc về Lương Lâm Kiên</p>
+    </footer>
+</body>
+</html>
+{{end}}

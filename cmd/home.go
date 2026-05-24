@@ -1,8 +1,33 @@
 package main
+
 import (
-	"fmt"
-	"net/http"
+    "html/template" // Nhớ import thư viện này, KHÔNG dùng text/template
+    "net/http"
 )
-page.Home=func(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Hello World!")
+func init(){
+	page.SetPageHome=func(){
+		page.mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+			// 1. Đọc cả file base và file home
+			// Lưu ý: Đường dẫn tính từ nơi bạn chạy lệnh "go run"
+			tmpl, err := template.ParseFiles("templates/base.html", "templates/home.html")
+			if err != nil {
+				http.Error(w, "Lỗi tải giao diện: "+err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			// 2. Chuẩn bị dữ liệu muốn truyền ra HTML
+			data := struct {
+				Title string
+			}{
+				Title: "Trang chủ - Website của tôi",
+			}
+
+			// 3. Thực thi template có tên là "base" và truyền data vào
+			err = tmpl.ExecuteTemplate(w, "base", data)
+			if err != nil {
+				http.Error(w, "Lỗi render: "+err.Error(), http.StatusInternalServerError)
+			}
+		})
+	}
 }
+

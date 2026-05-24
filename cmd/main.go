@@ -1,40 +1,62 @@
 package main
 
 import (
-	"fmt"
-	"net/http"
+    "fmt"
+    "net/http"
 )
-type PageFunc func(http.ResponseWriter, *http.Request)
+
 type WebPage struct {
-	Title string
-	Home PageFunc
-	About PageFunc
-	Contact PageFunc
-}
-var page WebPage
-func main() {
-	mux:= http.NewServeMux()
-	mux.HandleFunc("/", func (w http.ResponseWriter, r *http.Request) {
-		if page.Home == nil {
-			fmt.Fprintf(w, "Home")
-		} else {
-			page.Home(w, r)
-		}
-	})
-	mux.HandleFunc("/about", func (w http.ResponseWriter, r *http.Request) {
-		if page.About == nil {
-			fmt.Fprintf(w, "About")
-		} else {
-			page.About(w, r)
-		}
-	})
-	mux.HandleFunc("/contact", func (w http.ResponseWriter, r *http.Request) {
-		if page.Contact == nil {
-			fmt.Fprintf(w, "Contact")
-		} else {
-			page.Contact(w, r)
-		}
-	})
-	http.ListenAndServe(":8080", mux)
+    Title   		string
+		mux     		*http.ServeMux
+		SetPageHome		func()
+		SetPageLogin		func()
+		SetPageClass		func()
+		SetPageTeacher	func()
+		SetPageSubject	func()
+		SetPageAssignment	func()
+		SetPageAdmin		func()
+		SetPageAbout		func()
+		SetPageContact	func()
+
 }
 
+func (p *WebPage) init(mux *http.ServeMux) {
+    p.mux = mux
+		if p.SetPageHome != nil {
+			p.SetPageHome()
+		}
+		if p.SetPageLogin != nil {
+			p.SetPageLogin()
+		}
+		if p.SetPageClass != nil {
+			p.SetPageClass()
+		}
+		if p.SetPageTeacher != nil {
+			p.SetPageTeacher()
+		}
+		if p.SetPageSubject != nil {
+			p.SetPageSubject()
+		}
+		if p.SetPageAssignment != nil {
+			p.SetPageAssignment()
+		}
+		if p.SetPageAdmin != nil {
+			p.SetPageAdmin()
+		}
+		if p.SetPageAbout != nil {
+			p.SetPageAbout()
+		}
+		if p.SetPageContact != nil {
+			p.SetPageContact()
+		}
+}
+
+// Khai báo biến toàn cục
+var page WebPage
+
+func main() {
+    mux := http.NewServeMux()
+		page.init(mux)
+    fmt.Println("Server đang chạy tại http://localhost:8080")
+    http.ListenAndServe(":8080", mux)
+}
