@@ -1,30 +1,32 @@
-
 package main
 
 import (
-	"html/template"
-	"net/http"
+    "html/template" // Nhớ import thư viện này, KHÔNG dùng text/template
+    "net/http"
 )
-func init() {
-	page.SetPageClass=func() {
-		page.mux.HandleFunc("/subject", func(w http.ResponseWriter, r *http.Request) {
-			tmpl, err := template.ParseFiles("templates/subject.html","templates/base.html")
+func (p *WebPage) SetPageSubject() {
+		p.mux.HandleFunc("/subject", func(w http.ResponseWriter, r *http.Request) {
+			// 1. Đọc cả file base và file home
+			// Lưu ý: Đường dẫn tính từ nơi bạn chạy lệnh "go run"
+			tmpl, err := template.ParseFiles("templates/base.html", "templates/subject.html")
 			if err != nil {
 				panic(err)
-				http.Error(w, "Lỗi tải tệp subject.html", http.StatusInternalServerError)
+				http.Error(w, "Lỗi tải giao diện: "+err.Error(), http.StatusInternalServerError)
 				return
 			}
+
+			// 2. Chuẩn bị dữ liệu muốn truyền ra HTML
 			data := struct {
 				Title string
 			}{
-				Title: "Danh sách môn học",
+				Title: "Môn học - Website của tôi",
 			}
-			err = tmpl.Execute(w, data)
+
+			// 3. Thực thi template có tên là "base" và truyền data vào
+			err = tmpl.ExecuteTemplate(w, "base", data)
 			if err != nil {
 				panic(err)
-				http.Error(w, "Lỗi thực hiện tạo trang", http.StatusInternalServerError)
-				return
+				http.Error(w, "Lỗi render: "+err.Error(), http.StatusInternalServerError)
 			}
 		})
 	}
-}

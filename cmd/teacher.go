@@ -5,8 +5,7 @@ import (
 	"html/template"
 	"net/http"
 )
-func init(){
-	page.SetPageTeacher=func(){
+func (p *WebPage) SetPageTeacher(){
 		page.mux.HandleFunc("/teacher",func(w http.ResponseWriter, r *http.Request){
 			temp,err:=template.ParseFiles("templates/teacher.html","templates/base.html")
 			if err!=nil{
@@ -27,4 +26,3 @@ func init(){
 			}
 		})
 	}
-}

@@ -4,9 +4,8 @@ import (
 	"html/template"
 	"net/http"
 )
-func init() {
-	page.SetPageClass=func() {
-		page.mux.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
+func (p *WebPage) SetPageLogin() {
+		p.mux.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
 			tmpl, err := template.ParseFiles("templates/login.html","templates/base.html")
 			if err != nil {
 				panic(err)
@@ -26,4 +25,3 @@ func init() {
 			}
 		})
 	}
-}

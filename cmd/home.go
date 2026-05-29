@@ -4,9 +4,8 @@ import (
     "html/template" // Nhớ import thư viện này, KHÔNG dùng text/template
     "net/http"
 )
-func init(){
-	page.SetPageHome=func(){
-		page.mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+func (p *WebPage) SetPageHome() {
+		p.mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 			// 1. Đọc cả file base và file home
 			// Lưu ý: Đường dẫn tính từ nơi bạn chạy lệnh "go run"
 			tmpl, err := template.ParseFiles("templates/base.html", "templates/home.html")
@@ -31,5 +30,4 @@ func init(){
 			}
 		})
 	}
-}
 
