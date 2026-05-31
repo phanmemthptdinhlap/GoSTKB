@@ -1,14 +1,15 @@
+
 package main
 
 import (
     "html/template" // Nhớ import thư viện này, KHÔNG dùng text/template
     "net/http"
 )
-func (p *WebPage) SetPageAbout() {
-		p.mux.HandleFunc("/about", func(w http.ResponseWriter, r *http.Request) {
+func (p *WebPage) SetPageLopHoc() {
+		p.mux.HandleFunc("/class", func(w http.ResponseWriter, r *http.Request) {
 			// 1. Đọc cả file base và file home
 			// Lưu ý: Đường dẫn tính từ nơi bạn chạy lệnh "go run"
-			tmpl, err := template.ParseFiles("templates/base.html", "templates/about.html")
+			tmpl, err := template.ParseFiles("templates/base.html", "templates/class.html")
 			if err != nil {
 				panic(err)
 				http.Error(w, "Lỗi tải giao diện: "+err.Error(), http.StatusInternalServerError)
@@ -19,7 +20,7 @@ func (p *WebPage) SetPageAbout() {
 			data := struct {
 				Title string
 			}{
-				Title: "Trang giới thiệu - Website của tôi",
+				Title: "Lớp học - Website của tôi",
 			}
 
 			// 3. Thực thi template có tên là "base" và truyền data vào

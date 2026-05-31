@@ -4,7 +4,7 @@ import (
     "html/template" // Nhớ import thư viện này, KHÔNG dùng text/template
     "net/http"
 )
-func (p *WebPage) SetPageSubject() {
+func (p *WebPage) SetPageMonHoc() {
 		p.mux.HandleFunc("/subject", func(w http.ResponseWriter, r *http.Request) {
 			// 1. Đọc cả file base và file home
 			// Lưu ý: Đường dẫn tính từ nơi bạn chạy lệnh "go run"

@@ -12,12 +12,12 @@ type WebPage struct {
 
 func (p *WebPage) init(mux *http.ServeMux) {
     p.mux = mux
-		p.SetPageHome()
-		p.SetPageClass()
-		p.SetPageTeacher()
-		p.SetPageSubject()
-		p.SetPageAssignment()
-		p.SetPageAbout()
+		p.SetPageTrangChu()
+		p.SetPageLopHoc()
+		p.SetPageGiaoVien()
+		p.SetPageMonHoc()
+		p.SetPagePhanCong()
+		p.SetPageThongTin()
 	}
 
 // Khai báo biến toàn cục
