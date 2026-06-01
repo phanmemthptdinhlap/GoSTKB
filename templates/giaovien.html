@@ -50,9 +50,8 @@
                         <div>
                             <label class="text-xs text-gray-400 block font-medium uppercase tracking-wider mb-1">Lớp</label>
                             <div class="flex flex-wrap gap-1">
-                                <span v-for="lop in gv.lopDay" :key="lop" 
-                                      class="text-xs bg-gray-100 text-gray-700 font-medium px-2 py-0.5 rounded border border-gray-200">
-                                    [[ lop ]]
+                                <span class="text-xs bg-gray-100 text-gray-700 font-medium px-2 py-0.5 rounded border border-gray-200">
+                                    [[ gv.lopDay ]]
                                 </span>
                             </div>
                         </div>
@@ -104,15 +103,6 @@
                     <label class="block text-sm font-medium text-gray-700 mb-1">Họ và tên *</label>
                     <input v-model="form.hoTen" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="VD: Lâm Kiên">
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Môn dạy</label>
-                    <input v-model="form.monDay" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="VD: Tin học">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Lớp dạy (Cách nhau bằng dấu phẩy)</label>
-                    <input v-model="form.lopDayStr" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="VD: 12A1, 12A2, 11B1">
-                    <p class="text-xs text-gray-500 mt-1">Hệ thống sẽ tự động tách các lớp bằng dấu phẩy.</p>
-                </div>
             </div>
             
             <!-- Footer Modal -->
@@ -127,15 +117,15 @@
 </div>
 <!-- Script -->
 <script>
-    const { createApp, ref, reactive } = Vue
+    const { createApp, ref, reactive,onMounted } = Vue
 
     createApp({
         delimiters: ['[[', ']]'],
         setup() {
             // Dữ liệu danh sách giáo viên
             const danhSachGV = ref([
-                { ma: "GV001", hoTen: "Lâm Kiên", tenTKB: "KienL", monDay: "Tin học", lopDay: ["12A1", "12A2"] },
-                { ma: "GV002", hoTen: "Nguyễn Minh An", tenTKB: "AnNM", monDay: "Tin học", lopDay: ["10A1", "12C1"] }
+                { ma: "GV001", hoTen: "Lâm Kiên", tenTKB: "KienL", monDay: "Tin học, GDĐP", lopDay: "12A1, 12A2" },
+                { ma: "GV002", hoTen: "Nguyễn Minh An", tenTKB: "AnNM", monDay: "Toán, Trai nghiệp", lopDay: "10A1, 12C1" }
             ])
 
             // Quản lý trạng thái Modal Form
@@ -148,9 +138,7 @@
                 ma: '',
                 hoTen: '',
                 tenTKB: '',
-                monDay: '',
-                lopDayStr: '' // Chuỗi tạm để user nhập liệu "12A1, 12A2"
-            })
+              })
 
             // Hàm mở Modal để Thêm mới
             const openAddModal = () => {
@@ -169,8 +157,6 @@
                 form.ma = gv.ma
                 form.hoTen = gv.hoTen
                 form.tenTKB = gv.tenTKB
-                form.monDay = gv.monDay
-                form.lopDayStr = gv.lopDay.join(', ')
                 
                 showModal.value = true
             }
@@ -185,47 +171,84 @@
                 form.ma = ''
                 form.hoTen = ''
                 form.tenTKB = ''
-                form.monDay = ''
-                form.lopDayStr = ''
             }
-
+            const fetchGV = async () => {
+                try {
+                  let url = `/api/giaovien`
+                  const res = await fetch(url)
+                  if (res.ok) {
+                    danhSachGV.value = await res.json()
+                  } else {
+                    alert('Lỗi khi lấy dữ liệu!')
+                  }
+                } catch (err){
+                  console.error("Lỗi:",err)
+                }
+            }
+            onMounted(() => {
+              fetchGV()
+            })
             // Hàm Lưu (Dùng chung cho cả Thêm và Sửa)
-            const saveGV = () => {
+            const saveGV = async () => {
                 // Ràng buộc nhập liệu cơ bản
                 if(!form.ma || !form.hoTen || !form.tenTKB) {
                     alert('Vui lòng nhập các trường bắt buộc (*)')
                     return
                 }
-
-                // Xử lý chuỗi "12A1, 12A2" thành mảng ["12A1", "12A2"]
-                const mangLop = form.lopDayStr
-                    .split(',')
-                    .map(lop => lop.trim()) // Xóa dấu cách thừa
-                    .filter(lop => lop !== '') // Loại bỏ chuỗi rỗng
-
+                
                 const newData = {
                     ma: form.ma,
                     hoTen: form.hoTen,
                     tenTKB: form.tenTKB,
-                    monDay: form.monDay,
-                    lopDay: mangLop
                 }
-
-                if (isEdit.value) {
-                    // Cập nhật phần tử tại vị trí editIndex
-                    danhSachGV.value[editIndex.value] = newData
-                } else {
-                    // Thêm mới vào cuối mảng
-                    danhSachGV.value.push(newData)
+                try {
+                  let url = '/api/giaovien'
+                  const method = isEdit.value ? 'PUT' : 'POST'
+                  const res = await fetch(url, {
+                    method: method,
+                    headers: {
+                      'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(newData)
+                  })
+                  if (res.ok) {
+                    if (isEdit.value) {
+                      // Cập nhật phần tử tại vị trí editIndex
+                      danhSachGV.value[editIndex.value] = newData
+                    } else {
+                      // Thêm phần tử mới vào danh sách
+                      danhSachGV.value.push(newData)
+                    }
+                    closeModal()
+                  } else {
+                    alert('Lỗi khi lưu thông tin!')
+                  }
+                } catch (err){
+                  console.error("Lỗi:",err)
                 }
-
-                closeModal()
             }
 
             // Hàm Xóa Giáo Viên
-            const deleteGV = (index) => {
+            const deleteGV = async (index) => {
                 if(confirm('Bạn có chắc chắn muốn xóa dữ liệu giáo viên này?')) {
-                    danhSachGV.value.splice(index, 1) // Xóa 1 phần tử tại vị trí index
+                    const magv = danhSachGV.value[index].ma
+                    try {
+                      let url = `/api/giaovien/${magv}`
+                      let method = 'DELETE'
+                      const res = await fetch(url, {
+                        method: method,
+                        headers: {
+                          'Content-Type': 'application/json'
+                        }
+                      })
+                      if (res.ok) {
+                        danhSachGV.value.splice(index, 1) // Xóa 1 phần tử tại vị trí index
+                      } else {
+                        alert('Lỗi khi xóa thông tin!')
+                      }
+                    } catch (err){
+                      console.error("Lỗi:",err)
+                    }
                 }
             }
 
