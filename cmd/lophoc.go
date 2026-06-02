@@ -72,7 +72,7 @@ func (p *WebPage) SetPageLopHoc() {
 		p.mux.HandleFunc("POST /api/lophoc", func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
 			var lop LopHoc
-			err:= decoder := json.NewDecoder(r.Body).Decode(&lop)
+			err:= json.NewDecoder(r.Body).Decode(&lop)
 			if err != nil {
 				fmt.Println("Lối", err)
 				http.Error(w, "Lỗi decode: "+err.Error(), http.StatusInternalServerError)
