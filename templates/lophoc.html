@@ -1,67 +1,53 @@
 {{define "content"}}
-<div id="thong-tin-app" class="p-6 bg-gray-50 min-h-screen">
-    <div class="max-w-7xl mx-auto">
-        
-        <!-- Header & Nút Thêm mới -->
-        <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-            <h2 class="text-2xl font-bold text-gray-800">Danh Sách Lớp học</h2>
-            <div class="flex items-center gap-3">
-                <span class="text-sm bg-blue-100 text-blue-800 font-medium px-3 py-2 rounded-full border border-blue-200">
-                    Tổng: [[ danhSachLop.length ]]
-                </span>
-                <button @click="openAddModal" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg shadow-sm transition flex items-center gap-2">
-                    <!-- Icon Plus -->
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-                    Thêm lớp học
-                </button>
-            </div>
-        </div>
-        
-        <!-- Lưới thẻ thông tin -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div v-for="(lop, index) in danhSachLop" :key="lop.ma" 
-                 class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200 hover:shadow-md transition-shadow duration-300 flex flex-col">
-                
-                <!-- Head Thẻ -->
-                <div class="bg-blue-600 px-4 py-3 text-white flex justify-between items-center">
-                    <span class="text-xs font-semibold tracking-wider bg-blue-700 px-2 py-1 rounded uppercase">
-                        [[ lop.ma ]]
+<div id="thong-tin-app" class="p-6 bg-white min-h-screen">
+    <div class="max-w-7xl mx-auto bg-blue-100 rounded-lg shadow-md m-2">
+      <div class="flex justify-center items-center bg-blue-500 w-full rounded-lg align-middle">
+        <h1 class="text-2xl font-bold text-center text-white m-2">Danh sách lớp học</h1>
+      </div>
+      <div class = "mx-auto flex bg-blue-150 w-full rounded-lg m-2">
+          <table class="table-auto w-full text-sm text-left border-collapse border border-gray-100">
+            <thead class="bg-blue-500 text-white text-center font-bold w-full">
+              <tr>
+                  <th>Mã lớp học</th>
+                  <th>Tên lớp học</th>
+                  <th>Giáo viên chủ nhiệm</th>
+                  <th>Thao tác</th>
+              </tr>
+            </thead>
+            <tbody class="bg-blue-100 text-center">
+              <tr v-for="(lop, index) in danhSachLop" :key="lop.ma" class="border-b border-gray-300 hover:bg-blue-50 transition divide-x divide-gray-300">
+                  <td>[[ lop.ma ]]</td>
+                  <td>[[ lop.ten ]]</td>
+                  <td>[[ lop.gvcn ]]</td>
+                  <td>
+                    <button @click="openEditModal(index)" class="text-sm text-yellow-600 hover:text-yellow-800 bg-yellow-50 hover:bg-yellow-100 mx-1 px-6 py-1.5 rounded transition ">
+                      Sửa
+                    </button>
+                    <button @click="deleteLop(index)" class="text-sm text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 mx-1 px-6 py-1.5 rounded transition ">
+                      Xóa
+                    </button>
+                  </td>
+              </tr>
+            </tbody>
+            <tfoot class="bg-blue-100 text-center">
+              <tr>
+                <td colspan="4" class="text-center">
+                  <div class="flex items-center gap-3">
+                    <span class="text-sm bg-blue-100 text-blue-800 font-medium px-3 py-2 rounded-full border border-blue-200">
+                        Tổng: [[ danhSachLop.length ]]
                     </span>
-                    <div class="text-right">
-                        <span class="text-xs text-blue-100 block font-medium">Lớp học</span>
-                        <span class="text-sm font-bold tracking-wide">[[ lop.ten ]]</span>
-                    </div>
-                </div>
-                
-                <!-- Body Thẻ -->
-                <div class="p-5 flex-1">
-                    <div class="mb-4">
-                        <label class="text-xs text-gray-400 block font-medium uppercase tracking-wider mb-0.5">Tên lớp học</label>
-                        <p class="text-lg font-bold text-gray-800 tracking-wide">[[ lop.ten ]]</p>
-                    </div>
-                    <div>
-                        <label class="text-xs text-gray-400 block font-medium uppercase tracking-wider mb-0.5">Giáo viên chủ nhiệm</label>
-                        <p class="text-lg font-bold text-gray-800 tracking-wide">[[ lop.gvcn ]]</p>
-                    </div>
-                </div>
-                <!-- Footer Thẻ: Nút Sửa / Xóa -->
-                <div class="bg-gray-50 px-4 py-3 border-t border-gray-100 flex justify-end gap-2">
-                    <button @click="openEditModal(index)" class="text-sm text-yellow-600 hover:text-yellow-800 bg-yellow-50 hover:bg-yellow-100 px-3 py-1.5 rounded transition">
-                        Sửa
-                    </button>
-                    <button @click="deleteLop(index)" class="text-sm text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded transition">
-                        Xóa
-                    </button>
-                </div>
-            </div>
-            
-            <!-- Trạng thái trống -->
-            <div v-if="danhSachLop.length === 0" class="col-span-full text-center py-12 bg-white rounded-xl border border-dashed border-gray-300 text-gray-500">
-                Chưa có dữ liệu. Hãy thêm lớp học mới!
-            </div>
-        </div>
-    </div>
-
+                    <button @click="openAddModal" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg shadow-sm transition flex items-center gap-2">
+                      <!-- Icon Plus -->
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                      Thêm lớp học
+                      </button>
+                  </div>
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+       </div>
+       
     <!-- Modal Form (Thêm/Sửa) -->
     <div v-if="showModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
         <div class="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden">

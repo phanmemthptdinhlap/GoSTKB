@@ -1,81 +1,55 @@
 {{define "content"}}
 <div id="thong-tin-app" class="p-6 bg-gray-50 min-h-screen">
     <div class="max-w-7xl mx-auto">
-        
-        <!-- Header & Nút Thêm mới -->
-        <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-            <h2 class="text-2xl font-bold text-gray-800">Danh Sách Giáo Viên</h2>
-            <div class="flex items-center gap-3">
-                <span class="text-sm bg-blue-100 text-blue-800 font-medium px-3 py-2 rounded-full border border-blue-200">
-                    Tổng: [[ danhSachGV.length ]]
-                </span>
-                <button @click="openAddModal" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg shadow-sm transition flex items-center gap-2">
+    <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+        <div class="block w-full flex items-center gap-3">
+          <h2 class="text-2xl font-bold text-gray-800">Danh Sách Giáo Viên</h2>
+        </div>
+        <div class="flex items-center gap-3 w-full">
+          <table class="table-auto w-full">
+            <thead>
+              <tr>
+                <th class="px-4 py-2 text-left text-sm font-medium text-gray-900 whitespace-nowrap">Mã</th>
+                <th class="px-4 py-2 text-left text-sm font-medium text-gray-900 whitespace-nowrap">Tên TKB</th>
+                <th class="px-4 py-2 text-left text-sm font-medium text-gray-900 whitespace-nowrap">Họ và tên</th>
+                <th class="px-4 py-2 text-left text-sm font-medium text-gray-900 whitespace-nowrap">Môn dạy</th>
+                <th class="px-4 py-2 text-left text-sm font-medium text-gray-900 whitespace-nowrap">Lớp</th>
+                <th class="px-4 py-2 text-left text-sm font-medium text-gray-900 whitespace-nowrap">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(gv, index) in danhSachGV" :key="gv.ma" class="border-b border-gray-200 hover:bg-gray-100 transition-colors duration-300">
+                <td class="px-4 py-2 text-sm font-medium text-gray-900">[[ gv.ma ]]</td>
+                <td class="px-4 py-2 text-sm font-medium text-gray-900">[[ gv.tenTKB ]]</td>
+                <td class="px-4 py-2 text-sm font-medium text-gray-900">[[ gv.hoTen ]]</td>
+                <td class="px-4 py-2 text-sm font-medium text-gray-900">[[ gv.monDay ]]</td>
+                <td class="px-4 py-2 text-sm font-medium text-gray-900">[[ gv.lopDay ]]</td>
+                <td class="px-4 py-2 text-sm font-medium text-gray-900">
+                  <button @click="openEditModal(index)" class="text-sm text-yellow-600 hover:text-yellow-800 bg-yellow-50 hover:bg-yellow-100 px-3 py-1.5 rounded transition">
+                    Sửa
+                  </button>
+                  <button @click="deleteGV(index)" class="text-sm text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded transition">
+                    Xóa
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="7" class="px-4 py-2 text-sm font-medium text-gray-900 whitespace-nowrap">
+                  <button @click="openAddModal" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg shadow-sm transition flex items-center gap-2">
                     <!-- Icon Plus -->
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
                     Thêm Giáo Viên
-                </button>
-            </div>
+                  </button>
+                </td>
+              </tr> 
+            </tfoot>  
+          </table>
         </div>
+      </div>
         
-        <!-- Lưới thẻ thông tin -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div v-for="(gv, index) in danhSachGV" :key="gv.ma" 
-                 class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200 hover:shadow-md transition-shadow duration-300 flex flex-col">
-                
-                <!-- Head Thẻ -->
-                <div class="bg-blue-600 px-4 py-3 text-white flex justify-between items-center">
-                    <span class="text-xs font-semibold tracking-wider bg-blue-700 px-2 py-1 rounded uppercase">
-                        [[ gv.ma ]]
-                    </span>
-                    <div class="text-right">
-                        <span class="text-xs text-blue-100 block font-medium">TKB</span>
-                        <span class="text-sm font-bold tracking-wide">[[ gv.tenTKB ]]</span>
-                    </div>
-                </div>
-                
-                <!-- Body Thẻ -->
-                <div class="p-5 flex-1">
-                    <div class="mb-4">
-                        <label class="text-xs text-gray-400 block font-medium uppercase tracking-wider mb-0.5">Họ và tên</label>
-                        <p class="text-lg font-bold text-gray-800 tracking-wide">[[ gv.hoTen ]]</p>
-                    </div>
-                    
-                    <div class="grid grid-cols-2 gap-4 pt-3 border-t border-gray-100">
-                        <div>
-                            <label class="text-xs text-gray-400 block font-medium uppercase tracking-wider mb-1">Môn dạy</label>
-                            <span class="inline-block text-sm font-semibold text-blue-600 bg-blue-50 px-2.5 py-1 rounded border border-blue-100">
-                                [[ gv.monDay ]]
-                            </span>
-                        </div>
-                        <div>
-                            <label class="text-xs text-gray-400 block font-medium uppercase tracking-wider mb-1">Lớp</label>
-                            <div class="flex flex-wrap gap-1">
-                                <span class="text-xs bg-gray-100 text-gray-700 font-medium px-2 py-0.5 rounded border border-gray-200">
-                                    [[ gv.lopDay ]]
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Footer Thẻ: Nút Sửa / Xóa -->
-                <div class="bg-gray-50 px-4 py-3 border-t border-gray-100 flex justify-end gap-2">
-                    <button @click="openEditModal(index)" class="text-sm text-yellow-600 hover:text-yellow-800 bg-yellow-50 hover:bg-yellow-100 px-3 py-1.5 rounded transition">
-                        Sửa
-                    </button>
-                    <button @click="deleteGV(index)" class="text-sm text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded transition">
-                        Xóa
-                    </button>
-                </div>
-            </div>
-            
-            <!-- Trạng thái trống -->
-            <div v-if="danhSachGV.length === 0" class="col-span-full text-center py-12 bg-white rounded-xl border border-dashed border-gray-300 text-gray-500">
-                Chưa có dữ liệu. Hãy thêm giáo viên mới!
-            </div>
-        </div>
-    </div>
-
+    
     <!-- Modal Form (Thêm/Sửa) -->
     <div v-if="showModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
         <div class="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden">
