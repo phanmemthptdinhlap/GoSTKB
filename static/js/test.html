@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>GoSTKB</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+</head>
+<body>
+<div id="app">
+  <table-view 
+    :item-labels="columns" 
+    :item-datas="rows"
+    :show-button="true"
+    @update-item="handleUpdateItem"
+    @delete-ttem="handleDeleteItem"
+  ></table-view>
+</div>
+<script src="tableview.js"></script>
+<script>
+    const app = Vue.createApp({
+        data() {
+            return {
+                columns: [
+                    { title: 'Name', key: 'name' },
+                    { title: 'Age', key: 'age' },
+                    { title: 'Address', key: 'address' }
+                ],
+                rows: [
+                    { name: 'John', age: 20, address: 'New York' },
+                    { name: 'Jane', age: 18, address: 'London' },
+                    { name: 'Tom', age: 22, address: 'Paris' }
+                ]
+            }
+        },
+        methods: {
+            handleUpdateItem(item) {
+                // Nhận item mới, tìm theo tên và sửa/thêm
+                const index = this.rows.findIndex(row => row.name === item.name)
+                if (index !== -1) {
+                    this.rows[index] = item
+                } else {
+                    this.rows.push(item)
+                }
+            },
+            handleDeleteItem(index) {
+                // Đã sửa: Chỉ nhận vào đúng 'index' (con số) từ con gửi lên
+                this.rows.splice(index, 1)
+            }
+        } 
+    })
+    app.component('table-view', TableView)
+    app.config.compilerOptions.delimiters = ['[[', ']]'];
+    app.mount('#app')
+</script>
+</body>
+</html>
