@@ -9,13 +9,13 @@ const TableView ={
         <table class="tv-table">
           <thead class="tv-table-header">
             <tr>
-              <th v-for="label in itemsLabel" :key="label.key" > {{ label.label }} </th>
+              <th v-for="label in labels" :key="label.key" > {{ label.label }} </th>
               <th v-if="showAction">Thao tác</th>
             </tr>
           </thead>
           <tbody class="tv-table-body">
-            <tr v-for="(item,index) in itemsData" :key="index">
-              <td v-for="label in itemsLabel" :key="label.key" > {{ item[label.key] }} </td>
+            <tr v-for="(item,index) in datas" :key="index">
+              <td v-for="label in labels" :key="label.key" > {{ item[label.key] }} </td>
               <td v-if="showAction" class="tv-table-cell-edit-button" >
                 <button class="tv-button tv-button-edit" @click="openEditModal(index)">
                   <span class="tv-button-text">Sửa</span>
@@ -30,7 +30,7 @@ const TableView ={
             <tr>
               <td colspan="100%" style="padding: 8px;">
                 <div class="tv-pagination">
-                  <span class="tv-pagination-text">Tổng số: {{ itemsData.length }} </span>
+                  <span class="tv-pagination-text">Tổng số: {{ datas.length }} </span>
                   <button class="tv-pagination-button" @click="openAddModal">Thêm mới</button>
                 </div>
               </td>
@@ -41,65 +41,33 @@ const TableView ={
       <div class="tv-footer">
         <div class="tv-footer-text"> {{ footer }} </div>
       </div>
-    </div>
-  <div class="modal" v-if="showModal" >
-      <div class="modal-header">
-        <div class="modal-title"> {{ isEdit? 'Sửa thông tin' : 'Thêm mới' }} {{ modalTitle }} </div>
-      </div>
-
-      <div class="modal-body">
-        <div class="modal-form">
-          <div v-for="(label,index) in itemsLabel" :key="label.key" class="modal-item" >
-            <label class="modal-item-label" style="display:inline-block; width: 80px;"> {{ label.label }}: </label>
-            <input class="modal-item-input" type="text" v-model="modalItem[label.key] ">
-          </div>
-        </div>
-        <div class="modal-button">
-          <button class="modal-button modal-button-save" @click="saveModal">Lưu</button>
-          <button class="modal-button modal-button-cancel" @click="closeModal">Hủy</button>
-        </div>
-      </div>
-    </div>
-    `,
+  </div>
+  `,
   props: {
     title: { type: String, default: 'Danh sách' },
     subtitle: { type: String, default: '' },
     footer: { type: String, default: '' },
-    itemsLabel: { type: Array, default: () => [] },
-    itemsData: { type: Array, default: () => [] },
+    labels: { type: Array, default: () => [] },
+    datas: { type: Array, default: () => [] },
     showAction: { type: Boolean, default: false },
   },
-  data(){
-    return {
-      showModal: false,
-      isEdit: false,
-      modalItem: {},
-      modalTitle: '',
-    }
-  },
-  methods: {
-    openEditModal(index){
-      this.isEdit = true;
-      this.modalItem = {...this.itemsData[index]};
-      this.modalTitle = this.title;
-      this.showModal = true;
-    },
-    openAddModal(){
-      this.isEdit = false;
-      this.modalItem = {};
-      this.modalTitle = this.title;
-      this.showModal = true;
-    },
-    closeModal(){
-      this.showModal = false;
-    },
-    saveModal(){
-      this.$emit('updateItem', this.modalItem);
-      this.closeModal();
-    },
-    deleteItem(index){
+  emits: ['addItem', 'updateItem', 'deleteItem'],
+  setup(props, context){
+    const openEditModal = (index) => {
+      context.emit('updateItem', props.datas[index]);
+    };
+    const openAddModal = () => {
+      context.emit('addItem');
+    };
+    const deleteItem = (index) => {
       if(confirm('Bạn có chắc muốn xóa?'))
-        this.$emit('deleteItem', index);
-    }
-  }
+        context.emit('deleteItem', index);
+    };
+    return {
+      openEditModal,
+      openAddModal,
+      deleteItem,
+    };
+  },
 };
+

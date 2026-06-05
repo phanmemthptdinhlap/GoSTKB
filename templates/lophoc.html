@@ -1,44 +1,112 @@
 {{define "content"}}
+<script src="/static/js/tableview.js"></script>
+<script src="/static/js/modalview.js"></script>
 <div id = "app">
   <table-view 
      :title="title"
-     :items-label="itemsLabel"
-     :items-data="itemsData"
+     :subtitle="subTitle"
+     :labels="labels"
+     :datas="datas"
      :show-action="showAction"
+     @add-item="handleAddItems"
      @update-item="handleUpdateItems"
      @delete-item="handleDeleteItems"
     ></table-view>
+  <modal-view
+      ref="form"
+      :labels="labels"
+      @save-data="handleSaveData"
+    ></modal-view>
 </div>
-<script src="/static/js/tableview.js"></script>
 <script>
+  const {ref, onMounted, reactive} = Vue
   const app = Vue.createApp({
-    delimiters: ['[[', ']]'],
-    data() {
-      return {
-        title: 'Danh sách lớp học',
-        itemsLabel: [
-          {label: 'Name', key: 'name'},
-          {label: 'Age', key: 'age'},
-          {label: 'Address', key: 'address'},
-        ],
-        itemsData: [
-          {name: 'John', age: 20, address: 'New York'},
-          {name: 'Joe', age: 30, address: 'Paris'},
-          {name: 'Jane', age: 25, address: 'London'},
-        ],
-        showAction: true,
+    components: { TableView, ModalView },
+    setup() {
+      // Khai báo các thông số cần thiết cho table-view
+      const title = ref('Danh sách lớp học')
+      const subTitle = ref('Danh sách lớp học')
+      const labels = ref([
+        {label: 'Mã lớp học', key: 'ma'},
+        {label: 'Tên lớp học', key: 'ten'},
+        {label: 'GVCN', key: 'gvcn'},
+      ])
+      const datas = ref([])
+      const showAction = ref(true)
+      const isEdit = ref(false)
+      const handleAddItems = () => {
+        form.value.openAddModal('Thêm mới dữ liệu')
+        isEdit.value = false
       }
-    },
-    methods: {
-      handleUpdateItems(items) {
-        console.log(items)
-      },
-      handleDeleteItems(items) {
-        console.log(items)
-      },
-    },
+      const handleUpdateItems = (editData) => {
+        form.value.openEditModal(editData, 'Sửa dữ liệu')
+        isEdit.value = true
+      }
+      const handleDeleteItems = (index) => {
+        alert('Xóa dữ liệu' + index)
+      }
+      // Khai báo các thông số cần thiết cho modal-view
+      const form = ref(null)
+      const handleSaveData = async (data,callback) => {
+        if (!data.ma||!data.ten||!data.gvcn) {
+          if (callback) callback({success:false, message:'Mã lớp học, tên lớp học, GVCN không được bỏ trống'});
+          return
+        }
+        const newData = {
+          ma: data.ma,
+          ten: data.ten,
+          gvcn: data.gvcn,
+        }
+        try {
+          const response = await fetch('/api/lophoc', {
+            method: isEdit.value ? 'PUT' : 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(newData),
+          })
+          if (response.ok) {
+            if (callback) callback({success:true, message: isEdit.value ? 'Cập nhật thành công' : 'Thêm thành công'})
+            fetchData()
+          } else {
+            if (callback) callback({success:false, message: 'Không thể kết nối tới server'})
+          }
+        } catch (error) {
+          if (callback) callback({success:false, message: error.message})
+        }
+        isEdit.value = false
+        form.value.closeModal()
+      }
+      const fetchData = async () => {
+        try {
+          const response = await fetch('/api/lophoc')
+          if (response.ok) {
+            const data = await response.json()
+            datas.value = data
+          } else {
+            alert('Không thể kết nối tới server')
+          }
+        } catch (error) {
+          alert('Không thể kết nối tới server', error)
+        }
+      }
+      onMounted(() => {
+        fetchData()
+      })
+      return {
+        form,
+        title,
+        subTitle,
+        labels,
+        datas,
+        showAction,
+        handleAddItems,
+        handleUpdateItems,
+        handleDeleteItems,
+        handleSaveData,
+      }
+    }
   })
-  app.component('table-view', TableView)
   app.mount('#app')
 </script>
 {{end}}
