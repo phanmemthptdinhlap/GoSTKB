@@ -9,6 +9,10 @@ type WebPage struct {
     Title   		string
 		mux     		*http.ServeMux
 }
+func (p *WebPage) SetStaticFile() {
+		ps:=http.FileServer(http.Dir("./static"))
+    p.mux.Handle("/static/", http.StripPrefix("/static/", ps))
+}
 
 func (p *WebPage) init(mux *http.ServeMux) {
     p.mux = mux
@@ -18,6 +22,7 @@ func (p *WebPage) init(mux *http.ServeMux) {
 		p.SetPageMonHoc()
 		p.SetPagePhanCong()
 		p.SetPageThongTin()
+		p.SetStaticFile()
 	}
 
 // Khai báo biến toàn cục

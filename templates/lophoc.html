@@ -1,235 +1,44 @@
 {{define "content"}}
-<div id="thong-tin-app" class="p-6 bg-white min-h-screen">
-    <div class="max-w-7xl mx-auto bg-blue-100 rounded-lg shadow-md m-2">
-      <div class="flex justify-center items-center bg-blue-500 w-full rounded-lg align-middle">
-        <h1 class="text-2xl font-bold text-center text-white m-2">Danh sách lớp học</h1>
-      </div>
-      <div class = "mx-auto flex bg-blue-150 w-full rounded-lg m-2">
-          <table class="table-auto w-full text-sm text-left border-collapse border border-gray-100">
-            <thead class="bg-blue-500 text-white text-center font-bold w-full">
-              <tr>
-                  <th>Mã lớp học</th>
-                  <th>Tên lớp học</th>
-                  <th>Giáo viên chủ nhiệm</th>
-                  <th>Thao tác</th>
-              </tr>
-            </thead>
-            <tbody class="bg-blue-100 text-center">
-              <tr v-for="(lop, index) in danhSachLop" :key="lop.ma" class="border-b border-gray-300 hover:bg-blue-50 transition divide-x divide-gray-300">
-                  <td>[[ lop.ma ]]</td>
-                  <td>[[ lop.ten ]]</td>
-                  <td>[[ lop.gvcn ]]</td>
-                  <td>
-                    <button @click="openEditModal(index)" class="text-sm text-yellow-600 hover:text-yellow-800 bg-yellow-50 hover:bg-yellow-100 mx-1 px-6 py-1.5 rounded transition ">
-                      Sửa
-                    </button>
-                    <button @click="deleteLop(index)" class="text-sm text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 mx-1 px-6 py-1.5 rounded transition ">
-                      Xóa
-                    </button>
-                  </td>
-              </tr>
-            </tbody>
-            <tfoot class="bg-blue-100 text-center">
-              <tr>
-                <td colspan="4" class="text-center">
-                  <div class="flex items-center gap-3">
-                    <span class="text-sm bg-blue-100 text-blue-800 font-medium px-3 py-2 rounded-full border border-blue-200">
-                        Tổng: [[ danhSachLop.length ]]
-                    </span>
-                    <button @click="openAddModal" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg shadow-sm transition flex items-center gap-2">
-                      <!-- Icon Plus -->
-                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-                      Thêm lớp học
-                      </button>
-                  </div>
-                </td>
-              </tr>
-            </tfoot>
-          </table>
-       </div>
-       
-    <!-- Modal Form (Thêm/Sửa) -->
-    <div v-if="showModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden">
-            <!-- Header Modal -->
-            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                <h3 class="text-lg font-bold text-gray-800">
-                    [[ isEdit ? 'Sửa thông tin Lớp học' : 'Thêm Lớp học mới' ]]
-                </h3>
-                <button @click="closeModal" class="text-gray-400 hover:text-gray-600 font-bold text-xl">&times;</button>
-            </div>
-            
-            <!-- Body Modal (Form) -->
-            <div class="p-6 space-y-4">
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Mã Lớp học *</label>
-                        <input v-model="form.ma" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="VD: 1">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Tên lớp học *</label>
-                        <input v-model="form.ten" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="VD: Tên lớp">
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Giáo viên chủ nhiệm *</label>
-                    <input v-model="form.gvcn" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="VD: Lâm Kiên">
-                </div>
-            </div>
-            
-            <!-- Footer Modal -->
-            <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
-                <button @click="closeModal" class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition">Hủy</button>
-                <button @click="saveLop" class="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 transition">
-                    [[ isEdit ? 'Cập nhật' : 'Lưu dữ liệu' ]]
-                </button>
-            </div>
-        </div>
-    </div>
+<div id = "app">
+  <table-view 
+     :title="title"
+     :items-label="itemsLabel"
+     :items-data="itemsData"
+     :show-action="showAction"
+     @update-item="handleUpdateItems"
+     @delete-item="handleDeleteItems"
+    ></table-view>
 </div>
-<!-- Script -->
+<script src="/static/js/tableview.js"></script>
 <script>
-    const { createApp, ref, reactive,onMounted } = Vue
-
-    createApp({
-        delimiters: ['[[', ']]'],
-        setup() {
-            // Dữ liệu danh sách lớp học
-            const danhSachLop = ref([
-                { ma: "1", ten: "12A1", gvcn: "Lâm Kiên" },
-                { ma: "2", ten: "12A2", gvcn: "Nguyễn Minh An" }
-            ])
-
-            // Quản lý trạng thái Modal Form
-            const showModal = ref(false)
-            const isEdit = ref(false)
-            const editIndex = ref(-1)
-
-            // Object lưu trữ dữ liệu của Form
-            const form = reactive({
-                ma: '',
-                ten: '',
-                gvcn: '',
-              })
-
-            // Hàm mở Modal để Thêm mới
-            const openAddModal = () => {
-                isEdit.value = false
-                resetForm()
-                showModal.value = true
-            }
-
-            // Hàm mở Modal để Sửa thông tin
-            const openEditModal = (index) => {
-                isEdit.value = true
-                editIndex.value = index
-                const lop = danhSachLop.value[index]
-                
-                // Đổ dữ liệu vào form, nối mảng lớp thành chuỗi để hiển thị vào input
-                form.ma = lop.ma
-                form.ten = lop.ten
-                form.gvcn = lop.gvcn
-                
-                showModal.value = true
-            }
-
-            // Hàm đóng Modal
-            const closeModal = () => {
-                showModal.value = false
-            }
-
-            // Hàm Reset Form
-            const resetForm = () => {
-                form.ma = ''
-                form.ten = ''
-                form.gvcn = ''
-            }
-            const fetchLop = async () => {
-                try {
-                  let url = `/api/lophoc`
-                  const res = await fetch(url)
-                  if (res.ok) {
-                    danhSachLop.value = await res.json()
-                  } else {
-                    alert('Lỗi khi lấy dữ liệu!')
-                  }
-                } catch (err){
-                  console.error("Lỗi:",err)
-                }
-            }
-            onMounted(() => {
-              fetchLop()
-            })
-            // Hàm Lưu (Dùng chung cho cả Thêm và Sửa)
-            const saveLop = async () => {
-                // Ràng buộc nhập liệu cơ bản
-                if(!form.ma || !form.ten || !form.gvcn) {
-                    alert('Vui lòng nhập các trường bắt buộc (*)')
-                    return
-                }
-                
-                const newData = {
-                    ma: form.ma,
-                    ten: form.ten,
-                    gvcn: form.gvcn,
-                }
-                try {
-                  let url = '/api/lophoc'
-                  const method = isEdit.value ? 'PUT' : 'POST'
-                  const res = await fetch(url, {
-                    method: method,
-                    headers: {
-                      'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(newData)
-                  })
-                  if (res.ok) {
-                    if (isEdit.value) {
-                      // Cập nhật phần tử tại vị trí editIndex
-                      danhSachLop.value[editIndex.value] = newData
-                    } else {
-                      // Thêm phần tử mới vào danh sách
-                      danhSachLop.value.push(newData)
-                    }
-                    closeModal()
-                  } else {
-                    alert('Lỗi khi lưu thông tin!')
-                  }
-                } catch (err){
-                  console.error("Lỗi:",err)
-                }
-            }
-
-            // Hàm Xóa Lớp học
-            const deleteLop = async (index) => {
-                if(confirm('Bạn có chắc chắn muốn xóa dữ liệu giáo viên này?')) {
-                    const malop = danhSachLop.value[index].ma
-                    try {
-                      let url = `/api/lophoc/${malop}`
-                      let method = 'DELETE'
-                      const res = await fetch(url, {
-                        method: method,
-                        headers: {
-                          'Content-Type': 'application/json'
-                        }
-                      })
-                      if (res.ok) {
-                        danhSachLop.value.splice(index, 1) // Xóa 1 phần tử tại vị trí index
-                      } else {
-                        alert('Lỗi khi xóa thông tin!')
-                      }
-                    } catch (err){
-                      console.error("Lỗi:",err)
-                    }
-                }
-            }
-
-            return {
-                danhSachLop,
-                showModal, isEdit, form,
-                openAddModal, openEditModal, closeModal, saveLop, deleteLop
-            }
-        }
-    }).mount('#thong-tin-app')
+  const app = Vue.createApp({
+    delimiters: ['[[', ']]'],
+    data() {
+      return {
+        title: 'Danh sách lớp học',
+        itemsLabel: [
+          {label: 'Name', key: 'name'},
+          {label: 'Age', key: 'age'},
+          {label: 'Address', key: 'address'},
+        ],
+        itemsData: [
+          {name: 'John', age: 20, address: 'New York'},
+          {name: 'Joe', age: 30, address: 'Paris'},
+          {name: 'Jane', age: 25, address: 'London'},
+        ],
+        showAction: true,
+      }
+    },
+    methods: {
+      handleUpdateItems(items) {
+        console.log(items)
+      },
+      handleDeleteItems(items) {
+        console.log(items)
+      },
+    },
+  })
+  app.component('table-view', TableView)
+  app.mount('#app')
 </script>
 {{end}}
