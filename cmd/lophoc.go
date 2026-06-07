@@ -33,8 +33,10 @@ func deleteLopHoc(ma string) []LopHoc {
 	return lop_test
 }
 func updateLopHoc(lop LopHoc) []LopHoc {
+	fmt.Println("Cập nhât lớp học", lop)
 	for i, v := range lop_test {
 		if v.Ma == lop.Ma {
+			fmt.Println("Cập nhât lớp học", lop.Ma)
 			lop_test[i] = lop
 		}
 	}
@@ -46,9 +48,9 @@ func (p *WebPage) SetPageLopHoc() {
 			// Lưu ý: Đường dẫn tính từ nơi bạn chạy lệnh "go run"
 			tmpl, err := template.ParseFiles("templates/lophoc.html", "templates/base.html")
 			if err != nil {
-				panic(err)
-				http.Error(w, "Lỗi tải giao diện: "+err.Error(), http.StatusInternalServerError)
-				return
+				fmt.Println("Lỗi parse template: ", err)
+				http.Error(w, "Lỗi parse template: "+err.Error(), http.StatusInternalServerError)
+				return  
 			}
 
 			// 2. Chuẩn bị dữ liệu muốn truyền ra HTML
@@ -61,7 +63,7 @@ func (p *WebPage) SetPageLopHoc() {
 			// 3. Thực thi template có tên là "base" và truyền data vào
 			err = tmpl.ExecuteTemplate(w, "base", data)
 			if err != nil {
-				panic(err)
+				fmt.Println("Lỗi render: ", err)
 				http.Error(w, "Lỗi render: "+err.Error(), http.StatusInternalServerError)
 			}
 		})
@@ -79,6 +81,18 @@ func (p *WebPage) SetPageLopHoc() {
 				return
 			}
 			json.NewEncoder(w).Encode(addLopHoc(lop))
+		})
+		p.mux.HandleFunc("PUT /api/lophoc", func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Println("Tiếp nhận cập nhât lớp học")
+			var lop LopHoc
+			err:= json.NewDecoder(r.Body).Decode(&lop)
+			if err != nil {
+				fmt.Println("Lối", err)
+				http.Error(w, "Lỗi decode: "+err.Error(), http.StatusInternalServerError)
+				return
+			}
+			json.NewEncoder(w).Encode(updateLopHoc(lop))
 		})
 		p.mux.HandleFunc("DELETE /api/lophoc/{ma}", func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")

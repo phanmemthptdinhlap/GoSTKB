@@ -42,8 +42,18 @@
         form.value.openEditModal(editData, 'Sửa dữ liệu')
         isEdit.value = true
       }
-      const handleDeleteItems = (index) => {
-        alert('Xóa dữ liệu' + index)
+      const handleDeleteItems = async (index) => {
+        const response = await fetch('/api/lophoc/'+datas.value[index].ma, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        })
+        if (response.ok) {
+          datas.value.splice(index, 1)
+        } else {
+          footer.value='Lỗi xóa dữ liệu'
+        } 
       }
       // Khai báo các thông số cần thiết cho modal-view
       const form = ref(null)
@@ -76,6 +86,7 @@
         }
         isEdit.value = false
         form.value.closeModal()
+        fetchData()
       }
       const fetchData = async () => {
         try {
