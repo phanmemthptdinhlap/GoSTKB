@@ -1,48 +1,49 @@
 const TableView ={
   template: `
-  <div class="tv-main">
-      <div class="tv-header">
-        <div class="tv-title"> {{ title }} </div>
-        <div class="tv-subtitle"> {{ subtitle }} </div>
+  <div :class="theme.tv_main">
+      <div :class="theme.tv_header">
+        <div :class="theme.tv_title"> {{ title }} </div>
+        <div :class="theme.tv_subtitle"> {{ subtitle }} </div>
       </div>
-      <div class="tv-body">
-        <table class="tv-table">
-          <thead class="tv-table-header">
+      <div :class="theme.tv_body">
+        <table :class="theme.tv_table">
+          <thead :class="theme.tv_table_header">
             <tr>
               <th v-for="label in labels" :key="label.key" > {{ label.label }} </th>
               <th v-if="showAction">Thao tác</th>
             </tr>
           </thead>
-          <tbody class="tv-table-body">
+          <tbody :class="theme.tv_table_body">
             <tr v-for="(item,index) in datas" :key="index">
               <td v-for="label in labels" :key="label.key" > {{ item[label.key] }} </td>
-              <td v-if="showAction" class="tv-table-cell-edit-button" >
-                <button class="tv-button tv-button-edit" @click="openEditModal(index)">
-                  <span class="tv-button-text">Sửa</span>
+              <td v-if="showAction" :class="theme.tv_table_cell_edit_button" >
+                <button :class="[theme.tv_button, theme.tv_button_edit]" @click="openEditModal(index)">
+                  <span :class="theme.tv_button_text">Sửa</span>
                 </button>
-                <button class="tv-button tv-button-delete" @click="deleteItem(index)">
-                  <span class="tv-button-text">Xóa</span>
+                <button :class="[theme.tv_button, theme.tv_button_delete]" @click="deleteItem(index)">
+                  <span :class="theme.tv_button_text">Xóa</span>
                 </button>
               </td>
             </tr>
           </tbody>
-          <tfoot class="tv-table-footer">
+          <tfoot :class="theme.tv_table_footer">
             <tr>
               <td colspan="100%" style="padding: 8px;">
-                <div class="tv-pagination">
-                  <span class="tv-pagination-text">Tổng số: {{ datas.length }} </span>
-                  <button class="tv-pagination-button" @click="openAddModal">Thêm mới</button>
+                <div :class="theme.tv_pagination">
+                  <span :class="theme.tv_pagination_text">Tổng số: {{ datas.length }} </span>
+                  <button :class="theme.tv_pagination_button" @click="openAddModal">Thêm mới</button>
                 </div>
               </td>
             </tr>
           </tfoot>
         </table>
       </div>
-      <div class="tv-footer">
-        <div class="tv-footer-text"> {{ footer }} </div>
+      <div :class="theme.tv_footer">
+        <div :class="theme.tv_footer_text"> {{ footer }} </div>
       </div>
   </div>
   `,
+  // ... (Giữ nguyên phần props, emits và setup của bạn)
   props: {
     title: { type: String, default: 'Danh sách' },
     subtitle: { type: String, default: '' },
@@ -64,10 +65,10 @@ const TableView ={
         context.emit('deleteItem', index);
     };
     return {
+      theme: AppTheme,
       openEditModal,
       openAddModal,
       deleteItem,
     };
   },
 };
-
