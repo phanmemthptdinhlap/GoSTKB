@@ -27,8 +27,8 @@ const AppTheme = {
   tv_footer_text: "text-sm",
   // Phần Modal
   modal: "fixed inset-0 flex justify-center items-center bg-black/30 backdrop-blur-sm",
-  modal_container: "bg-blue-200 max-w-md rounded-2xl shadow-2xl flex-col overflow-hidden m-4 p-4 ",
-  modal_header: "flex flex-row justify-between items-center w-full h-16 bg-gray-100 border-b border-gray-200",
+  modal_container: "bg-blue-200 max-w-md rounded-2xl shadow-2xl flex-col overflow-hidden",
+  modal_header: "flex flex-row justify-center items-center w-full h-16 bg-gray-100 border-b border-gray-200",
   modal_title: "text-2xl font-bold text-center",
   modal_body: "flex flex-col w-full h-full",
   modal_form: "flex flex-col w-full h-full",
