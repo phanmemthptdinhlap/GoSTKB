@@ -7,15 +7,15 @@
 </head>
 <body>
 <div id="app">
-  <table-view 
-    :item-labels="columns" 
-    :item-datas="rows"
-    :show-button="true"
-    @update-item="handleUpdateItem"
-    @delete-ttem="handleDeleteItem"
-  ></table-view>
+  <dataview 
+    :title="'Danh sách'"  
+    :labels="columns" 
+    :datas="rows"
+    @syncData="handleUpdateItem"
+    @deleteData="handleDeleteItem"
+  ></dataview>
 </div>
-<script src="tableview.js"></script>
+<script src="dataview.js"></script>
 <script>
     const app = Vue.createApp({
         data() {
@@ -48,7 +48,7 @@
             }
         } 
     })
-    app.component('table-view', TableView)
+    app.component('dataview', DataView)
     app.config.compilerOptions.delimiters = ['[[', ']]'];
     app.mount('#app')
 </script>
