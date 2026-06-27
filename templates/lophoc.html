@@ -1,7 +1,7 @@
 {{define "content"}}
-<script src="/static/tableview.js"></script>
-<script src="/static/modalview.js"></script>
+<script src="/static/datasheet.js"></script>
 <div id = "app">
+  <h1>Danh sách lớp học</h1>
   <table-view 
      :title="title"
      :subtitle="subTitle"
@@ -21,43 +21,17 @@
 <script>
   const {ref, onMounted, reactive} = Vue
   const app = Vue.createApp({
-    components: { TableView, ModalView },
+    components: { DataSheet},
     setup() {
       // Khai báo các thông số cần thiết cho table-view
       const title = ref('Danh sách lớp học')
-      const subTitle = ref('Danh sách lớp học')
       const labels = ref([
         {label: 'Mã lớp học', key: 'ma'},
         {label: 'Tên lớp học', key: 'ten'},
         {label: 'GVCN', key: 'gvcn'},
       ])
       const datas = ref([])
-      const showAction = ref(true)
-      const isEdit = ref(false)
-      const handleAddItems = () => {
-        form.value.openAddModal('Thêm mới dữ liệu')
-        isEdit.value = false
-      }
-      const handleUpdateItems = (editData) => {
-        form.value.openEditModal(editData, 'Sửa dữ liệu')
-        isEdit.value = true
-      }
-      const handleDeleteItems = async (index) => {
-        const response = await fetch('/api/lophoc/'+datas.value[index].ma, {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        })
-        if (response.ok) {
-          datas.value.splice(index, 1)
-        } else {
-          footer.value='Lỗi xóa dữ liệu'
-        } 
-      }
-      // Khai báo các thông số cần thiết cho modal-view
-      const form = ref(null)
-      const handleSaveData = async (data,callback) => {
+      const syncData = async (data,callback) => {
         if (!data.ma||!data.ten||!data.gvcn) {
           if (callback) callback({success:false, message:'Mã lớp học, tên lớp học, GVCN không được bỏ trống'});
           return
