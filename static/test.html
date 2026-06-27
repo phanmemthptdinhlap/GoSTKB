@@ -1,56 +1,72 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
-    <meta charset="utf-8">
-    <title>GoSTKB</title>
+    <meta charset="UTF-8">
+    <title>Quản lý Thời khóa biểu</title>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
 </head>
 <body>
-<div id="app">
-  <dataview 
-    :title="'Danh sách'"  
-    :labels="columns" 
-    :datas="rows"
-    @syncData="handleUpdateItem"
-    @deleteData="handleDeleteItem"
-  ></dataview>
-</div>
-<script src="dataview.js"></script>
-<script>
-    const app = Vue.createApp({
-        data() {
-            return {
-                columns: [
-                    { title: 'Name', key: 'name' },
-                    { title: 'Age', key: 'age' },
-                    { title: 'Address', key: 'address' }
-                ],
-                rows: [
-                    { name: 'John', age: 20, address: 'New York' },
-                    { name: 'Jane', age: 18, address: 'London' },
-                    { name: 'Tom', age: 22, address: 'Paris' }
-                ]
+    <div id="app">
+        <h1>Quản lý Thời khóa biểu</h1>
+        
+        <generic-datasheet 
+            :labels="scheduleColumns" 
+            :datas="scheduleData" 
+            @sync="handleSyncToServer">
+        </generic-datasheet>
+    </div>
+
+    <script src="datasheet.js"></script>
+
+    <script>
+        const { createApp, ref } = Vue;
+
+        const app = createApp({
+            setup() {
+                // Cấu hình các cột (labels) [cite: 5, 10]
+                const scheduleColumns = ref([
+                    { key: 'subject', title: 'Tên Môn Học', type: 'text' },
+                    { key: 'teacher', title: 'Giáo viên', type: 'text' },
+                    { key: 'date', title: 'Ngày học', type: 'date' },
+                    { key: 'time', title: 'Thời gian', type: 'time' }
+                ]);
+
+                // Dữ liệu mô phỏng (Sau này lấy từ Golang Server qua Fetch API) [cite: 6]
+                const scheduleData = ref([
+                    { id: 1, subject: 'Toán cao cấp', teacher: 'Nguyễn Văn A', date: '2026-06-28', time: '07:30' },
+                    { id: 2, subject: 'Lập trình Go', teacher: 'Trần Thị B', date: '2026-06-29', time: '09:00' }
+                ]);
+
+                // Hàm xử lý đồng bộ [cite: 14]
+                const handleSyncToServer = (updatedData) => {
+                    console.log('Dữ liệu gửi lên Golang:', updatedData);
+                    // Dùng fetch() gửi lên server Go ở đây
+                    /*
+                    fetch('/api/sync-schedule', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(updatedData)
+                    })
+                    .then(res => res.json())
+                    .then(data => alert('Đồng bộ thành công!'))
+                    .catch(err => console.error('Lỗi:', err));
+                    */
+                    alert('Kiểm tra console để xem dữ liệu chuẩn bị gửi!');
+                };
+
+                return {
+                    scheduleColumns,
+                    scheduleData,
+                    handleSyncToServer
+                };
             }
-        },
-        methods: {
-            handleUpdateItem(item) {
-                // Nhận item mới, tìm theo tên và sửa/thêm
-                const index = this.rows.findIndex(row => row.name === item.name)
-                if (index !== -1) {
-                    this.rows[index] = item
-                } else {
-                    this.rows.push(item)
-                }
-            },
-            handleDeleteItem(index) {
-                // Đã sửa: Chỉ nhận vào đúng 'index' (con số) từ con gửi lên
-                this.rows.splice(index, 1)
-            }
-        } 
-    })
-    app.component('dataview', DataView)
-    app.config.compilerOptions.delimiters = ['[[', ']]'];
-    app.mount('#app')
-</script>
+        });
+
+        // Đăng ký component toàn cục để dùng trong HTML
+        app.component('generic-datasheet', DataSheet);
+
+        // Chạy ứng dụng
+        app.mount('#app');
+    </script>
 </body>
 </html>
