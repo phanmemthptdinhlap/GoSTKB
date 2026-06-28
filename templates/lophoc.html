@@ -1,88 +1,52 @@
 {{define "content"}}
-<script src="/static/datasheet.js"></script>
 <div id = "app">
   <h1>Danh sách lớp học</h1>
   <datasheet
       :labels="labels"
       :datas="datas"
-      @sync="syncData"
-  ></datasheet>
+      @sync="syncData">
+  </datasheet>
 </div>
+<script src="static/datasheet.js"></script>
 <script>
-  const {ref, onMounted, reactive} = Vue
-  const app = Vue.createApp({
-    components: { DataSheet},
+  const { createApp, ref } = Vue;
+  const app = createApp({
     setup() {
-      // Khai báo các thông số cần thiết cho table-view
-      const title = ref('Danh sách lớp học')
       const labels = ref([
-        {label: 'Mã lớp học', key: 'ma',type:'text'},
-        {label: 'Tên lớp học', key: 'ten',type:'text'},
-        {label: 'GVCN', key: 'gvcn',type:'text'},
-      ])
-      const datas = ref([])
-      const syncData = async (data,callback) => {
-        if (!data.ma||!data.ten||!data.gvcn) {
-          if (callback) callback({success:false, message:'Mã lớp học, tên lớp học, GVCN không được bỏ trống'});
-          return
-        }
-        const newData = {
-          ma: data.ma,
-          ten: data.ten,
-          gvcn: data.gvcn,
-        }
-        try {
-          const response = await fetch('/api/lophoc', {
-            method: isEdit.value ? 'PUT' : 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(newData),
-          })
-          if (response.ok) {
-            if (callback) callback({success:true, message: isEdit.value ? 'Cập nhật thành công' : 'Thêm thành công'})
-            fetchData()
-          } else {
-            if (callback) callback({success:false, message: 'Không thể kết nối tới server'})
-          }
-        } catch (error) {
-          if (callback) callback({success:false, message: error.message})
-        }
-        isEdit.value = false
-        form.value.closeModal()
-        fetchData()
-      }
-      const fetchData = async () => {
-        try {
-          const response = await fetch('/api/lophoc')
-          if (response.ok) {
-            const data = await response.json()
-            datas.value = data
-          } else {
-            alert('Không thể kết nối tới server')
-          }
-        } catch (error) {
-          alert('Không thể kết nối tới server', error)
-        }
-      }
-      onMounted(() => {
-        fetchData()
-      })
+        { key: 'name', title: 'Tên lớp học', type: 'text' },
+        { key: 'code', title: 'Mã lớp học', type: 'text' },
+        { key: 'credit', title: 'Số lượng tín', type: 'number' },
+        { key: 'teacher', title: 'Giáo viên', type: 'text' },
+        { key: 'date', title: 'Ngày học', type: 'date' },
+        { key: 'time', title: 'Thời gian', type: 'time' }
+      ]);
+      const datas = ref([
+        { id: 1, name: 'Lớp học 1', code: 'LH1', credit: 3, teacher: 'Nguyễn Văn A', date: '2026-06-28', time: '07:30' },
+        { id: 2, name: 'Lớp học 2', code: 'LH2', credit: 3, teacher: 'Trần Thị B', date: '2026-06-29', time: '09:00' }
+      ]);
+      const syncData = (updatedData) => {
+        console.log('Dữ liệu gửi lên Golang:', updatedData);
+        // Dùng fetch() gửi lên server Go ở đây
+        /*
+        fetch('/api/sync-schedule', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updatedData)
+        })
+        .then(res => res.json())
+        .then(data => alert('Đồng bộ thành công!'))
+        .catch(err => console.error('Lỗi:', err));
+        */
+        alert('Kiểm tra console để xem dữ liệu chuẩn bị gửi!');
+      };
       return {
-        form,
-        title,
-        subTitle,
         labels,
         datas,
-        showAction,
-        handleAddItems,
-        handleUpdateItems,
-        handleDeleteItems,
-        handleSaveData,
-      }
+        syncData
+      };
     }
-  })
-  app.component('datasheet', DataSheet)
-  app.mount('#app')
+  });
+  app.component('datasheet', DataSheet);
+  app.mount('#app');
 </script>
 {{end}}
