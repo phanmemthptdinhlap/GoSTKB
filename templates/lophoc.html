@@ -2,21 +2,11 @@
 <script src="/static/datasheet.js"></script>
 <div id = "app">
   <h1>Danh sách lớp học</h1>
-  <table-view 
-     :title="title"
-     :subtitle="subTitle"
-     :labels="labels"
-     :datas="datas"
-     :show-action="showAction"
-     @add-item="handleAddItems"
-     @update-item="handleUpdateItems"
-     @delete-item="handleDeleteItems"
-    ></table-view>
-  <modal-view
-      ref="form"
+  <datasheet
       :labels="labels"
-      @save-data="handleSaveData"
-    ></modal-view>
+      :datas="datas"
+      @sync="syncData"
+  ></datasheet>
 </div>
 <script>
   const {ref, onMounted, reactive} = Vue
@@ -26,9 +16,9 @@
       // Khai báo các thông số cần thiết cho table-view
       const title = ref('Danh sách lớp học')
       const labels = ref([
-        {label: 'Mã lớp học', key: 'ma'},
-        {label: 'Tên lớp học', key: 'ten'},
-        {label: 'GVCN', key: 'gvcn'},
+        {label: 'Mã lớp học', key: 'ma',type:'text'},
+        {label: 'Tên lớp học', key: 'ten',type:'text'},
+        {label: 'GVCN', key: 'gvcn',type:'text'},
       ])
       const datas = ref([])
       const syncData = async (data,callback) => {
@@ -92,6 +82,7 @@
       }
     }
   })
+  app.component('datasheet', DataSheet)
   app.mount('#app')
 </script>
 {{end}}

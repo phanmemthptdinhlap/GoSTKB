@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Quản lý nhiều bảng với Vue 3 Composition API</title>
+    <script type="importmap">
+      {
+        "imports": {
+          "vue": "https://unpkg.com/vue@3/dist/vue.esm-browser.js"
+        }
+      }
+    </script>
+</head>
+<body>
+
+    <div id="app" style="max-width: 900px; margin: 40px auto; font-family: Arial, sans-serif;">
+        <h1>Hệ thống quản lý (Cú pháp Vue 3 Hiện Đại)</h1>
+        <hr><br>
+
+        <dynamic-table 
+            title="Danh sách học sinh lớp 12"
+            :headers="studentHeaders" 
+            v-model="students">
+        </dynamic-table>
+
+        <dynamic-table 
+            title="Quản lý thiết bị phòng máy tin học"
+            :headers="deviceHeaders" 
+            v-model="devices">
+        </dynamic-table>
+    </div>
+
+    <script type="module">
+        import { createApp, ref } from 'vue';
+        import DynamicTable from 'dataview.js';
+
+        createApp({
+            components: {
+                DynamicTable
+            },
+            setup() {
+                // --- BẢNG HỌC SINH ---
+                const studentHeaders = [
+                    { key: 'id', label: 'Mã HS' },
+                    { key: 'name', label: 'Họ và Tên' },
+                    { key: 'classroom', label: 'Lớp' },
+                    { key: 'score', label: 'Điểm số' }
+                ];
+                const students = ref([
+                    { id: 'HS001', name: 'Nguyễn Văn A', classroom: '12A1', score: '8.5' },
+                    { id: 'HS002', name: 'Trần Thị B', classroom: '12A2', score: '9.0' }
+                ]);
+
+                // --- BẢNG THIẾT BỊ ---
+                const deviceHeaders = [
+                    { key: 'id', label: 'Mã Thiết Bị' },
+                    { key: 'deviceName', label: 'Tên Thiết Bị' },
+                    { key: 'quantity', label: 'Số lượng' },
+                    { key: 'status', label: 'Trạng thái' }
+                ];
+                const devices = ref([
+                    { id: 'DEV01', deviceName: 'Switch Cisco 24-Port', quantity: 2, status: 'Hoạt động tốt' },
+                    { id: 'DEV02', deviceName: 'Mạch phát triển ESP32-S3', quantity: 15, status: 'Mới nhập kho' }
+                ]);
+
+                // Trả về dữ liệu để hiển thị ngoài giao diện HTML
+                return {
+                    studentHeaders,
+                    students,
+                    deviceHeaders,
+                    devices
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
