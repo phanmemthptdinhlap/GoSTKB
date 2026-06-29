@@ -1,0 +1,65 @@
+package main
+
+import (
+    "fmt"
+    "net/http"
+)
+
+<<<<<<< HEAD
+type PageFunc func(http.ResponseWriter, *http.Request)
+
+type WebPage struct {
+    Title   string
+    Home    PageFunc
+    About   PageFunc
+    Contact PageFunc
+}
+
+=======
+type WebPage struct {
+    Title   		string
+		mux     		*http.ServeMux
+}
+
+func (p *WebPage) init(mux *http.ServeMux) {
+    p.mux = mux
+		p.SetPageTrangChu()
+		p.SetPageLopHoc()
+		p.SetPageGiaoVien()
+		p.SetPageMonHoc()
+		p.SetPagePhanCong()
+		p.SetPageThongTin()
+	}
+
+>>>>>>> 9eda0bf1344a0ae67e99ba5a98ebaaa3a779ae24
+// Khai báo biến toàn cục
+var page WebPage
+
+func main() {
+<<<<<<< HEAD
+    // 1. CHẠY HÀM KHỞI TẠO TỪ CÁC TỆP KHÁC
+    SetPageHome()
+    // SetPageAbout() // Giả sử bạn viết thêm file about.go
+
+    // 2. Khởi tạo ServeMux
+    mux := http.NewServeMux()
+
+    // 3. Gắn route
+    mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+        if page.Home == nil {
+            fmt.Fprintf(w, "Default Home")
+        } else {
+            page.Home(w, r)
+        }
+    })
+
+    // ... các route cho /about và /contact của bạn giữ nguyên ...
+
+    // 4. Chạy server
+=======
+    mux := http.NewServeMux()
+		page.init(mux)
+>>>>>>> 9eda0bf1344a0ae67e99ba5a98ebaaa3a779ae24
+    fmt.Println("Server đang chạy tại http://localhost:8080")
+    http.ListenAndServe(":8080", mux)
+}

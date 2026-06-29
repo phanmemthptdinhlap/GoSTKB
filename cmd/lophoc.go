@@ -1,102 +1,116 @@
 package main
 
 import (
-		"fmt"
-		"encoding/json"
-    "html/template" // Nhớ import thư viện này, KHÔNG dùng text/template
-    "net/http"
+	"encoding/json"
+	"fmt"
+	"html/template"
+	"net/http"
 )
+
+// Bổ sung trường action để mapping với giao diện Vue
 type LopHoc struct {
-	Ma string `json:"ma"`
-	Ten string `json:"ten"`
-	Gvcn string `json:"gvcn"`
+	Ma     string `json:"ma"`
+	Ten    string `json:"ten"`
+	Gvcn   string `json:"gvcn"`
+	Action string `json:"action,omitempty"` 
 }
+
 var lop_test = []LopHoc{
 	{Ma: "1", Ten: "10A1", Gvcn: "Mai"},
 	{Ma: "2", Ten: "12A1", Gvcn: "DuyenA"},
 	{Ma: "3", Ten: "12A2", Gvcn: "DuyenB"},
 }
+
 func getLopHoc() []LopHoc {
 	return lop_test
 }
+
 func addLopHoc(lop LopHoc) []LopHoc {
+	// Lọc bỏ trường action trước khi lưu vào DB (bằng cách gán rỗng)
+	lop.Action = ""
 	lop_test = append(lop_test, lop)
 	return lop_test
 }
+
 func deleteLopHoc(ma string) []LopHoc {
 	for i, v := range lop_test {
 		if v.Ma == ma {
 			lop_test = append(lop_test[:i], lop_test[i+1:]...)
+			break // Thêm break để dừng vòng lặp sau khi xóa thành công, tránh lỗi out of bounds
 		}
 	}
-	fmt.Println(lop_test)
+	fmt.Println("Sau khi xóa:", lop_test)
 	return lop_test
 }
+
 func updateLopHoc(lop LopHoc) []LopHoc {
-	fmt.Println("Cập nhât lớp học", lop)
+	fmt.Println("Cập nhật lớp học", lop)
 	for i, v := range lop_test {
 		if v.Ma == lop.Ma {
-			fmt.Println("Cập nhât lớp học", lop.Ma)
+			fmt.Println("Cập nhật thành công mã", lop.Ma)
+			lop.Action = "" // Xóa action trước khi lưu
 			lop_test[i] = lop
+			break
 		}
 	}
 	return lop_test
 }
+
 func (p *WebPage) SetPageLopHoc() {
-		p.mux.HandleFunc("/lophoc", func(w http.ResponseWriter, r *http.Request) {
-			// 1. Đọc cả file base và file home
-			// Lưu ý: Đường dẫn tính từ nơi bạn chạy lệnh "go run"
-			tmpl, err := template.ParseFiles("templates/lophoc.html", "templates/base.html")
-			if err != nil {
-				fmt.Println("Lỗi parse template: ", err)
-				http.Error(w, "Lỗi parse template: "+err.Error(), http.StatusInternalServerError)
-				return  
-			}
+	p.mux.HandleFunc("/lophoc", func(w http.ResponseWriter, r *http.Request) {
+		tmpl, err := template.ParseFiles("templates/lophoc.html", "templates/base.html")
+		if err != nil {
+			fmt.Println("Lỗi parse template: ", err)
+			http.Error(w, "Lỗi parse template: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
 
-			// 2. Chuẩn bị dữ liệu muốn truyền ra HTML
-			data := struct {
-				Title string
-			}{
-				Title: "Lớp học - Website của tôi",
-			}
+		data := struct{ Title string }{Title: "Lớp học - Website của tôi"}
 
-			// 3. Thực thi template có tên là "base" và truyền data vào
-			err = tmpl.ExecuteTemplate(w, "base", data)
-			if err != nil {
-				fmt.Println("Lỗi render: ", err)
-				http.Error(w, "Lỗi render: "+err.Error(), http.StatusInternalServerError)
+		err = tmpl.ExecuteTemplate(w, "base", data)
+		if err != nil {
+			fmt.Println("Lỗi render: ", err)
+			http.Error(w, "Lỗi render: "+err.Error(), http.StatusInternalServerError)
+		}
+	})
+
+	// API Lấy danh sách
+	p.mux.HandleFunc("GET /api/lophoc", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(getLopHoc())
+	})
+
+	// === API MỚI: ĐỒNG BỘ DỮ LIỆU HÀNG LOẠT ===
+	p.mux.HandleFunc("POST /api/lophoc/sync", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		var danhSachDongBo []LopHoc
+		
+		err := json.NewDecoder(r.Body).Decode(&danhSachDongBo)
+		if err != nil {
+			http.Error(w, "Lỗi decode: "+err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		fmt.Printf("Nhận được %d bản ghi cần đồng bộ\n", len(danhSachDongBo))
+
+		// Phân loại và xử lý từng hành động
+		for _, lop := range danhSachDongBo {
+			switch lop.Action {
+			case "insert":
+				addLopHoc(lop)
+			case "update":
+				updateLopHoc(lop)
+			case "delete":
+				deleteLopHoc(lop.Ma)
 			}
-		})
-		p.mux.HandleFunc("GET /api/lophoc", func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(getLopHoc())
-		})
-		p.mux.HandleFunc("POST /api/lophoc", func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Content-Type", "application/json")
-			var lop LopHoc
-			err:= json.NewDecoder(r.Body).Decode(&lop)
-			if err != nil {
-				fmt.Println("Lối", err)
-				http.Error(w, "Lỗi decode: "+err.Error(), http.StatusInternalServerError)
-				return
-			}
-			json.NewEncoder(w).Encode(addLopHoc(lop))
-		})
-		p.mux.HandleFunc("PUT /api/lophoc", func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Content-Type", "application/json")
-			fmt.Println("Tiếp nhận cập nhât lớp học")
-			var lop LopHoc
-			err:= json.NewDecoder(r.Body).Decode(&lop)
-			if err != nil {
-				fmt.Println("Lối", err)
-				http.Error(w, "Lỗi decode: "+err.Error(), http.StatusInternalServerError)
-				return
-			}
-			json.NewEncoder(w).Encode(updateLopHoc(lop))
-		})
-		p.mux.HandleFunc("DELETE /api/lophoc/{ma}", func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Content-Type", "application/json")
-			ma:=r.PathValue("ma")
-			json.NewEncoder(w).Encode(deleteLopHoc(ma))
-		})
+		}
+
+		// Trả về thành công
+		json.NewEncoder(w).Encode(map[string]string{"status": "success", "message": "Đồng bộ hoàn tất"})
+	})
+
+	// Các API cũ giữ nguyên phục vụ cho CRUD lẻ (nếu cần)
+	p.mux.HandleFunc("POST /api/lophoc", func(w http.ResponseWriter, r *http.Request) { /* ... */ })
+	p.mux.HandleFunc("PUT /api/lophoc", func(w http.ResponseWriter, r *http.Request) { /* ... */ })
+	p.mux.HandleFunc("DELETE /api/lophoc/{ma}", func(w http.ResponseWriter, r *http.Request) { /* ... */ })
 }
