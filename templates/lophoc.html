@@ -24,7 +24,7 @@
       const datas = ref([]);
 
       // 1. Hàm lấy dữ liệu từ Golang Server
-      const loadDataFromServer = async () => {
+      const fetchData = async () => {
         try {
           const response = await fetch('/api/lophoc');
           if (response.ok) {
@@ -42,7 +42,7 @@
       // 2. Hàm Đồng bộ dữ liệu lên Golang Server
       const syncData = async (updatedData) => {
         // Chỉ lấy những dòng bị sửa đổi, thêm mới hoặc xóa
-        const dataToSend = updatedData.filter(item => item.action !== 'none');
+        const dataToSend = updatedData.filter(item => item.action !== ' ');
         
         if (dataToSend.length === 0) {
           alert('Chưa có thay đổi nào để đồng bộ!');
@@ -61,7 +61,7 @@
             alert('Đồng bộ thành công ' + dataToSend.length + ' thao tác!');
             
             // 3. Gọi lại hàm tải dữ liệu để làm mới giao diện và reset toàn bộ action về 'none'
-            await loadDataFromServer();
+            await fetchData();
           } else {
             alert("Đã xảy ra lỗi trong quá trình đồng bộ.");
           }
@@ -73,7 +73,7 @@
 
       // Khi giao diện vừa render xong thì tự động gọi lấy dữ liệu ngay
       onMounted(() => {
-        loadDataFromServer();
+        fetchData();
       });
 
       return {

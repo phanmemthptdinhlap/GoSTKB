@@ -25,14 +25,14 @@ func getLopHoc() []LopHoc {
 	return lop_test
 }
 
-func addLopHoc(lop LopHoc) []LopHoc {
+func addLopHoc(lop LopHoc) {
 	// Lọc bỏ trường action trước khi lưu vào DB (bằng cách gán rỗng)
-	lop.Action = ""
+	lop.Action = " "
 	lop_test = append(lop_test, lop)
-	return lop_test
+	fmt.Println("Thêm lớp học", lop_test)
 }
 
-func deleteLopHoc(ma string) []LopHoc {
+func deleteLopHoc(ma string) {
 	for i, v := range lop_test {
 		if v.Ma == ma {
 			lop_test = append(lop_test[:i], lop_test[i+1:]...)
@@ -40,10 +40,9 @@ func deleteLopHoc(ma string) []LopHoc {
 		}
 	}
 	fmt.Println("Sau khi xóa:", lop_test)
-	return lop_test
 }
 
-func updateLopHoc(lop LopHoc) []LopHoc {
+func updateLopHoc(lop LopHoc) {
 	fmt.Println("Cập nhật lớp học", lop)
 	for i, v := range lop_test {
 		if v.Ma == lop.Ma {
@@ -53,7 +52,7 @@ func updateLopHoc(lop LopHoc) []LopHoc {
 			break
 		}
 	}
-	return lop_test
+	fmt.Println("Cập nhật lớp học", lop_test)
 }
 
 func (p *WebPage) SetPageLopHoc() {
@@ -96,11 +95,11 @@ func (p *WebPage) SetPageLopHoc() {
 		// Phân loại và xử lý từng hành động
 		for _, lop := range danhSachDongBo {
 			switch lop.Action {
-			case "insert":
+			case "thêm":
 				addLopHoc(lop)
-			case "update":
+			case "sửa":
 				updateLopHoc(lop)
-			case "delete":
+			case "xóa":
 				deleteLopHoc(lop.Ma)
 			}
 		}
