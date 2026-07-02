@@ -3,13 +3,12 @@ package SQL
 import (
 	"database/sql"
 	"fmt"
-
 	_ "github.com/mattn/go-sqlite3"
 )
 
 func ConnectSTKB() (*sql.DB, error) {
 	// Kết nối SQLite
-	db, err := sql.Open("sqlite3", "./SQL/STKB.db")
+	db, err := sql.Open("sqlite3", "./sql/STKB.db")
 	if err != nil {
 		return nil, fmt.Errorf("không kết nối được với CSDL : %w", err)
 	}
@@ -21,16 +20,19 @@ func CreateTable(db *sql.DB) error {
 	CREATE TABLE IF NOT EXISTS giaovien(
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		ten_ngan TEXT,
-		hoten TEXT
+		ho_ten TEXT,
+		mon_chinh_id INTEGER
+		FOREIGN KEY (mon_chinh_id) REFERENCES monhoc(id)
 	);
 	CREATE TABLE IF NOT EXISTS monhoc(
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		ten TEXT
+		ten_mon TEXT,
+		loai_mon TEXT
 	);
 	CREATE TABLE IF NOT EXISTS lophoc(
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		ten TEXT,
-		khoi TEXT
+		ten_lop TEXT,
+		khoi_lop TEXT
 	);
 	CREATE TABLE IF NOT EXISTS phancong(
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -42,6 +44,14 @@ func CreateTable(db *sql.DB) error {
 		FOREIGN KEY (giaovien_id) REFERENCES giaovien(id),
 		FOREIGN KEY (lop_id) REFERENCES lophoc(id),
 		FOREIGN KEY (monhoc_id) REFERENCES monhoc(id)
+	);
+	CREATE TABLE IF NOT EXISTS rangbuoc(
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		giaovien_id INTEGER,
+		thu INTEGR,
+		tiet INTEGER,
+		loai_rang_buoc TEXT,
+		FOREIGN KEY (giaovien_id) REFERENCES giaovien(id)
 	);
 	`
 	_, err := db.Exec(sqlCreateTables)

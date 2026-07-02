@@ -25,14 +25,14 @@ const DataSheet = {
 
       <table border="1" style="width: 100%; border-collapse: collapse; border-spacing: 0; border-color: gray;">
         <thead style="background-color: #f5f5f5;">
-          <tr>
+          <tr style="border-bottom: 1px solid #eee;">
             <th v-for="col in labels" :key="col.key" style="padding: 10px; text-align: left;">{{ col.title }}</th>
             <th v-if="isShowAll" style="padding: 10px; text-align: center; color: #d32f2f;">Trạng thái</th>
             <th style="padding: 10px; text-align: center; width: 120px;">Thao tác</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="row in displayedDatas" :key="row.id || row.code">
+          <tr v-for="row in displayedDatas" :key="row.id || row.code" style="border-bottom: 1px solid #eee;">
             <td v-for="col in labels" :key="col.key" style="padding: 8px;">
                <span :style="{ textDecoration: row.action === 'delete' ? 'line-through' : 'none', color: row.action === 'delete' ? '#9e9e9e' : 'inherit' }">
                  {{ row[col.key] }}
@@ -41,7 +41,7 @@ const DataSheet = {
             <td v-if="isShowAll" style="padding: 8px; text-align: center; font-weight: bold; color: #d32f2f;">
                {{ row.action }}
             </td>
-            <td style="padding: 8px; text-align: center;">
+            <td style="padding: 8px; text-align: center; border-right: 1px solid #eee;">
               <template v-if="row.action !== 'xóa'">
                 <button @click="openEditModal(row)" style="margin-right: 5px;">Sửa</button>
                 <button @click="deleteRow(row)" style="color: red;">Xóa</button>
