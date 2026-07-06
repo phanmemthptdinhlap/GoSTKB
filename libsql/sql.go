@@ -13,19 +13,19 @@ const (
 		sqlCreateTables = `
 		CREATE TABLE IF NOT EXISTS giaovien(
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			ten_ngan TEXT,
-			ho_ten TEXT,
+			ten_ngan TEXT UNIQUE,
+ 			ho_ten TEXT,
 			mon_chinh_id INTEGER,
 			FOREIGN KEY (mon_chinh_id) REFERENCES monhoc(id)
 		);
 		CREATE TABLE IF NOT EXISTS monhoc(
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			ten_mon TEXT,
+			ten_mon TEXT UNIQUE,
 			loai_mon TEXT
 		);
 		CREATE TABLE IF NOT EXISTS lophoc(
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			ten_lop TEXT,
+			ten_lop TEXT UNIQUE,
 			khoi_lop TEXT
 		);
 		CREATE TABLE IF NOT EXISTS phancong(
@@ -56,27 +56,27 @@ const (
 			FOREIGN KEY (mon_hoc_id) REFERENCES monhoc(id)
 		);`
 		sqlInsertGiaoVien = `
-		INSERT INTO giaovien(ten_ngan, ho_ten, mon_chinh_id)
+		INSERT OR IGNORE INTO giaovien(ten_ngan, ho_ten, mon_chinh_id)
 		VALUES (?, ?, ?);
 		`
 		sqlInsertMonHoc = `
-		INSERT INTO monhoc(ten_mon, loai_mon)
+		INSERT OR IGNORE INTO monhoc(ten_mon, loai_mon)
 		VALUES (?, ?);
 		`
 		sqlInsertLopHoc = `
-		INSERT INTO lophoc(ten_lop, khoi_lop)
+		INSERT OR IGNORE INTO lophoc(ten_lop, khoi_lop)
 		VALUES (?, ?);
 		`
 		sqlInsertPhanCong = `
-		INSERT INTO phancong(giao_vien_id, lop_id, mon_hoc_id, tuan, so_tiet)
+		INSERT OR IGNORE INTO phancong(giao_vien_id, lop_id, mon_hoc_id, tuan, so_tiet)
 		VALUES (?, ?, ?, ?, ?);
 		`
 		sqlInsertRangBuoc = `
-		INSERT INTO rangbuoc(giao_vien_id, thu, tiet, loai_rang_buoc)
+		INSERT OR IGNORE INTO rangbuoc(giao_vien_id, thu, tiet, loai_rang_buoc)
 		VALUES (?, ?, ?, ?);
 		`
 		sqlInsertThuaThieu = `
-		INSERT INTO thuathieu(lop_id, mon_hoc_id, tiet_thieu)
+		INSERT OR IGNORE INTO thuathieu(lop_id, mon_hoc_id, tiet_thieu)
 		VALUES (?, ?, ?);
 		`
 		sqlEditGiaoVien = `
