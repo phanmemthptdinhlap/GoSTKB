@@ -3,6 +3,7 @@ package main
 import (
     "fmt"
     "net/http"
+		. "GoSTKB/libsql"
 )
 
 type WebPage struct {
@@ -27,6 +28,22 @@ func (p *WebPage) init(mux *http.ServeMux) {
 
 // Khai báo biến toàn cục
 var page WebPage
+var db *SqlTKB
+
+func init() {
+	db, err := ConnectSTKB()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer func() {
+		if err := db.Close(); err != nil {
+			fmt.Println(err)
+		}
+	}()
+	page.Title = "Trang chủ"
+}
+
 
 func main() {
     mux := http.NewServeMux()

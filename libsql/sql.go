@@ -208,16 +208,19 @@ type GiaoVien struct {
 	TenNgan string `json:"ten_ngan"`
 	HoTen string `json:"ho_ten"`
 	MonChinhId int `json:"mon_chinh_id"`
+	Action string `json:"action,omitempty"`
 }
 type MonHoc struct {
 	ID int `json:"id"`
 	TenMon string `json:"ten_mon"`
 	LoaiMon string `json:"loai_mon"`
+	Action string `json:"action,omitempty"`
 }
 type LopHoc struct {
 	ID int `json:"id"`
 	TenLop string `json:"ten_lop"`
 	KhoiLop string `json:"khoi_lop"`
+	Action string `json:"action,omitempty"`
 }
 type PhanCong struct {
 	ID int `json:"id"`
@@ -226,6 +229,7 @@ type PhanCong struct {
 	MonHocId int `json:"mon_hoc_id"`
 	Tuan int `json:"tuan"`
 	Sotiet int `json:"so_tiet"`
+	Action string `json:"action,omitempty"`
 }
 type RangBuoc struct {
 	ID int `json:"id"`
@@ -233,12 +237,14 @@ type RangBuoc struct {
 	Thu int `json:"thu"`
 	Tiet int `json:"tiet"`
 	LoaiRangBuoc string `json:"loai_rang_buoc"`
+	Action string `json:"action,omitempty"`
 }
 type ThuaThieu struct {
 	ID int `json:"id"`
 	LopId int `json:"lop_id"`
 	MonhocId int `json:"mon_hoc_id"`
 	TietThieu int `json:"tiet_thieu"`
+	Action string `json:"action,omitempty"`
 }
 
 type SqlTKB struct {
@@ -248,11 +254,11 @@ type SqlTKB struct {
 // func InsertGiaoVien, InsertMonHoc, InsertLopHoc, InsertPhanCong, InsertRangBuoc, InsertThuaThieu
 // return count, error
 
-func (s *SqlTKB) InsertGiaoVien(giaovien []GiaoVien) (int, error) {
+func (s *SqlTKB) InsertGiaoVien(giaovien GiaoVien) error {
 	// Bắt đầu một transaction
 	tx, err := s.db.Begin()
 	if err != nil {
-		return 0, fmt.Errorf("không thể bắt đầu giao dịch: %w", err)
+		return fmt.Errorf("không thể bắt đầu giao dịch: %w", err)
 	}
 
 	// Đảm bảo rollback nếu có lỗi xảy ra (tránh treo CSDL)
@@ -265,36 +271,30 @@ func (s *SqlTKB) InsertGiaoVien(giaovien []GiaoVien) (int, error) {
 		}
 	}()
 
-	var count int
 	// Chuẩn bị câu lệnh SQL (Prepared Statement) để tái sử dụng trong vòng lặp
 	stmt, err := tx.Prepare(sqlInsertGiaoVien)
 	if err != nil {
-		return 0, fmt.Errorf("không thể chuẩn bị câu lệnh: %w", err)
+		return fmt.Errorf("không thể chuẩn bị câu lệnh: %w", err)
 	}
 	defer stmt.Close() // Đóng statement khi xong
 
-	for _, gv := range giaovien {
-		// Dùng statement đã chuẩn bị để thực thi
-		_, err = stmt.Exec(gv.TenNgan, gv.HoTen, gv.MonChinhId)
-		if err != nil {
+	_, err = stmt.Exec(giaovien.TenNgan, giaovien.HoTen, giaovien.MonChinhId)
+	if err != nil {
 			// Lỗi được gán cho biến err, defer sẽ kích hoạt Rollback()
-			return count, fmt.Errorf("không thể thêm giáo viên %s (%w)", gv.TenNgan, err)
-		}
-		count++
+			return fmt.Errorf("không thể thêm giáo viên %s (%w)", giaovien.TenNgan, err)
 	}
 
 	// Nếu mọi thứ ổn, commit giao dịch
 	err = tx.Commit()
 	if err != nil {
-		return count, fmt.Errorf("không thể chốt giao dịch: %w", err)
+		return fmt.Errorf("không thể chốt giao dịch: %w", err)
 	}
-
-	return count, nil
+	return nil
 }
-func (s *SqlTKB) InsertMonHoc(monhoc []MonHoc) (int, error) {
+func (s *SqlTKB) InsertMonHoc(monhoc MonHoc) error {
 	tx, err := s.db.Begin()
 	if err != nil {
-		return 0, fmt.Errorf("không thể bắt đầu giao dịch: %w", err)
+		return fmt.Errorf("không thể bắt đầu giao dịch: %w", err)
 	}
 	// Đảm bảo rollback nếu có lỗi xảy ra (tránh treo CSDL)
 	defer func() {
@@ -306,34 +306,29 @@ func (s *SqlTKB) InsertMonHoc(monhoc []MonHoc) (int, error) {
 			return // Đừng gọi return khi err != nil
 		}
 	}()
-	var count int
 	// Chuẩn bị câu lệnh SQL (Prepared Statement) để tái sử dụng trong vòng lặp
 	stmt, err := tx.Prepare(sqlInsertMonHoc)
 	if err != nil {
-		return 0, fmt.Errorf("không thể chuẩn bị câu lệnh: %w", err)
+		return fmt.Errorf("không thể chuẩn bị câu lệnh: %w", err)
 	}
 	defer stmt.Close() // Đóng statement khi xong
-	for _, mh := range monhoc {
-		// Dùng statement đã chuẩn bị để thực thi
-		_, err = stmt.Exec(mh.TenMon, mh.LoaiMon)
-		if err != nil {
+	_, err = stmt.Exec(monhoc.TenMon, monhoc.LoaiMon)
+	if err != nil {
 			// Lỗi được gán cho biến err, defer sẽ kích hoạt Rollback()
-			return count, fmt.Errorf("không thể thêm môn học %s (%w)", mh.TenMon, err)
+			return fmt.Errorf("không thể thêm môn học %s (%w)", monhoc.TenMon, err)
 		}
-		count++
-	}
 	// Nếu mọi thứ ổn, commit giao dịch
 	err = tx.Commit()
 	if err != nil {
-		return count, fmt.Errorf("không thể chốt giao dịch: %w", err)
+		return fmt.Errorf("không thể chốt giao dịch: %w", err)
 	}
-	return count, nil
+	return nil
 }
 
-func (s *SqlTKB) InsertLopHoc(lophoc []LopHoc) (int, error) {
+func (s *SqlTKB) InsertPhanCong(phancong PhanCong) error {
 	tx, err := s.db.Begin()
 	if err != nil {
-		return 0, fmt.Errorf("không thể bắt đầu giao dịch: %w", err)
+		return fmt.Errorf("không thể bắt đầu giao dịch: %w", err)
 	}
 	// Đảm bảo rollback nếu có lỗi xảy ra (tránh treo CSDL)
 	defer func() {
@@ -345,73 +340,28 @@ func (s *SqlTKB) InsertLopHoc(lophoc []LopHoc) (int, error) {
 			return // Đừng gọi return khi err != nil
 		}
 	}()
-	var count int
-	// Chuẩn bị câu lệnh SQL (Prepared Statement) để tái sử dụng trong vòng lặp
-	stmt, err := tx.Prepare(sqlInsertLopHoc)
-	if err != nil {
-		return 0, fmt.Errorf("không thể chuẩn bị câu lệnh: %w", err)
-	}
-	defer stmt.Close() // Đóng statement khi xong
-	for _, lh := range lophoc {
-		// Dùng statement đã chuẩn bị để thực thi
-		_, err = stmt.Exec(lh.TenLop, lh.KhoiLop)
-		if err != nil {
-			// Lỗi được gán cho biến err, defer sẽ kích hoạt Rollback()
-			return count, fmt.Errorf("không thể thêm lớp học %s (%w)", lh.TenLop, err)
-		}
-		count++
-	}
-	// Nếu mọi thứ ổn, commit giao dịch
-	err = tx.Commit()
-	if err != nil {
-		return count, fmt.Errorf("không thể chốt giao dịch: %w", err)
-	}
-	return count, nil
-}
-
-func (s *SqlTKB) InsertPhanCong(phancong []PhanCong) (int, error) {
-	tx, err := s.db.Begin()
-	if err != nil {
-		return 0, fmt.Errorf("không thể bắt đầu giao dịch: %w", err)
-	}
-	// Đảm bảo rollback nếu có lỗi xảy ra (tránh treo CSDL)
-	defer func() {
-		if p := recover(); p != nil {
-			tx.Rollback()
-			panic(p) // Bắn lại panic sau khi rollback
-		} else if err != nil {
-			tx.Rollback() // Rollback nếu err != nil
-			return // Đừng gọi return khi err != nil
-		}
-	}()
-	var count int
 	// Chuẩn bị câu lệnh SQL (Prepared Statement) để tái sử dụng trong vòng lặp
 	stmt, err := tx.Prepare(sqlInsertPhanCong)
 	if err != nil {
-		return 0, fmt.Errorf("không thể chuẩn bị câu lệnh: %w", err)
+		return fmt.Errorf("không thể chuẩn bị câu lệnh: %w", err)
 	}
 	defer stmt.Close() // Đóng statement khi xong
-	for _, pc := range phancong {
-		// Dùng statement đã chuẩn bị để thực thi
-		_, err = stmt.Exec(pc.GiaoVienId, pc.LopId, pc.MonHocId, pc.Tuan, pc.Sotiet)
-		if err != nil {
+	_, err = stmt.Exec(phancong.GiaoVienId, phancong.LopId, phancong.MonHocId, phancong.Tuan, phancong.Sotiet)
+	if err != nil {
 			// Lỗi được gán cho biến err, defer sẽ kích hoạt Rollback()
-			return count, fmt.Errorf("không thể thêm phần cống %s (%w)", pc.GiaoVienId, err)
-		}
-		count++
+			return fmt.Errorf("không thể thêm phần cống %d (%w)", phancong.GiaoVienId, err)
 	}
 	// Nếu mọi thứ ổn, commit giao dịch
 	err = tx.Commit()
 	if err != nil {
-		return count, fmt.Errorf("không thể chốt giao dịch: %w", err)
+		return fmt.Errorf("không thể chốt giao dịch: %w", err)
 	}
-	return count, nil
+	return nil
 }
-
-func (s *SqlTKB) InsertRangBuoc(rangbuoc []RangBuoc) (int, error) {
+func (s *SqlTKB) InsertRangBuoc(rangbuoc RangBuoc) error {
 	tx, err := s.db.Begin()
 	if err != nil {
-		return 0, fmt.Errorf("không thể bắt đầu giao dịch: %w", err)
+		return fmt.Errorf("không thể bắt đầu giao dịch: %w", err)
 	}
 	// Đảm bảo rollback nếu có lỗi xảy ra (tránh treo CSDL)
 	defer func() {
@@ -423,34 +373,28 @@ func (s *SqlTKB) InsertRangBuoc(rangbuoc []RangBuoc) (int, error) {
 			return // Đừng gọi return khi err != nil
 		}
 	}()
-	var count int
 	// Chuẩn bị câu lệnh SQL (Prepared Statement) để tái sử dụng trong vòng lặp
 	stmt, err := tx.Prepare(sqlInsertRangBuoc)
 	if err != nil {
-		return 0, fmt.Errorf("không thể chuẩn bị câu lệnh: %w", err)
+		return fmt.Errorf("không thể chuẩn bị câu lệnh: %w", err)
 	}
 	defer stmt.Close() // Đóng statement khi xong
-	for _, rb := range rangbuoc {
-		// Dùng statement đã chuẩn bị để thực thi
-		_, err = stmt.Exec(rb.GiaoVienId, rb.Thu, rb.Tiet, rb.LoaiRangBuoc)
-		if err != nil {
+	_, err = stmt.Exec(rangbuoc.GiaoVienId, rangbuoc.Thu, rangbuoc.Tiet, rangbuoc.LoaiRangBuoc)
+	if err != nil {
 			// Lỗi được gán cho biến err, defer sẽ kích hoạt Rollback()
-			return count, fmt.Errorf("không thể thêm rang bước %s (%w)", rb.GiaoVienId, err)
-		}
-		count++
+			return fmt.Errorf("không thể thêm rang bước %d (%w)", rangbuoc.GiaoVienId, err)
 	}
 	// Nếu mọi thứ ổn, commit giao dịch
 	err = tx.Commit()
 	if err != nil {
-		return count, fmt.Errorf("không thể chốt giao dịch: %w", err)
+		return fmt.Errorf("không thể chốt giao dịch: %w", err)
 	}
-	return count, nil
+	return nil
 }
-
-func (s *SqlTKB) InsertThuaThieu(thuathieu []ThuaThieu) (int, error) {
+func (s *SqlTKB) InsertThuaThieu(thuathieu ThuaThieu) error {
 	tx, err := s.db.Begin()
 	if err != nil {
-		return 0, fmt.Errorf("không thể bắt đầu giao dịch: %w", err)
+		return fmt.Errorf("không thể bắt đầu giao dịch: %w", err)
 	}
 	// Đảm bảo rollback nếu có lỗi xảy ra (tránh treo CSDL)
 	defer func() {
@@ -462,30 +406,24 @@ func (s *SqlTKB) InsertThuaThieu(thuathieu []ThuaThieu) (int, error) {
 			return // Đừng gọi return khi err != nil
 		}
 	}()
-	var count int
 	// Chuẩn bị câu lệnh SQL (Prepared Statement) để tái sử dụng trong vòng lặp
 	stmt, err := tx.Prepare(sqlInsertThuaThieu)
 	if err != nil {
-		return 0, fmt.Errorf("không thể chuẩn bị câu lệnh: %w", err)
+		return fmt.Errorf("không thể chuẩn bị câu lệnh: %w", err)
 	}
 	defer stmt.Close() // Đóng statement khi xong
-	for _, tt := range thuathieu {
-		// Dùng statement đã chuẩn bị để thực thi
-		_, err = stmt.Exec(tt.LopId, tt.MonhocId, tt.TietThieu)
-		if err != nil {
+	_, err = stmt.Exec(thuathieu.LopId, thuathieu.MonhocId, thuathieu.TietThieu)
+	if err != nil {
 			// Lỗi được gán cho biến err, defer sẽ kích hoạt Rollback()
-			return count, fmt.Errorf("không thể thêm thuật thiếu %s (%w)", tt.LopId, err)
-		}
-		count++
+			return fmt.Errorf("không thể thêm thuật thiếu %d (%w)", thuathieu.LopId, err)
 	}
 	// Nếu mọi thứ ổn, commit giao dịch
 	err = tx.Commit()
 	if err != nil {
-		return count, fmt.Errorf("không thể chốt giao dịch: %w",	err)
+		return fmt.Errorf("không thể chốt giao dịch: %w",	err)
 	}
-	return count, nil
+	return nil
 }
-
 
 // func EditGiaoVien, EditMonHoc, EditLopHoc, EditPhanCong, EditRangBuoc, EditThuaThieu
 // return error
@@ -517,7 +455,7 @@ func (s *SqlTKB) EditLopHoc(lh LopHoc) error {
 func (s *SqlTKB) EditPhanCong(pc PhanCong) error {
 	_, err := s.db.Exec(sqlEditPhanCong, pc.Tuan, pc.Sotiet, pc.ID)
 	if err != nil {
-		return fmt.Errorf("Không thể chỉnh sửa phần cống %s (%w )", pc.GiaoVienId, err)
+		return fmt.Errorf("Không thể chỉnh sửa phần cống %d (%w )", pc.GiaoVienId, err)
 	}
 	return nil
 }
@@ -525,7 +463,7 @@ func (s *SqlTKB) EditPhanCong(pc PhanCong) error {
 func (s *SqlTKB) EditRangBuoc(rb RangBuoc) error {
 	_, err := s.db.Exec(sqlEditRangBuoc, rb.Thu, rb.Tiet, rb.LoaiRangBuoc, rb.ID)
 	if err != nil {
-		return fmt.Errorf("Không thể chỉnh sửa rang bước %s (%w )", rb.GiaoVienId, err)
+		return fmt.Errorf("Không thể chỉnh sửa rang bước %d (%w )", rb.GiaoVienId, err)
 	}
 	return nil
 }
@@ -533,7 +471,7 @@ func (s *SqlTKB) EditRangBuoc(rb RangBuoc) error {
 func (s *SqlTKB) EditThuaThieu(tt ThuaThieu) error {
 	_, err := s.db.Exec(sqlEditThuaThieu, tt.TietThieu, tt.ID)
 	if err != nil {
-		return fmt.Errorf("Không thể chỉnh sửa thuật thiếu %s (%w )", tt.LopId, err)
+		return fmt.Errorf("Không thể chỉnh sửa thuật thiếu %d (%w )", tt.LopId, err)
 	}
 	return nil
 }

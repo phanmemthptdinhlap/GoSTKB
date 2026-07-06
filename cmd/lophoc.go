@@ -5,24 +5,14 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	. "GoSTKB/libsql"
 )
 
 // Bổ sung trường action để mapping với giao diện Vue
-type LopHoc struct {
-	Ma     string `json:"ma"`
-	Ten    string `json:"ten"`
-	Gvcn   string `json:"gvcn"`
-	Action string `json:"action,omitempty"` 
-}
 
-var lop_test = []LopHoc{
-	{Ma: "1", Ten: "10A1", Gvcn: "Mai"},
-	{Ma: "2", Ten: "12A1", Gvcn: "DuyenA"},
-	{Ma: "3", Ten: "12A2", Gvcn: "DuyenB"},
-}
 
 func getLopHoc() []LopHoc {
-	return lop_test
+	return db.SelectAllLopHoc()
 }
 
 func addLopHoc(lop LopHoc) {
