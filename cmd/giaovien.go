@@ -1,56 +1,16 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"net/http"
-	"encoding/json"
+	. "GoSTKB/libsql"
 )
-type GiaoVien struct{
-	Ma string `json:"ma"`
-	HoTen string `json:"hoTen"`
-	TenTKB string `json:"tenTKB"`
-	MonDay string `json:"monDay"`
-	LopDay string `json:"lopDay"`
-	Action string `json:"action,omitempty"`
-}
-var dsgiaovien_test=[]GiaoVien{
-	{Ma: "GV001", HoTen: "Lâm Kiên", TenTKB: "KienL", MonDay: "Tin học, Trai nghiem", LopDay: "12A1, 12A2"},
-	{Ma: "GV002", HoTen: "Kiên", TenTKB: "Kien", MonDay: "Tin học", LopDay: "12C1, 12C2"},
-}
-func getGiaoVien() []GiaoVien{
-	return dsgiaovien_test
-}
-func addGiaovien(gv GiaoVien) {
-	gv.Action = " "
-	for _,v:=range dsgiaovien_test{
-		if v.Ma==gv.Ma{
-			fmt.Println("Giao vien đã tồn tại")
-			return
-		}
-	}
-	dsgiaovien_test=append(dsgiaovien_test,gv)
-}
-func updateGiaovien(gv GiaoVien) {
-	gv.Action = " "
-	for i,v:=range dsgiaovien_test{
-		if v.Ma==gv.Ma{
-			dsgiaovien_test[i]=gv
-			return
-		} 
-	}
-	dsgiaovien_test=append(dsgiaovien_test,gv)
-}
 
-func deleteGiaovien(maGV string) {
-		for i,v:=range dsgiaovien_test{
-			if v.Ma==maGV{
-				dsgiaovien_test=append(dsgiaovien_test[:i],dsgiaovien_test[i+1:]...)
-				return 
-			}
-		}
-		fmt.Println("Giao vien không tồn tại")
-}
+// Bổ sung trường action để mapping với giao diện Vue
+
+
 func (p *WebPage) SetPageGiaoVien() {
 	p.mux.HandleFunc("/giaovien", func(w http.ResponseWriter, r *http.Request) {
 		tmpl, err := template.ParseFiles("templates/giaovien.html", "templates/base.html")
@@ -60,7 +20,7 @@ func (p *WebPage) SetPageGiaoVien() {
 			return
 		}
 
-		data := struct{ Title string }{Title: "Giáo viên - Website của tôi"}
+		data := struct{ Title string }{Title: "Giao viên - Website của tôi"}
 
 		err = tmpl.ExecuteTemplate(w, "base", data)
 		if err != nil {
@@ -72,13 +32,19 @@ func (p *WebPage) SetPageGiaoVien() {
 	// API Lấy danh sách
 	p.mux.HandleFunc("GET /api/giaovien", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(getGiaoVien())
+		giaovien,err := db.SelectAllGiaoVien()
+		if err != nil {
+			fmt.Println("Lỗi lấy danh sách: ", err)
+			http.Error(w, "Lỗi lấy danh sách: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		json.NewEncoder(w).Encode(giaovien)
 	})
 
 	// === API MỚI: ĐỒNG BỘ DỮ LIỆU HÀNG LOẠT ===
 	p.mux.HandleFunc("POST /api/giaovien/sync", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		var danhSachDongBo []GiaoVien
+		var danhSachDongBo []	GiaoVien
 		
 		err := json.NewDecoder(r.Body).Decode(&danhSachDongBo)
 		if err != nil {
@@ -89,14 +55,14 @@ func (p *WebPage) SetPageGiaoVien() {
 		fmt.Printf("Nhận được %d bản ghi cần đồng bộ\n", len(danhSachDongBo))
 
 		// Phân loại và xử lý từng hành động
-		for _, gv := range danhSachDongBo {
-			switch gv.Action {
+		for _, giaoVien := range danhSachDongBo {
+			switch giaoVien.Action {
 			case "thêm":
-				addGiaovien(gv)
+				db.InsertGiaoVien(giaoVien)
 			case "sửa":
-				updateGiaovien(gv)
+				db.EditGiaoVien(giaoVien)
 			case "xóa":
-				deleteGiaovien(gv.Ma)
+				db.DeleteGiaoVien(giaoVien.ID)
 			}
 		}
 

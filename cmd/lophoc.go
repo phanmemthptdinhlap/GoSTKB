@@ -11,40 +11,6 @@ import (
 // Bổ sung trường action để mapping với giao diện Vue
 
 
-func getLopHoc() []LopHoc {
-	return db.SelectAllLopHoc()
-}
-
-func addLopHoc(lop LopHoc) {
-	// Lọc bỏ trường action trước khi lưu vào DB (bằng cách gán rỗng)
-	lop.Action = " "
-	lop_test = append(lop_test, lop)
-	fmt.Println("Thêm lớp học", lop_test)
-}
-
-func deleteLopHoc(ma string) {
-	for i, v := range lop_test {
-		if v.Ma == ma {
-			lop_test = append(lop_test[:i], lop_test[i+1:]...)
-			break // Thêm break để dừng vòng lặp sau khi xóa thành công, tránh lỗi out of bounds
-		}
-	}
-	fmt.Println("Sau khi xóa:", lop_test)
-}
-
-func updateLopHoc(lop LopHoc) {
-	fmt.Println("Cập nhật lớp học", lop)
-	for i, v := range lop_test {
-		if v.Ma == lop.Ma {
-			fmt.Println("Cập nhật thành công mã", lop.Ma)
-			lop.Action = "" // Xóa action trước khi lưu
-			lop_test[i] = lop
-			break
-		}
-	}
-	fmt.Println("Cập nhật lớp học", lop_test)
-}
-
 func (p *WebPage) SetPageLopHoc() {
 	p.mux.HandleFunc("/lophoc", func(w http.ResponseWriter, r *http.Request) {
 		tmpl, err := template.ParseFiles("templates/lophoc.html", "templates/base.html")
@@ -66,7 +32,13 @@ func (p *WebPage) SetPageLopHoc() {
 	// API Lấy danh sách
 	p.mux.HandleFunc("GET /api/lophoc", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(getLopHoc())
+		lops,err := db.SelectAllLopHoc()
+		if err != nil {
+			fmt.Println("Lỗi lấy danh sách: ", err)
+			http.Error(w, "Lỗi lấy danh sách: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		json.NewEncoder(w).Encode(lops)
 	})
 
 	// === API MỚI: ĐỒNG BỘ DỮ LIỆU HÀNG LOẠT ===
@@ -86,11 +58,11 @@ func (p *WebPage) SetPageLopHoc() {
 		for _, lop := range danhSachDongBo {
 			switch lop.Action {
 			case "thêm":
-				addLopHoc(lop)
+				db.InsertLopHoc(lop)
 			case "sửa":
-				updateLopHoc(lop)
+				db.EditLopHoc(lop)
 			case "xóa":
-				deleteLopHoc(lop.Ma)
+				db.DeleteLopHoc(lop.ID)
 			}
 		}
 
