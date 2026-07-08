@@ -13,19 +13,19 @@ const (
 		sqlCreateTables = `
 		CREATE TABLE IF NOT EXISTS giaovien(
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			ten_ngan TEXT,
+			ten_ngan TEXT UNIQUE,
 			ho_ten TEXT,
 			mon_chinh_id INTEGER,
 			FOREIGN KEY (mon_chinh_id) REFERENCES monhoc(id)
 		);
 		CREATE TABLE IF NOT EXISTS monhoc(
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			ten_mon TEXT,
+			ten_mon TEXT UNIQUE,
 			loai_mon TEXT
 		);
 		CREATE TABLE IF NOT EXISTS lophoc(
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			ten_lop TEXT,
+			ten_lop TEXT UNIQUE,
 			khoi_lop TEXT
 		);
 		CREATE TABLE IF NOT EXISTS phancong(
@@ -208,16 +208,20 @@ type GiaoVien struct {
 	TenNgan string `json:"ten_ngan"`
 	HoTen string `json:"ho_ten"`
 	MonChinhId int `json:"mon_chinh_id"`
+	action string `json:"action;omitempty"`
+	
 }
 type MonHoc struct {
 	ID int `json:"id"`
 	TenMon string `json:"ten_mon"`
 	LoaiMon string `json:"loai_mon"`
+	action string `json:"action,omitempty"`
 }
 type LopHoc struct {
 	ID int `json:"id"`
 	TenLop string `json:"ten_lop"`
 	KhoiLop string `json:"khoi_lop"`
+	action string `json:"action,omitempty"`
 }
 type PhanCong struct {
 	ID int `json:"id"`
@@ -226,6 +230,7 @@ type PhanCong struct {
 	MonHocId int `json:"mon_hoc_id"`
 	Tuan int `json:"tuan"`
 	Sotiet int `json:"so_tiet"`
+	action string `json:"action,omitempty"`
 }
 type RangBuoc struct {
 	ID int `json:"id"`
@@ -233,12 +238,14 @@ type RangBuoc struct {
 	Thu int `json:"thu"`
 	Tiet int `json:"tiet"`
 	LoaiRangBuoc string `json:"loai_rang_buoc"`
+	action string `json:"action,omitempty"`
 }
 type ThuaThieu struct {
 	ID int `json:"id"`
 	LopId int `json:"lop_id"`
 	MonhocId int `json:"mon_hoc_id"`
 	TietThieu int `json:"tiet_thieu"`
+	action string `json:"action,omitempty"`
 }
 
 type SqlTKB struct {

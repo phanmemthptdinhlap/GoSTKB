@@ -17,32 +17,22 @@ func main() {
 			fmt.Println(err)
 		}
 	}()
-	mh:=[]MonHoc{
-		{TenMon: "Lý", LoaiMon: "Tự chọn"},
-		{TenMon: "Hóa", LoaiMon: "Tự chọn"},
-		{TenMon: "Sinh", LoaiMon: "Tự chọn"},
-		{TenMon: "Tin", LoaiMon: "Tự chọn"},
-		{TenMon: "Văn", LoaiMon: "Bắt buộc"},
-		{TenMon: "Sử", LoaiMon: "Bắt buộc"},
-		{TenMon: "Địa", LoaiMon: "Tự chọn"},
-		{TenMon: "Ngoại ngữ", LoaiMon: "Tự chọn"},
-		{TenMon: "GDKTPL", LoaiMon: "Tự chọn"},
-		{TenMon: "QPAN", LoaiMon: "Bắt buộc"},
-		{TenMon: "GDTC", LoaiMon: "Tự chọn"},
+	gv:=[]GiaoVien{
+		{TenNgan: "Kiên", HoTen:"Lương Lâm Kiên",MonChinhId: 4},
+		{TenNgan: "Viên", HoTen:"Nguyễn Thị Viện", MonChinhId: 5},
 	}
-	sl,err := db.InsertMonHoc(mh)
+	sl,err := db.InsertGiaoVien(gv)
+	if err!=nil{
+		fmt.Println(err)
+	}
+	fmt.Printf("Đã thêm %d Giáo viên vào CSDL!\n",sl)
+	gvs,err := db.SelectAllGiaoVien()
 	if err!=nil{
 		fmt.Println(err)
 		return
 	}
-	fmt.Printf("Đã thêm %d môn học vào CSDL!\n",sl)
-	mh,err = db.SelectAllMonHoc()
-	if err!=nil{
-		fmt.Println(err)
-		return
-	}
-	fmt.Println("Danh sách các môn học")
-	for _,v:=range mh{
-		fmt.Println(v)
+	fmt.Println("Danh sách các Giáo viên")
+	for _,g:=range gvs{
+		fmt.Println(g)
 	}
 }
