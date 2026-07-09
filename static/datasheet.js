@@ -26,18 +26,22 @@ const DataSheet = {
       <table border="1" style="width: 100%; border-collapse: collapse; border-spacing: 0; border-color: gray;">
         <thead style="background-color: #f5f5f5;">
           <tr style="border-bottom: 1px solid #eee;">
-            <th v-for="col in labels" :key="col.key" style="padding: 10px; text-align: left;">{{ col.title }}</th>
+            <template v-for="col in labels" :key="col.key" style="padding: 10px; text-align: left;">
+              <th v-if="col.type!=='hidden'" >{{ col.title }}</th>
+            </template>
             <th v-if="isShowAll" style="padding: 10px; text-align: center; color: #d32f2f;">Trạng thái</th>
             <th style="padding: 10px; text-align: center; width: 120px;">Thao tác</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="row in displayedDatas" :key="row.id || row.code" style="border-bottom: 1px solid #eee;">
-            <td v-for="col in labels" :key="col.key" style="padding: 8px;">
-               <span :style="{ textDecoration: row.action === 'delete' ? 'line-through' : 'none', color: row.action === 'delete' ? '#9e9e9e' : 'inherit' }">
-                 {{ row[col.key] }}
+             <template v-for="col in labels" :key="col.key">
+              <td v-if="col.type !== 'hidden'" style="padding: 8px;">
+               <span :style="{ textDecoration: row.action === 'xóa' ? 'line-through' : 'none', color: row.action === 'xóa' ? '#9e9e9e' : 'inherit' }">
+                 {{ getDisplayText(row, col) }}
                </span>
-            </td>
+              </td>
+            </template>
             <td v-if="isShowAll" style="padding: 8px; text-align: center; font-weight: bold; color: #d32f2f;">
                {{ row.action }}
             </td>
@@ -63,18 +67,31 @@ const DataSheet = {
         <div style="background: white; padding: 25px; border-radius: 8px; min-width: 350px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
           <h3 style="margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 10px;">{{ isEditing ? 'Sửa thông tin' : 'Thêm dữ liệu mới' }}</h3>
           <form @submit.prevent="saveModal">
-            <div v-for="col in labels" :key="col.key" style="margin-bottom: 12px;">
-              <label style="display: block; margin-bottom: 5px; font-weight: 500;">{{ col.title }}</label>
-              <input v-model="formData[col.key]" :type="col.type || 'text'" required style="width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;" />
-            </div>
+            <template v-for="col in labels" :key="col.key">
+              <div v-if="col.type !== 'hidden'" style="margin-bottom: 12px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: 500;">{{ col.title }}</label>
+                
+                <div v-if="col.type === 'select'">
+                  <select v-model="formData[col.key]" required style="width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;">
+                    <option disabled value="">-- Chọn {{ col.title }} --</option>
+                    <option v-for="option in col.options" :key="option.value" :value="option.value">{{ option.text }}</option>
+                  </select>
+                </div>
+
+                <div v-else>
+                  <input v-model="formData[col.key]" :type="col.type || 'text'" required style="width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;" />
+                </div>
+              </div>
+            </template>
+
             <div style="text-align: right; margin-top: 20px;">
-              <button type="button" @click="closeModal" style="margin-right: 10px; padding: 6px 15px;">Hủy</button>
+              <button type="button" @click="closeModal" style="margin-right: 10px; padding: 6px 15px; border: 1px solid #ccc; border-radius: 4px; background: #fff; cursor: pointer;">Hủy</button>
               <button type="submit" style="padding: 6px 15px; background-color: #1976d2; color: white; border: none; border-radius: 4px; cursor: pointer;">Lưu lại</button>
             </div>
-          </form>
-        </div>
+          </form> 
       </div>
     </div>
+  </div>
   `,
   setup(props, { emit }) {
     // 1. Khởi tạo mảng đúng chuẩn bằng .map()
@@ -99,6 +116,13 @@ const DataSheet = {
       }
       return localDatas.value.filter(row => row.action !== 'xóa');
     });
+    const getDisplayText = (row, label) => {
+      if (label.type === 'select') {
+        const found = label.options?.find(o => o.value == row[label.key]);
+        return found ? found.text : row[label.key];
+      }
+     return row[label.key];
+    };
 
     const openAddModal = () => {
       formData.value = {};
@@ -162,7 +186,7 @@ const DataSheet = {
 
     // 5. Bắt buộc phải return TẤT CẢ các biến/hàm được gọi trên template
     return {
-      localDatas, isShowAll, displayedDatas, isModalOpen, isEditing, formData,
+      localDatas, isShowAll, displayedDatas, isModalOpen, isEditing, formData, getDisplayText,
       openAddModal, openEditModal, closeModal, saveModal, deleteRow, restoreRow, syncData
     };
   }

@@ -55,6 +55,7 @@ func (p *WebPage) SetPageGiaoVien() {
 		fmt.Printf("Nhận được %d bản ghi cần đồng bộ\n", len(danhSachDongBo))
 		var Insert []GiaoVien
 		var Update []GiaoVien
+		var Delete []int	
 
 		// Lấy danh sách các giao vien đã có trong DB
 
@@ -66,11 +67,12 @@ func (p *WebPage) SetPageGiaoVien() {
 			case "sửa":
 				Update = append(Update, giaoVien)
 			case "xóa":
-				db.DeleteGiaoVien(giaoVien.ID)
+				Delete = append(Delete, giaoVien.ID)
 			}
 		}
 		db.InsertGiaoVien(Insert)
-		db.UpdateGiaoVien(Update)
+		db.EditGiaoVien(Update)
+		db.DeleteGiaoVien(Delete)
 
 		// Trả về thành công
 		json.NewEncoder(w).Encode(map[string]string{"status": "success", "message": "Đồng bộ hoàn tất"})

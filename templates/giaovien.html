@@ -14,45 +14,56 @@
 
   const app = createApp({
     setup() {
-      // Đã cập nhật key khớp chuẩn với JSON từ Golang trả về (ma, ten, gvcn)
       const labels = ref([
-        { key: 'ma', title: 'Mã giao viên', type: 'text' },
-        { key: 'hoTen', title: 'Họ tên', type: 'text' },
-        { key: 'tenTKB', title: 'Tên TKB', type: 'text' },
-        { key: 'monDay', title: 'Dạy môn', type: 'text' },
-        { key: 'lopDay', title: 'Dạy lớp', type: 'text' }
+        { key: 'id', title: 'Mã giáo viên', type: 'hidden' }, // Ẩn cột này đi
+        { key: 'ten_ngan', title: 'Tên viết tắt (Tên TKB)', type: 'text' },
+        { key: 'ho_ten', title: 'Họ và tên', type: 'text' },
+        { key: 'mon_chinh_id', title: 'Môn chính', type: 'select', options: [] } // Sẽ nạp động dữ liệu vào đây
       ]);
       
       const datas = ref([]);
 
-      // 1. Hàm lấy dữ liệu từ Golang Server
+      // Nạp danh sách giáo viên
       const fetchData = async () => {
         try {
           const response = await fetch('/api/giaovien');
           if (response.ok) {
-            const result = await response.json();
-            // Gán dữ liệu server vào datas. Component datasheet sẽ tự động map thêm action 'none'
-            datas.value = result || [];
-          } else {
-            alert("Lỗi khi tải dữ liệu từ máy chủ");
+            datas.value = await response.json() || [];
           }
         } catch (error) {
           console.error("Lỗi mạng:", error);
         }
       };
 
-      // 2. Hàm Đồng bộ dữ liệu lên Golang Server
+      // Nạp danh sách môn học để làm menu xổ xuống (Dropdown)
+      const fetchMonHoc = async () => {
+        try {
+          const response = await fetch('/api/monhoc');
+          if (response.ok) {
+            const monhocs = await response.json() || [];
+            // Chuyển đổi dữ liệu môn học thành dạng { value: id, text: ten_mon }
+            const monHocOptions = monhocs.map(m => ({
+              value: m.id,
+              text: m.ten_mon
+            }));
+            
+            // Đổ vào mảng options của nhãn mon_chinh_id
+            const lbl = labels.value.find(l => l.key === 'mon_chinh_id');
+            if (lbl) lbl.options = monHocOptions;
+          }
+        } catch (error) {
+          console.error("Lỗi lấy danh sách môn học:", error);
+        }
+      };
+
       const syncData = async (updatedData) => {
-        // Chỉ lấy những dòng bị sửa đổi, thêm mới hoặc xóa
         const dataToSend = updatedData.filter(item => item.action !== ' ');
-        
         if (dataToSend.length === 0) {
           alert('Chưa có thay đổi nào để đồng bộ!');
           return;
         }
 
         try {
-          // Gửi POST lên API đồng bộ hàng loạt
           const response = await fetch('/api/giaovien/sync', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -60,21 +71,19 @@
           });
 
           if (response.ok) {
-            alert('Đồng bộ thành công ' + dataToSend.length + ' thao tác!');
-            
-            // 3. Gọi lại hàm tải dữ liệu để làm mới giao diện và reset toàn bộ action về 'none'
+            alert('Đồng bộ thành công!');
             await fetchData();
           } else {
             alert("Đã xảy ra lỗi trong quá trình đồng bộ.");
           }
         } catch (error) {
-          console.error("Lỗi đồng bộ:", error);
           alert("Không thể kết nối đến máy chủ!");
         }
       };
 
-      // Khi giao diện vừa render xong thì tự động gọi lấy dữ liệu ngay
       onMounted(() => {
+        // Chạy song song 2 luồng tải dữ liệu
+        fetchMonHoc();
         fetchData();
       });
 

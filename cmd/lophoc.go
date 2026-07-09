@@ -32,19 +32,19 @@ func (p *WebPage) SetPageLopHoc() {
 	// API Lấy danh sách
 	p.mux.HandleFunc("GET /api/lophoc", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		lops,err := db.SelectAllLopHoc()
+		lophoc,err := db.SelectAllLopHoc()
 		if err != nil {
 			fmt.Println("Lỗi lấy danh sách: ", err)
 			http.Error(w, "Lỗi lấy danh sách: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
-		json.NewEncoder(w).Encode(lops)
+		json.NewEncoder(w).Encode(lophoc)
 	})
 
 	// === API MỚI: ĐỒNG BỘ DỮ LIỆU HÀNG LOẠT ===
 	p.mux.HandleFunc("POST /api/lophoc/sync", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		var danhSachDongBo []LopHoc
+		var danhSachDongBo []	LopHoc
 		
 		err := json.NewDecoder(r.Body).Decode(&danhSachDongBo)
 		if err != nil {
@@ -53,18 +53,26 @@ func (p *WebPage) SetPageLopHoc() {
 		}
 
 		fmt.Printf("Nhận được %d bản ghi cần đồng bộ\n", len(danhSachDongBo))
+		var Insert []LopHoc
+		var Update []LopHoc
+		var Delete []int	
+
+		// Lấy danh sách các giao vien đã có trong DB
 
 		// Phân loại và xử lý từng hành động
-		for _, lop := range danhSachDongBo {
-			switch lop.Action {
+		for _, lophoc := range danhSachDongBo {
+			switch lophoc.Action {
 			case "thêm":
-				db.InsertLopHoc(lop)
+				Insert = append(Insert, lophoc)
 			case "sửa":
-				db.EditLopHoc(lop)
+				Update = append(Update, lophoc)
 			case "xóa":
-				db.DeleteLopHoc(lop.ID)
+				Delete = append(Delete, lophoc.ID)
 			}
 		}
+		db.InsertLopHoc(Insert)
+		db.EditLopHoc(Update)
+		db.DeleteLopHoc(Delete)
 
 		// Trả về thành công
 		json.NewEncoder(w).Encode(map[string]string{"status": "success", "message": "Đồng bộ hoàn tất"})

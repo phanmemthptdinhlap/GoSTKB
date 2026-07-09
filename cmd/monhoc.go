@@ -53,17 +53,25 @@ func (p *WebPage) SetPageMonHoc() {
 		}
 
 		fmt.Printf("Nhận được %d bản ghi cần đồng bộ\n", len(danhSachDongBo))
+		var Insert []MonHoc
+		var Update []MonHoc
+		var Delete []int	
+
+		// Lấy danh sách các giao vien đã có trong DB
 
 		// Phân loại và xử lý từng hành động
 		for _, mon := range danhSachDongBo {
 			switch mon.Action {
 			case "thêm":
-				db.InsertMonHoc(mon)
+				Insert = append(Insert, mon)
 			case "sửa":
-				db.EditMonHoc(mon)
+				Update = append(Update, mon)
 			case "xóa":
-				db.DeleteMonHoc(mon.ID)
+				Delete = append(Delete, mon.ID)
 			}
+			db.InsertMonHoc(Insert)
+			db.EditMonHoc(Update)
+			db.DeleteMonHoc(Delete)	
 		}
 
 		// Trả về thành công
