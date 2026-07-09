@@ -208,20 +208,20 @@ type GiaoVien struct {
 	TenNgan string `json:"ten_ngan"`
 	HoTen string `json:"ho_ten"`
 	MonChinhId int `json:"mon_chinh_id"`
-	action string `json:"action;omitempty"`
+	Action string `json:"action,omitempty"`
 	
 }
 type MonHoc struct {
 	ID int `json:"id"`
 	TenMon string `json:"ten_mon"`
 	LoaiMon string `json:"loai_mon"`
-	action string `json:"action,omitempty"`
+	Action string `json:"action,omitempty"`
 }
 type LopHoc struct {
 	ID int `json:"id"`
 	TenLop string `json:"ten_lop"`
 	KhoiLop string `json:"khoi_lop"`
-	action string `json:"action,omitempty"`
+	Action string `json:"action,omitempty"`
 }
 type PhanCong struct {
 	ID int `json:"id"`
@@ -230,7 +230,7 @@ type PhanCong struct {
 	MonHocId int `json:"mon_hoc_id"`
 	Tuan int `json:"tuan"`
 	Sotiet int `json:"so_tiet"`
-	action string `json:"action,omitempty"`
+	Action string `json:"action,omitempty"`
 }
 type RangBuoc struct {
 	ID int `json:"id"`
@@ -238,14 +238,14 @@ type RangBuoc struct {
 	Thu int `json:"thu"`
 	Tiet int `json:"tiet"`
 	LoaiRangBuoc string `json:"loai_rang_buoc"`
-	action string `json:"action,omitempty"`
+	Action string `json:"action,omitempty"`
 }
 type ThuaThieu struct {
 	ID int `json:"id"`
 	LopId int `json:"lop_id"`
 	MonhocId int `json:"mon_hoc_id"`
 	TietThieu int `json:"tiet_thieu"`
-	action string `json:"action,omitempty"`
+	Action string `json:"action,omitempty"`
 }
 
 type SqlTKB struct {
@@ -494,107 +494,405 @@ func (s *SqlTKB) InsertThuaThieu(thuathieu []ThuaThieu) (int, error) {
 }
 
 
-// func EditGiaoVien, EditMonHoc, EditLopHoc, EditPhanCong, EditRangBuoc, EditThuaThieu
+// func EditGiaoVien, EditMonHoc, EditLopHoc, EditPhanCong, EditRangBuoc, EditThuaThieu, EditGiaoVien
 // return error
 
-func (s *SqlTKB) EditGiaoVien(gv GiaoVien) error {
-	_, err := s.db.Exec(sqlEditGiaoVien, gv.TenNgan, gv.HoTen, gv.MonChinhId, gv.ID)
+func (s *SqlTKB) EditGiaoVien(giaovien []GiaoVien) (int, error) {
+	tx, err := s.db.Begin()
 	if err != nil {
-		return fmt.Errorf("Không thể chỉnh sửa giáo viên %s (%w )", gv.TenNgan, err)
+		return 0, fmt.Errorf("không thể bắt đầu giao dịch: %w", err)
 	}
-	return nil
+	// Đảm bảo rollback nếu có lỗi xảy ra (tránh treo CSDL)
+	defer func() {
+		if p := recover(); p != nil {
+			tx.Rollback()
+			panic(p) // Bắn lại panic sau khi rollback
+		} else if err != nil {
+			tx.Rollback() // Rollback nếu err != nil
+			return // Đừng gọi return khi err != nil
+		}
+	}()
+	var count int
+	// Chuẩn bị câu lệnh SQL (Prepared Statement) để tái sử dụng trong vòng lặp
+	stmt, err := tx.Prepare(sqlEditGiaoVien)
+	if err != nil {
+		return 0, fmt.Errorf("không thể chuẩn bị câu lệnh: %w", err)
+	}
+	defer stmt.Close() // Đóng statement khi xong
+	for _, gv := range giaovien {
+		// Dùng statement đã chuẩn bị để thực thi
+		_, err = stmt.Exec(gv.TenNgan, gv.HoTen, gv.MonChinhId, gv.ID)
+		if err != nil {
+			// Lỗi được gán cho biến err, defer sẽ kích hoạt Rollback()
+			return count, fmt.Errorf("không thể sửa giáo viên %s (%w)", gv.TenNgan, err)
+		}
+		count++
+	}
+	// Nếu mọi thứ ổn, commit giao dịch
+	err = tx.Commit()
+	if err != nil {
+		return count, fmt.Errorf("không thể chốt giao dịch: %w",	err)
+	}
+	return count, nil
 }
 
-func (s *SqlTKB) EditMonHoc(mh MonHoc) error {
-	_, err := s.db.Exec(sqlEditMonHoc, mh.TenMon, mh.LoaiMon, mh.ID)
+func (s *SqlTKB) EditMonHoc(monhoc []MonHoc) (int, error) {
+	tx, err := s.db.Begin()
 	if err != nil {
-		return fmt.Errorf("Không thể chỉnh sửa môn học %s (%w )", mh.TenMon, err)
+		return 0, fmt.Errorf("không thể bắt đầu giao dịch: %w", err)
 	}
-	return nil
+	// Đảm bảo rollback nếu có lỗi xảy ra (tránh treo CSDL)
+	defer func() {
+		if p := recover(); p != nil {
+			tx.Rollback()
+			panic(p) // Bắn lại panic sau khi rollback
+		} else if err != nil {
+			tx.Rollback() // Rollback nếu err != nil
+			return // Đừng gọi return khi err != nil
+		}
+	}()
+	var count int
+	// Chuẩn bị câu lệnh SQL (Prepared Statement) để tái sử dụng trong vòng lặp
+	stmt, err := tx.Prepare(sqlEditMonHoc)
+	if err != nil {
+		return 0, fmt.Errorf("không thể chuẩn bị câu lệnh: %w", err)
+	}
+	defer stmt.Close() // Đóng statement khi xong
+	for _, mh := range monhoc {
+		// Dùng statement đã chuẩn bị để thực thi
+		_, err = stmt.Exec(mh.TenMon, mh.LoaiMon, mh.ID)
+		if err != nil {
+			// Lỗi được gán cho biến err, defer sẽ kích hoạt Rollback()
+			return count, fmt.Errorf("không thể sửa môn học %s (%w)", mh.TenMon, err)
+		}
+		count++
+	}
+	// Nếu mọi thứ ổn, commit giao dịch
+	err = tx.Commit()
+	if err != nil {
+		return count, fmt.Errorf("không thể chốt giao dịch: %w",	err)
+	}
+	return count, nil
 }
 
-func (s *SqlTKB) EditLopHoc(lh LopHoc) error {
-	_, err := s.db.Exec(sqlEditLopHoc, lh.TenLop, lh.KhoiLop, lh.ID)
+func (s *SqlTKB) EditLopHoc(lophoc []LopHoc) (int, error) {
+	tx, err := s.db.Begin()
 	if err != nil {
-		return fmt.Errorf("Không thể chỉnh sửa lớp học %s (%w )", lh.TenLop, err)
+		return 0, fmt.Errorf("không thể bắt đầu giao dịch: %w", err)
 	}
-	return nil
+	// Đảm bảo rollback nếu có lỗi xảy ra (tránh treo CSDL)
+	defer func() {
+		if p := recover(); p != nil {
+			tx.Rollback()
+			panic(p) // Bắn lại panic sau khi rollback
+		} else if err != nil {
+			tx.Rollback() // Rollback nếu err != nil
+			return // Đừng gọi return khi err != nil
+		}
+	}()
+	var count int
+	// Chuẩn bị câu lệnh SQL (Prepared Statement) để tái sử dụng trong vòng lặp
+	stmt, err := tx.Prepare(sqlEditLopHoc)
+	if err != nil {
+		return 0, fmt.Errorf("không thể chuẩn bị câu lệnh: %w", err)
+	}
+	defer stmt.Close() // Đóng statement khi xong
+	for _, lh := range lophoc {
+		// Dùng statement đã chuẩn bị để thực thi
+		_, err = stmt.Exec(lh.TenLop, lh.KhoiLop, lh.ID)
+		if err != nil {
+			// Lỗi được gán cho biến err, defer sẽ kích hoạt Rollback()
+			return count, fmt.Errorf("không thể sửa lớp học %s (%w)", lh.TenLop, err)
+		}
+		count++
+	}
+	// Nếu mọi thứ ổn, commit giao dịch
+	err = tx.Commit()
+	if err != nil {
+		return count, fmt.Errorf("không thể chốt giao dịch: %w",	err)
+	}
+	return count, nil
 }
 
-func (s *SqlTKB) EditPhanCong(pc PhanCong) error {
-	_, err := s.db.Exec(sqlEditPhanCong, pc.Tuan, pc.Sotiet, pc.ID)
+func (s *SqlTKB) EditPhanCong(phancong []PhanCong) (int, error) {
+	tx, err := s.db.Begin()
 	if err != nil {
-		return fmt.Errorf("Không thể chỉnh sửa phần cống %d (%w )", pc.GiaoVienId, err)
+		return 0, fmt.Errorf("không thể bắt đầu giao dịch: %w", err)
 	}
-	return nil
+	// Đảm bảo rollback nếu có lỗi xảy ra (tránh treo CSDL)
+	defer func() {
+		if p := recover(); p != nil {
+			tx.Rollback()
+			panic(p) // Bắn lại panic sau khi rollback
+		} else if err != nil {
+			tx.Rollback() // Rollback nếu err != nil
+			return // Đừng gọi return khi err != nil
+		}
+	}()
+	var count int
+	// Chuẩn bị câu lệnh SQL (Prepared Statement) để tái sử dụng trong vòng lặp
+	stmt, err := tx.Prepare(sqlEditPhanCong)
+	if err != nil {
+		return 0, fmt.Errorf("không thể chuẩn bị câu lệnh: %w", err)
+	}
+	defer stmt.Close() // Đóng statement khi xong
+	for _, pc := range phancong {
+		// Dùng statement đã chuẩn bị để thực thi
+		_, err = stmt.Exec(pc.Tuan, pc.Sotiet, pc.ID)
+		if err != nil {
+			// Lỗi được gán cho biến err, defer sẽ kích hoạt Rollback()
+			return count, fmt.Errorf("không thể sửa phần cống %d (%w)", pc.GiaoVienId, err)
+		}
+		count++
+	}
+	// Nếu mọi thứ ổn, commit giao dịch
+	err = tx.Commit()
+	if err != nil {
+		return count, fmt.Errorf("không thể chốt giao dịch: %w",	err)
+	}
+	return count, nil
 }
 
-func (s *SqlTKB) EditRangBuoc(rb RangBuoc) error {
-	_, err := s.db.Exec(sqlEditRangBuoc, rb.Thu, rb.Tiet, rb.LoaiRangBuoc, rb.ID)
+func (s *SqlTKB) EditRangBuoc(rangbuoc []RangBuoc) (int, error) {
+	tx, err := s.db.Begin()
 	if err != nil {
-		return fmt.Errorf("Không thể chỉnh sửa rang bước %d (%w )", rb.GiaoVienId, err)
+		return 0, fmt.Errorf("không thể bắt đầu giao dịch: %w", err)
 	}
-	return nil
+	// Đảm bảo rollback nếu có lỗi xảy ra (tránh treo CSDL)
+	defer func() {
+		if p := recover(); p != nil {
+			tx.Rollback()
+			panic(p) // Bắn lại panic sau khi rollback
+		} else if err != nil {
+			tx.Rollback() // Rollback nếu err != nil
+			return // Đừng gọi return khi err != nil
+		}
+	}()
+	var count int
+	// Chuẩn bị câu lệnh SQL (Prepared Statement) để tái sử dụng trong vòng lặp
+	stmt, err := tx.Prepare(sqlEditRangBuoc)
+	if err != nil {
+		return 0, fmt.Errorf("không thể chuẩn bị câu lệnh: %w", err)
+	}
+	defer stmt.Close() // Đóng statement khi xong
+	for _, rb := range rangbuoc {
+		// Dùng statement đã chuẩn bị để thực thi
+		_, err = stmt.Exec(rb.Thu, rb.Tiet, rb.LoaiRangBuoc, rb.ID)
+		if err != nil {
+			// Lỗi được gán cho biến err, defer sẽ kích hoạt Rollback()
+			return count, fmt.Errorf("không thể sửa rang bước %d (%w)", rb.GiaoVienId, err)
+		}
+		count++
+	}
+	// Nếu mọi thứ ổn, commit giao dịch
+	err = tx.Commit()
+	if err != nil {
+		return count, fmt.Errorf("không thể chốt giao dịch: %w",	err)
+	}
+	return count, nil
 }
 
-func (s *SqlTKB) EditThuaThieu(tt ThuaThieu) error {
-	_, err := s.db.Exec(sqlEditThuaThieu, tt.TietThieu, tt.ID)
-	if err != nil {
-		return fmt.Errorf("Không thể chỉnh sửa thuật thiếu %d (%w )", tt.LopId, err)
-	}
-	return nil
-}
 
+
+	
 // func DeleteGiaoVien, DeleteMonHoc, DeleteLopHoc, DeletePhanCong, DeleteRangBuoc, DeleteThuaThieu
 // return error
 
-func (s *SqlTKB) DeleteGiaoVien(id int) error {
-	_, err := s.db.Exec(sqlDeleteGiaoVien, id)
-	if err != nil {
-		return fmt.Errorf("Không thể xóa giáo viên %d (%w )", id, err)
+func (s *SqlTKB) DeleteGiaoVien(ids []int) (int, error) {
+	tx,err:=s.db.Begin()
+	if err!=nil{
+		return 0, fmt.Errorf("Không thể bắt đầu giao dịch %w", err)
 	}
-	return nil
+	// Đảm bảo rollback nếu có lỗi xảy ra (tránh treo CSDL)
+	defer func() {
+		if p := recover(); p != nil {
+			tx.Rollback()
+			panic(p) // Bắn lại panic sau khi rollback
+		} else if err != nil {
+			tx.Rollback() // Rollback nếu err != nil
+			return // Đừng gọi return khi err != nil
+		}
+	}()
+	var count int
+	// Chuẩn bị câu lệnh SQL (Prepared Statement) để tái sử dụng trong vòng lặp
+	stmt, err := tx.Prepare(sqlDeleteGiaoVien)
+	if err != nil {
+		return 0, fmt.Errorf("Không thể chuẩn bị câu lệnh %w", err)
+	}
+	defer stmt.Close() // Đóng statement khi xong
+	for _, id := range ids {
+		// Dùng statement đã chuẩn bị để thực thi
+		_, err = stmt.Exec(id)
+		if err != nil {
+			// Lỗi được gán cho biến err, defer sẽ kích hoạt Rollback()
+			return count, fmt.Errorf("Không thể xóa giáo viên %d (%w)", id, err)
+		}
+		count++
+	}
+	// Nếu mọi thứ ổn, commit giao dịch
+	err = tx.Commit()
+	if err != nil {
+		return count, fmt.Errorf("Không thể chốt giao dịch %w", err)
+	}
+	return count, nil
 }
 
-func (s *SqlTKB) DeleteMonHoc(id int) error {
-	_, err := s.db.Exec(sqlDeleteMonHoc, id)
+func (s *SqlTKB) DeleteMonHoc(ids []int) (int, error) {
+	tx, err := s.db.Begin()
 	if err != nil {
-		return fmt.Errorf("Không thể xóa môn học %d (%w )", id, err)
+		return 0, fmt.Errorf("Không thể bắt đầu giao dịch %w", err)
 	}
-	return nil
+	// Đảm bảo rollback nếu có lỗi xảy ra (tránh treo CSDL)
+	defer func() {
+		if p := recover(); p != nil {
+			tx.Rollback()
+			panic(p) // Bắn lại panic sau khi rollback
+		} else if err != nil {
+			tx.Rollback() // Rollback nếu err != nil
+			return // Đừng gọi return khi err != nil
+		}
+	}()
+	var count int
+	// Chuẩn bị câu lệnh SQL (Prepared Statement) để tái sử dụng trong vòng lặp
+	stmt, err := tx.Prepare(sqlDeleteMonHoc)
+	if err != nil {
+		return 0, fmt.Errorf("Không thể chuẩn bị câu lệnh %w", err)
+	}
+	defer stmt.Close() // Đóng statement khi xong
+	for _, id := range ids {
+			// Dùng statement đã chuẩn bị để thực thi
+		_, err = stmt.Exec(id)
+		if err != nil {
+				// Lỗi được gán cho biến err, defer sẽ kích hoạt Rollback()
+			return count, fmt.Errorf("Không thể xóa môn học %d (%w)", id, err)
+		}
+		count++
+	}
+			// Nếu mọi thứ ổn, commit giao dịch
+	err = tx.Commit()
+		if err != nil {
+			return count, fmt.Errorf("Không thể chốt giao dịch %w", err)
+		}
+	return count, nil
 }
 
-func (s *SqlTKB) DeleteLopHoc(id int) error {
-	_, err := s.db.Exec(sqlDeleteLopHoc, id)
+func (s *SqlTKB) DeleteLopHoc(ids []int) (int, error) {
+	tx, err := s.db.Begin()
 	if err != nil {
-		return fmt.Errorf("Không thể xóa lớp học %d (%w )", id, err)
+		return 0, fmt.Errorf("Không thể bắt đầu giao dịch %w", err)
 	}
-	return nil
+		// Đảm bảo rollback nếu có lỗi xảy ra (tránh treo CSDL)
+	defer func() {
+		if p := recover(); p != nil {
+			tx.Rollback()
+			panic(p) // Bắn lại panic sau khi rollback
+		} else if err != nil {
+			tx.Rollback() // Rollback nếu err != nil
+			return // Đừng gọi return khi err != nil
+		}
+	}()
+	var count int
+	// Chuẩn bị câu lệnh SQL (Prepared Statement) để tái sử dụng trong vòng lặp
+	stmt, err := tx.Prepare(sqlDeleteLopHoc)
+	if err != nil {
+		return 0, fmt.Errorf("Không thể chuẩn bị câu lệnh %w", err)
+	}
+	defer stmt.Close() // Đóng statement khi xong
+	for _, id := range ids {
+			// Dùng statement đã chuẩn bị để thực thi
+		_, err = stmt.Exec(id)
+		if err != nil {
+				// Lỗi được gán cho biến err, defer sẽ kích hoạt Rollback()
+			return count, fmt.Errorf("Không thể xóa lớp học %d (%w)", id, err)
+		}
+		count++
+	}
+			// Nếu mọi thứ ổn, commit giao dịch
+	err = tx.Commit()
+	if err != nil {
+		return count, fmt.Errorf("Không thể chốt giao dịch %w", err)
+	}
+	return count, nil
 }
 
-func (s *SqlTKB) DeletePhanCong(id int) error {
-	_, err := s.db.Exec(sqlDeletePhanCong, id)
+func (s *SqlTKB) DeletePhanCong(ids []int) (int, error) {
+	tx, err := s.db.Begin()
 	if err != nil {
-		return fmt.Errorf("Không thể xóa phần cống %d (%w )", id, err)
+		return 0, fmt.Errorf("Không thể bắt đầu giao dịch %w", err)
 	}
-	return nil
+	// Đảm bảo rollback nếu có lỗi xảy ra (tránh treo CSDL)
+	defer func() {
+		if p := recover(); p != nil {
+			tx.Rollback()
+			panic(p) // Bắn lại panic sau khi rollback
+		} else if err != nil {
+			tx.Rollback() // Rollback nếu err != nil
+			return // Đừng gọi return khi err != nil
+		}
+	}()
+	var count int
+	// Chuẩn bị câu lệnh SQL (Prepared Statement) để tái sử dụng trong vòng lặp
+	stmt, err := tx.Prepare(sqlDeletePhanCong)
+	if err != nil {
+		return 0, fmt.Errorf("Không thể chuẩn bị câu lệnh %w", err)
+	}
+	defer stmt.Close() // Đóng statement khi xong
+	for _, id := range ids {
+		// Dùng statement đã chuẩn bị để thực thi
+		_, err = stmt.Exec(id)
+		if err != nil {
+			// Lỗi được gán cho biến err, defer sẽ kích hoạt Rollback()
+			return count, fmt.Errorf("Không thể xóa phần cống %d (%w)", id, err)
+		}
+		count++
+	}
+	// Nếu mọi thứ ổn, commit giao dịch
+	err = tx.Commit()
+	if err != nil {
+		return count, fmt.Errorf("Không thể chốt giao dịch %w", err)
+	}
+	return count, nil
 }
 
-func (s *SqlTKB) DeleteRangBuoc(id int) error {
-	_, err := s.db.Exec(sqlDeleteRangBuoc, id)
+func (s *SqlTKB) DeleteRangBuoc(ids []int) (int, error) {
+	tx, err := s.db.Begin()
 	if err != nil {
-		return fmt.Errorf("Không thể xóa rang bước %d (%w )", id, err)
+		return 0, fmt.Errorf("Không thể bắt đầu giao dịch %w", err)
 	}
-	return nil
+	// Đảm bảo rollback nếu có lỗi xảy ra (tránh treo CSDL)
+	defer func() {
+		if p := recover(); p != nil {
+			tx.Rollback()
+			panic(p) // Bắn lại panic sau khi rollback
+		} else if err != nil {
+			tx.Rollback() // Rollback nếu err != nil
+			return // Đừng gọi return khi err != nil
+		}
+	}()
+	var count int
+	// Chuẩn bị câu lệnh SQL (Prepared Statement) để tái sử dụng trong vòng lặp
+	stmt, err := tx.Prepare(sqlDeleteRangBuoc)
+	if err != nil {
+		return 0, fmt.Errorf("Không thể chuẩn bị câu lệnh %w", err)
+	}
+	defer stmt.Close() // Đóng statement khi xong
+	for _, id := range ids {
+		// Dùng statement đã chuẩn bị để thực thi
+		_, err = stmt.Exec(id)
+		if err != nil {
+			// Lỗi được gán cho biến err, defer sẽ kích hoạt Rollback()
+			return count, fmt.Errorf("Không thể xóa rang bước %d (%w)", id, err)
+		}
+		count++
+	}
+	// Nếu mọi thứ ổn, commit giao dịch
+	err = tx.Commit()
+	if err != nil {
+		return count, fmt.Errorf("Không thể chốt giao dịch %w", err)
+	}
+	return count, nil
 }
 
-func (s *SqlTKB) DeleteThuaThieu(id int) error {
-	_, err := s.db.Exec(sqlDeleteThuaThieu, id)
-	if err != nil {
-		return fmt.Errorf("Không thể xóa thuật thiếu %d (%w )", id, err)
-	}
-	return nil
-}
 
 // func SelectGiaoVien, SelectMonHoc, SelectLopHoc, SelectPhanCong, SelectRangBuoc, SelectThuaThieu
 // return data, error
