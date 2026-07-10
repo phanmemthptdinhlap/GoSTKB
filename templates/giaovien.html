@@ -15,7 +15,7 @@
   const app = createApp({
     setup() {
       const labels = ref([
-        { key: 'id', title: 'Mã giáo viên', type: 'hidden' }, // Ẩn cột này đi
+        { key: 'id', title: 'Mã giáo viên', type: 'text',readonly:true }, // Ẩn cột này đi
         { key: 'ten_ngan', title: 'Tên viết tắt (Tên TKB)', type: 'text' },
         { key: 'ho_ten', title: 'Họ và tên', type: 'text' },
         { key: 'mon_chinh_id', title: 'Môn chính', type: 'select', options: [] } // Sẽ nạp động dữ liệu vào đây

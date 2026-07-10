@@ -6,8 +6,7 @@ const DataSheet = {
   },
   emits: ['sync'],
   template: `
-    <div class="datasheet-container" style="display: flex; flex-direction: column; gap: 10px;">
-      
+    <div class="datasheet-container" style="display: flex; flex-direction: column; gap: 10px;"> 
       <div class="toolbar" style="margin-bottom: 10px;">
         <table border="0" style="width: 100%; border-collapse: collapse; border-spacing: 0;">
           <tr>
@@ -70,16 +69,21 @@ const DataSheet = {
             <template v-for="col in labels" :key="col.key">
               <div v-if="col.type !== 'hidden'" style="margin-bottom: 12px;">
                 <label style="display: block; margin-bottom: 5px; font-weight: 500;">{{ col.title }}</label>
-                
                 <div v-if="col.type === 'select'">
-                  <select v-model="formData[col.key]" required style="width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;">
+                  <select v-model="formData[col.key]" :required="col.required||false" :disabled="col.readonly||false" style="width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;">
                     <option disabled value="">-- Chọn {{ col.title }} --</option>
                     <option v-for="option in col.options" :key="option.value" :value="option.value">{{ option.text }}</option>
                   </select>
                 </div>
 
                 <div v-else>
-                  <input v-model="formData[col.key]" :type="col.type || 'text'" required style="width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;" />
+                  <input v-model="formData[col.key]" :type="col.type || 'text'" :required="col.required||false" :readonly="col.readonly||false" 
+                  style="{
+                  width: 100%; padding: 8px; box-sizing: border-box; 
+                  border: 1px solid #ccc; border-radius: 4px; 
+                  backgroundColor: col.readonly ? '#f5f5f5' : '#fff', 
+                  color: col.readonly ? '#888' : 'inherit'
+                  }">
                 </div>
               </div>
             </template>
