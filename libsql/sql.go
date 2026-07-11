@@ -51,7 +51,7 @@ const (
 			phan_cong_id INTEGER,
 			tuan INTEGER,
 			so_tiet INTEGER,
-			ROREIGN KEY (phan_cong_id) REFERENCES phancong(id)
+			FOREIGN KEY (phan_cong_id) REFERENCES phancong(id)
 		);
 		CREATE TABLE IF NOT EXISTS rangbuoc(
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
