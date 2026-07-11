@@ -26,18 +26,32 @@ const (
 		CREATE TABLE IF NOT EXISTS lophoc(
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			ten_lop TEXT UNIQUE,
-			khoi_lop TEXT
+			khoi_lop TEXT,
+			gvcn_id INTEGER,
+			FOREIGN KEY (gvcn_id) REFERENCES giaovien(id)
 		);
 		CREATE TABLE IF NOT EXISTS phancong(
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			giao_vien_id INTEGER,
 			lop_id INTEGER,
 			mon_hoc_id INTEGER,
-			tuan INTEGER,
-			so_tiet INTEGER,
 			FOREIGN KEY (giao_vien_id) REFERENCES giaovien(id),
 			FOREIGN KEY (lop_id) REFERENCES lophoc(id),
 			FOREIGN KEY (mon_hoc_id) REFERENCES monhoc(id)
+		);
+		CREATE TABLE IF NOT EXISTS phanbotiet(
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			phan_cong_id INTEGER,
+			tuan INTEGER,
+			so_tiet INTEGER,
+			FOREIGN KEY (phan_cong_id) REFERENCES phancong(id)
+		);
+		CREATE TABLE IF NOT EXISTS tiendo(
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			phan_cong_id INTEGER,
+			tuan INTEGER,
+			so_tiet INTEGER,
+			ROREIGN KEY (phan_cong_id) REFERENCES phancong(id)
 		);
 		CREATE TABLE IF NOT EXISTS rangbuoc(
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -46,14 +60,6 @@ const (
 			tiet INTEGER,
 			loai_rang_buoc TEXT,
 			FOREIGN KEY (giao_vien_id) REFERENCES giaovien(id)
-		);
-		CREATE TABLE IF NOT EXISTS thuathieu(
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			lop_id INTEGER,
-			mon_hoc_id INTEGER,
-			tiet_thieu INTEGER,
-			FOREIGN KEY (lop_id) REFERENCES lophoc(id),
-			FOREIGN KEY (mon_hoc_id) REFERENCES monhoc(id)
 		);`
 		sqlInsertGiaoVien = `
 		INSERT INTO giaovien(ten_ngan, ho_ten, mon_chinh_id)
@@ -71,13 +77,17 @@ const (
 		INSERT INTO phancong(giao_vien_id, lop_id, mon_hoc_id, tuan, so_tiet)
 		VALUES (?, ?, ?, ?, ?);
 		`
+		sqlInsertPhanbotiet = `
+		INSERT INTO phanbotiet(phan_cong_id, tuan, so_tiet)
+		VALUES (?, ?, ?);
+		`
+		sqlInsertTiendo = `
+		INSERT INTO tiendo(phan_cong_id, tuan, so_tiet)
+		VALUES (?, ?, ?);
+		`
 		sqlInsertRangBuoc = `
 		INSERT INTO rangbuoc(giao_vien_id, thu, tiet, loai_rang_buoc)
 		VALUES (?, ?, ?, ?);
-		`
-		sqlInsertThuaThieu = `
-		INSERT INTO thuathieu(lop_id, mon_hoc_id, tiet_thieu)
-		VALUES (?, ?, ?);
 		`
 		sqlEditGiaoVien = `
 		UPDATE giaovien
@@ -99,14 +109,19 @@ const (
 		SET tuan = ?, so_tiet = ?
 		WHERE id = ?;
 		`
+		sqlEditPhanbotiet = `
+		UPDATE phanbotiet
+		SET tuan = ?, so_tiet = ?
+		WHERE id = ?;
+		`
+		sqlEditTiendo = `
+		UPDATE tiendo
+		SET tuan = ?, so_tiet = ?
+		WHERE id = ?;
+		`
 		sqlEditRangBuoc = `
 		UPDATE rangbuoc
 		SET thu = ?, tiet = ?, loai_rang_buoc = ?
-		WHERE id = ?;
-		`
-		sqlEditThuaThieu = `
-		UPDATE thuathieu
-		SET tiet_thieu = ?
 		WHERE id = ?;
 		`
 		sqlDeleteGiaoVien = `
@@ -125,12 +140,16 @@ const (
 		DELETE FROM phancong
 		WHERE id = ?;
 		`
-		sqlDeleteRangBuoc = `
-		DELETE FROM rangbuoc
+		sqlDeletePhanbotiet = `
+		DELETE FROM phanbotiet
 		WHERE id = ?;
 		`
-		sqlDeleteThuaThieu = `
-		DELETE FROM thuathieu
+		sqlDeleteTiendo = `
+		DELETE FROM tiendo
+		WHERE id = ?;
+		`
+		sqlDeleteRangBuoc = `
+		DELETE FROM rangbuoc
 		WHERE id = ?;
 		`
 		sqlSelectGiaoVien = `
@@ -149,12 +168,16 @@ const (
 		SELECT * FROM phancong
 		WHERE id = ?;
 		`
-		sqlSelectRangBuoc = `
-		SELECT * FROM rangbuoc
+		sqlSelectPhanbotiet = `
+		SELECT * FROM phanbotiet
 		WHERE id = ?;
 		`
-		sqlSelectThuaThieu = `
-		SELECT * FROM thuathieu
+		sqlSelectTiendo = `
+		SELECT * FROM tiendo
+		WHERE id = ?;
+		`
+		sqlSelectRangBuoc = `
+		SELECT * FROM rangbuoc
 		WHERE id = ?;
 		`
 		sqlSelectAllGiaoVien = `
@@ -169,11 +192,14 @@ const (
 		sqlSelectAllPhanCong = `
 		SELECT * FROM phancong;
 		`
+		sqlSelectAllPhanbotiet = `
+		SELECT * FROM phanbotiet;
+		`
+		sqlSelectAllTiendo = `
+		SELECT * FROM tiendo;
+		`
 		sqlSelectAllRangBuoc = `
 		SELECT * FROM rangbuoc;
-		`
-		sqlSelectAllThuaThieu = `
-		SELECT * FROM thuathieu;
 		`
 		sqlFindGiaoVien = `
 		SELECT * FROM giaovien
@@ -191,13 +217,17 @@ const (
 		SELECT * FROM phancong
 		WHERE giao_vien_id = ?;
 		`
+		sqlFindPhanbotiet = `
+		SELECT * FROM phanbotiet
+		WHERE phan_cong_id = ?;
+		`
+		sqlFindTiendo = `
+		SELECT * FROM tiendo
+		WHERE phan_cong_id = ?;
+		`
 		sqlFindRangBuoc = `
 		SELECT * FROM rangbuoc
 		WHERE giao_vien_id = ?;
-		`
-		sqlFindThuaThieu = `
-		SELECT * FROM thuathieu
-		WHERE mon_hoc_id = ?;
 		`
 	)
 
@@ -232,19 +262,26 @@ type PhanCong struct {
 	Sotiet int `json:"so_tiet"`
 	Action string `json:"action,omitempty"`
 }
+type PhanBotiet struct {
+	ID int `json:"id"`
+	PhanCongId int `json:"phan_cong_id"`
+	Tuan int `json:"tuan"`
+	Sotiet int `json:"so_tiet"`
+	Action string `json:"action,omitempty"`
+}
+type Tiendo struct {
+	ID int `json:"id"`
+	PhanCongId int `json:"phan_cong_id"`
+	Tuan int `json:"tuan"`
+	Sotiet int `json:"so_tiet"`
+	Action string `json:"action,omitempty"`
+}
 type RangBuoc struct {
 	ID int `json:"id"`
 	GiaoVienId int `json:"giao_vien_id"`
 	Thu int `json:"thu"`
 	Tiet int `json:"tiet"`
 	LoaiRangBuoc string `json:"loai_rang_buoc"`
-	Action string `json:"action,omitempty"`
-}
-type ThuaThieu struct {
-	ID int `json:"id"`
-	LopId int `json:"lop_id"`
-	MonhocId int `json:"mon_hoc_id"`
-	TietThieu int `json:"tiet_thieu"`
 	Action string `json:"action,omitempty"`
 }
 
@@ -415,6 +452,84 @@ func (s *SqlTKB) InsertPhanCong(phancong []PhanCong) (int, error) {
 	return count, nil
 }
 
+func (s *SqlTKB) InsertPhanbotiet(phanbotiet []PhanBotiet) (int, error) {
+	tx, err := s.db.Begin()
+	if err != nil {
+		return 0, fmt.Errorf("không thể bắt đầu giao dịch: %w", err)
+	}
+	// Đảm bảo rollback nếu có lỗi xảy ra (tránh treo CSDL)
+	defer func() {
+		if p := recover(); p != nil {
+			tx.Rollback()
+			panic(p) // Bắn lại panic sau khi rollback
+		} else if err != nil {
+			tx.Rollback() // Rollback nếu err != nil
+			return // Đừng gọi return khi err != nil
+		}
+	}()
+	var count int
+	// Chuẩn bị câu lệnh SQL (Prepared Statement) để tái sử dụng trong vòng lặp
+	stmt, err := tx.Prepare(sqlInsertPhanbotiet)
+	if err != nil {
+		return 0, fmt.Errorf("không thể chuẩn bị câu lệnh: %w", err)
+	}
+	defer stmt.Close() // Đóng statement khi xong
+	for _, pb := range phanbotiet {
+		// Dùng statement đã chuẩn bị để thực thi
+		_, err = stmt.Exec(pb.Tuan, pb.Sotiet, pb.ID)
+		if err != nil {
+			// Lỗi được gán cho biến err, defer sẽ kích hoạt Rollback()
+			return count, fmt.Errorf("không thể thêm phanbotiet %d (%w)", pb.PhanCongId, err)
+		}
+		count++
+	}
+	// Nếu mọi thứ ổn, commit giao dịch
+	err = tx.Commit()
+	if err != nil {
+		return count, fmt.Errorf("không thể chốt giao dịch: %w", err)
+	}
+	return count, nil
+}
+
+func (s *SqlTKB) InsertTiendo(tiendo []Tiendo) (int, error) {
+	tx, err := s.db.Begin()
+	if err != nil {
+		return 0, fmt.Errorf("không thể bắt đầu giao dịch: %w", err)
+	}
+	// Đảm bảo rollback nếu có lỗi xảy ra (tránh treo CSDL)
+	defer func() {
+		if p := recover(); p != nil {
+			tx.Rollback()
+			panic(p) // Bắn lại panic sau khi rollback
+		} else if err != nil {
+			tx.Rollback() // Rollback nếu err != nil
+			return // Đừng gọi return khi err != nil
+		}
+	}()
+	var count int
+	// Chuẩn bị câu lệnh SQL (Prepared Statement) để tái sử dụng trong vòng lặp
+	stmt, err := tx.Prepare(sqlInsertTiendo)
+	if err != nil {
+		return 0, fmt.Errorf("không thể chuẩn bị câu lệnh: %w", err)
+	}
+	defer stmt.Close() // Đóng statement khi xong
+	for _, tt := range tiendo {
+		// Dùng statement đã chuẩn bị để thực thi
+		_, err = stmt.Exec(tt.Tuan, tt.Sotiet, tt.ID)
+		if err != nil {
+			// Lỗi được gán cho biến err, defer sẽ kích hoạt Rollback()
+			return count, fmt.Errorf("không thể thêm tiendo %d (%w)", tt.PhanCongId, err)
+		}
+		count++
+	}
+	// Nếu mọi thứ ổn, commit giao dịch
+	err = tx.Commit()
+	if err != nil {
+		return count, fmt.Errorf("không thể chốt giao dịch: %w", err)
+	}
+	return count, nil
+}
+
 func (s *SqlTKB) InsertRangBuoc(rangbuoc []RangBuoc) (int, error) {
 	tx, err := s.db.Begin()
 	if err != nil {
@@ -450,45 +565,6 @@ func (s *SqlTKB) InsertRangBuoc(rangbuoc []RangBuoc) (int, error) {
 	err = tx.Commit()
 	if err != nil {
 		return count, fmt.Errorf("không thể chốt giao dịch: %w", err)
-	}
-	return count, nil
-}
-
-func (s *SqlTKB) InsertThuaThieu(thuathieu []ThuaThieu) (int, error) {
-	tx, err := s.db.Begin()
-	if err != nil {
-		return 0, fmt.Errorf("không thể bắt đầu giao dịch: %w", err)
-	}
-	// Đảm bảo rollback nếu có lỗi xảy ra (tránh treo CSDL)
-	defer func() {
-		if p := recover(); p != nil {
-			tx.Rollback()
-			panic(p) // Bắn lại panic sau khi rollback
-		} else if err != nil {
-			tx.Rollback() // Rollback nếu err != nil
-			return // Đừng gọi return khi err != nil
-		}
-	}()
-	var count int
-	// Chuẩn bị câu lệnh SQL (Prepared Statement) để tái sử dụng trong vòng lặp
-	stmt, err := tx.Prepare(sqlInsertThuaThieu)
-	if err != nil {
-		return 0, fmt.Errorf("không thể chuẩn bị câu lệnh: %w", err)
-	}
-	defer stmt.Close() // Đóng statement khi xong
-	for _, tt := range thuathieu {
-		// Dùng statement đã chuẩn bị để thực thi
-		_, err = stmt.Exec(tt.LopId, tt.MonhocId, tt.TietThieu)
-		if err != nil {
-			// Lỗi được gán cho biến err, defer sẽ kích hoạt Rollback()
-			return count, fmt.Errorf("không thể thêm thuật thiếu %d (%w)", tt.LopId, err)
-		}
-		count++
-	}
-	// Nếu mọi thứ ổn, commit giao dịch
-	err = tx.Commit()
-	if err != nil {
-		return count, fmt.Errorf("không thể chốt giao dịch: %w",	err)
 	}
 	return count, nil
 }
@@ -653,6 +729,84 @@ func (s *SqlTKB) EditPhanCong(phancong []PhanCong) (int, error) {
 	return count, nil
 }
 
+func (s *SqlTKB) EditPhanbotiet(phanbotiet []PhanBotiet) (int, error) {
+	tx, err := s.db.Begin()
+	if err != nil {
+		return 0, fmt.Errorf("không thể bắt đầu giao dịch: %w", err)
+	}
+	// Đảm bảo rollback nếu có lỗi xảy ra (tránh treo CSDL)
+	defer func() {
+		if p := recover(); p != nil {
+			tx.Rollback()
+			panic(p) // Bắn lại panic sau khi rollback
+		} else if err != nil {
+			tx.Rollback() // Rollback nếu err != nil
+			return // Đừng gọi return khi err != nil
+		}
+	}()
+	var count int
+	// Chuẩn bị câu lệnh SQL (Prepared Statement) để tái sử dụng trong vòng lặp
+	stmt, err := tx.Prepare(sqlEditPhanbotiet)
+	if err != nil {
+		return 0, fmt.Errorf("không thể chuẩn bị câu lệnh: %w", err)
+	}
+	defer stmt.Close() // Đóng statement khi xong
+	for _, pb := range phanbotiet {
+		// Dùng statement đã chuẩn bị để thực thi
+		_, err = stmt.Exec(pb.Tuan, pb.Sotiet, pb.ID)
+		if err != nil {
+			// Lỗi được gán cho biến err, defer sẽ kích hoạt Rollback()
+			return count, fmt.Errorf("không thể sửa phanbotiet %d (%w)", pb.PhanCongId, err)
+		}
+		count++
+	}
+	// Nếu mọi thứ ổn, commit giao dịch
+	err = tx.Commit()
+	if err != nil {
+		return count, fmt.Errorf("không thể chốt giao dịch: %w", err)
+	}
+	return count, nil
+}
+
+func (s *SqlTKB) EditTiendo(tiendo []Tiendo) (int, error) {
+	tx, err := s.db.Begin()
+	if err != nil {
+		return 0, fmt.Errorf("không thể bắt đầu giao dịch: %w", err)
+	}
+	// Đảm bảo rollback nếu có lỗi xảy ra (tránh treo CSDL)
+	defer func() {
+		if p := recover(); p != nil {
+			tx.Rollback()
+			panic(p) // Bắn lại panic sau khi rollback
+		} else if err != nil {
+			tx.Rollback() // Rollback nếu err != nil
+			return // Đừng gọi return khi err != nil
+		}
+	}()
+	var count int
+	// Chuẩn bị câu lệnh SQL (Prepared Statement) để tái sử dụng trong vòng lặp
+	stmt, err := tx.Prepare(sqlEditTiendo)
+	if err != nil {
+		return 0, fmt.Errorf("không thể chuẩn bị câu lệnh: %w", err)
+	}
+	defer stmt.Close() // Đóng statement khi xong
+	for _, tt := range tiendo {
+		// Dùng statement đã chuẩn bị để thực thi
+		_, err = stmt.Exec(tt.Tuan, tt.Sotiet, tt.ID)
+		if err != nil {
+			// Lỗi được gán cho biến err, defer sẽ kích hoạt Rollback()
+			return count, fmt.Errorf("không thể sửa tiendo %d (%w)", tt.PhanCongId, err)
+		}
+		count++
+	}
+	// Nếu mọi thứ ổn, commit giao dịch
+	err = tx.Commit()
+	if err != nil {
+		return count, fmt.Errorf("không thể chốt giao dịch: %w", err)
+	}
+	return count, nil
+}
+
 func (s *SqlTKB) EditRangBuoc(rangbuoc []RangBuoc) (int, error) {
 	tx, err := s.db.Begin()
 	if err != nil {
@@ -693,8 +847,6 @@ func (s *SqlTKB) EditRangBuoc(rangbuoc []RangBuoc) (int, error) {
 }
 
 
-
-	
 // func DeleteGiaoVien, DeleteMonHoc, DeleteLopHoc, DeletePhanCong, DeleteRangBuoc, DeleteThuaThieu
 // return error
 
@@ -854,6 +1006,84 @@ func (s *SqlTKB) DeletePhanCong(ids []int) (int, error) {
 	return count, nil
 }
 
+func (s *SqlTKB) DeletePhanbotiet(ids []int) (int, error) {
+	tx, err := s.db.Begin()
+	if err != nil {
+		return 0, fmt.Errorf("Không thể bắt đầu giao dịch %w", err)
+	}
+	// Đảm bảo rollback nếu có lỗi xảy ra (tránh treo CSDL)
+	defer func() {
+		if p := recover(); p != nil {
+			tx.Rollback()
+			panic(p) // Bắn lại panic sau khi rollback
+		} else if err != nil {
+			tx.Rollback() // Rollback nếu err != nil
+			return // Đừng gọi return khi err != nil
+		}
+	}()
+	var count int
+	// Chuẩn bị câu lệnh SQL (Prepared Statement) để tái sử dụng trong vòng lặp
+	stmt, err := tx.Prepare(sqlDeletePhanbotiet)
+	if err != nil {
+		return 0, fmt.Errorf("Không thể chuẩn bị câu lệnh %w", err)
+	}
+	defer stmt.Close() // Đóng statement khi xong
+	for _, id := range ids {
+		// Dùng statement đã chuẩn bị để thực thi
+		_, err = stmt.Exec(id)
+		if err != nil {
+			// Lỗi được gán cho biến err, defer sẽ kích hoạt Rollback()
+			return count, fmt.Errorf("Không thể xóa phanbotiet %d (%w)", id, err)
+		}
+		count++
+	}
+	// Nếu mọi thứ ổn, commit giao dịch
+	err = tx.Commit()
+	if err != nil {
+		return count, fmt.Errorf("Không thể chốt giao dịch %w", err)
+	}
+	return count, nil
+}
+
+func (s *SqlTKB) DeleteTiendo(ids []int) (int, error) {
+	tx, err := s.db.Begin()
+	if err != nil {
+		return 0, fmt.Errorf("Không thể bắt đầu giao dịch %w", err)
+	}
+	// Đảm bảo rollback nếu có lỗi xảy ra (tránh treo CSDL)
+	defer func() {
+		if p := recover(); p != nil {
+			tx.Rollback()
+			panic(p) // Bắn lại panic sau khi rollback
+		} else if err != nil {
+			tx.Rollback() // Rollback nếu err != nil
+			return // Đừng gọi return khi err != nil
+		}
+	}()
+	var count int
+	// Chuẩn bị câu lệnh SQL (Prepared Statement) để tái sử dụng trong vòng lặp
+	stmt, err := tx.Prepare(sqlDeleteTiendo)
+	if err != nil {
+		return 0, fmt.Errorf("Không thể chuẩn bị câu lệnh %w", err)
+	}
+	defer stmt.Close() // Đóng statement khi xong
+	for _, id := range ids {
+		// Dùng statement đã chuẩn bị để thực thi
+		_, err = stmt.Exec(id)
+		if err != nil {
+			// Lỗi được gán cho biến err, defer sẽ kích hoạt Rollback()
+			return count, fmt.Errorf("Không thể xóa tiendo %d (%w)", id, err)
+		}
+		count++
+	}
+	// Nếu mọi thứ ổn, commit giao dịch
+	err = tx.Commit()
+	if err != nil {
+		return count, fmt.Errorf("Không thể chốt giao dịch %w", err)
+	}
+	return count, nil
+}
+
 func (s *SqlTKB) DeleteRangBuoc(ids []int) (int, error) {
 	tx, err := s.db.Begin()
 	if err != nil {
@@ -933,6 +1163,24 @@ func (s *SqlTKB) SelectPhanCong(id int) (*PhanCong, error) {
 	return &pc, nil
 }
 
+func (s *SqlTKB) SelectPhanbotiet(id int) (*PhanBotiet, error) {
+	var pb PhanBotiet
+	err := s.db.QueryRow(sqlSelectPhanbotiet, id).Scan(&pb.ID, &pb.PhanCongId, &pb.Tuan, &pb.Sotiet)
+	if err != nil {
+		return nil, fmt.Errorf("không thể lấy dữ liệu từ bảng phanbotiet : %w", err)
+	}
+	return &pb, nil
+}
+
+func (s *SqlTKB) SelectTiendo(id int) (*Tiendo, error) {
+	var td Tiendo
+	err := s.db.QueryRow(sqlSelectTiendo, id).Scan(&td.ID, &td.PhanCongId, &td.Tuan, &td.Sotiet)
+	if err != nil {
+		return nil, fmt.Errorf("không thể lấy dữ liệu từ bảng tiendo : %w", err)
+	}
+	return &td, nil
+}
+
 func (s *SqlTKB) SelectRangBuoc(id int) (*RangBuoc, error) {
 	var rb RangBuoc
 	err := s.db.QueryRow(sqlSelectRangBuoc, id).Scan(&rb.ID, &rb.GiaoVienId, &rb.Thu, &rb.Tiet, &rb.LoaiRangBuoc)
@@ -940,15 +1188,6 @@ func (s *SqlTKB) SelectRangBuoc(id int) (*RangBuoc, error) {
 		return nil, fmt.Errorf("không thể lấy dữ liệu từ bảng rangbuoc : %w", err)
 	}
 	return &rb, nil
-}
-
-func (s *SqlTKB) SelectThuaThieu(id int) (*ThuaThieu, error) {
-	var tt ThuaThieu
-	err := s.db.QueryRow(sqlSelectThuaThieu, id).Scan(&tt.ID, &tt.LopId, &tt.MonhocId, &tt.TietThieu)
-	if err != nil {
-		return nil, fmt.Errorf("không thể lấy dữ liệu từ bảng thuathieu : %w", err)
-	}
-	return &tt, nil
 }
 
 // func SelectAllGiaoVien, SelectAllMonHoc, SelectAllLopHoc, SelectAllPhanCong, SelectAllRangBuoc, SelectAllThuaThieu
@@ -1026,6 +1265,42 @@ func (s *SqlTKB) SelectAllPhanCong() ([]PhanCong, error) {
 	return phancong, nil
 }
 
+func (s *SqlTKB) SelectAllPhanbotiet() ([]PhanBotiet, error) {
+	var phanbotiet []PhanBotiet
+	Rows, err := s.db.Query(sqlSelectAllPhanbotiet)
+	if err != nil {
+		return nil, fmt.Errorf("không thể lấy dữ liệu từ bảng phanbotiet : %w", err)
+	}
+	defer Rows.Close()
+	for Rows.Next() {
+		var pb PhanBotiet
+		err := Rows.Scan(&pb.ID, &pb.PhanCongId, &pb.Tuan, &pb.Sotiet)
+		if err != nil {
+			return nil, fmt.Errorf("Không thể quét dữ liệu vào biến phanbotiet : %w", err)
+		}
+		phanbotiet = append(phanbotiet, pb)
+	}
+	return phanbotiet, nil
+}
+
+func (s *SqlTKB) SelectAllTiendo() ([]Tiendo, error) {
+	var tiendo []Tiendo
+	Rows, err := s.db.Query(sqlSelectAllTiendo)
+	if err != nil {
+		return nil, fmt.Errorf("không thể lấy dữ liệu từ bảng tiendo : %w", err)
+	}
+	defer Rows.Close()
+	for Rows.Next() {
+		var td Tiendo
+		err := Rows.Scan(&td.ID, &td.PhanCongId, &td.Tuan, &td.Sotiet)
+		if err != nil {
+			return nil, fmt.Errorf("Không thể quét dữ liệu vào biến tiendo : %w", err)
+		}
+		tiendo = append(tiendo, td)
+	}
+	return tiendo, nil
+}
+
 func (s *SqlTKB) SelectAllRangBuoc() ([]RangBuoc, error) {
 	var rangbuoc []RangBuoc
 	Rows, err := s.db.Query(sqlSelectAllRangBuoc)
@@ -1042,24 +1317,6 @@ func (s *SqlTKB) SelectAllRangBuoc() ([]RangBuoc, error) {
 		rangbuoc = append(rangbuoc, rb)
 	}
 	return rangbuoc, nil
-}
-
-func (s *SqlTKB) SelectAllThuaThieu() ([]ThuaThieu, error) {
-	var thuathieu []ThuaThieu
-	Rows, err := s.db.Query(sqlSelectAllThuaThieu)
-	if err != nil {
-		return nil, fmt.Errorf("không thể lấy dữ liệu từ bảng thuathieu : %w", err)
-	}
-	defer Rows.Close()
-	for Rows.Next() {
-		var tt ThuaThieu		
-		err := Rows.Scan(&tt.ID, &tt.LopId, &tt.MonhocId, &tt.TietThieu)	
-		if err != nil {			
-			return nil, fmt.Errorf("Không thể quét dữ liệu vào biến thuathieu : %w", err)
-		}		
-		thuathieu = append(thuathieu, tt)
-	}	
-	return thuathieu, nil
 }
 
 // func FindGiaoVien, FindMonHoc, FindLopHoc, FindPhanCong, FindRangBuoc, FindThuaThieu
@@ -1102,6 +1359,24 @@ func (s *SqlTKB) FindPhanCong(giao_vien_id int) (*PhanCong, error) {
 	return &pc, nil
 }
 
+func (s *SqlTKB) FindPhanbotiet(phan_cong_id int) (*PhanBotiet, error) {	
+	var pb PhanBotiet
+	err := s.db.QueryRow(sqlFindPhanbotiet, phan_cong_id).Scan(&pb.ID, &pb.PhanCongId, &pb.Tuan, &pb.Sotiet)
+	if err != nil {
+		return nil, fmt.Errorf("không thể lấy dữ liệu từ bảng phanbotiet : %w", err)
+	}
+	return &pb, nil
+}
+
+func (s *SqlTKB) FindTiendo(phan_cong_id int) (*Tiendo, error) {	
+	var td Tiendo
+	err := s.db.QueryRow(sqlFindTiendo, phan_cong_id).Scan(&td.ID, &td.PhanCongId, &td.Tuan, &td.Sotiet)
+	if err != nil {
+		return nil, fmt.Errorf("không thể lấy dữ liệu từ bảng tiendo : %w", err)
+	}
+	return &td, nil
+}
+
 func (s *SqlTKB) FindRangBuoc(giao_vien_id int) (*RangBuoc, error) {	
 	var rb RangBuoc
 	err := s.db.QueryRow(sqlFindRangBuoc, giao_vien_id).Scan(&rb.ID, &rb.GiaoVienId, &rb.Thu, &rb.Tiet, &rb.LoaiRangBuoc)
@@ -1109,15 +1384,6 @@ func (s *SqlTKB) FindRangBuoc(giao_vien_id int) (*RangBuoc, error) {
 		return nil, fmt.Errorf("không thể lấy dữ liệu từ bảng rangbuoc : %w", err)
 	}
 	return &rb, nil
-}
-
-func (s *SqlTKB) FindThuaThieu(mon_hoc_id int) (*ThuaThieu, error) {	
-	var tt ThuaThieu
-	err := s.db.QueryRow(sqlFindThuaThieu, mon_hoc_id).Scan(&tt.ID, &tt.LopId, &tt.MonhocId, &tt.TietThieu)
-	if err != nil {
-		return nil, fmt.Errorf("không thể lấy dữ liệu từ bảng thuathieu : %w", err)
-	}
-	return &tt, nil
 }
 
 // func Close

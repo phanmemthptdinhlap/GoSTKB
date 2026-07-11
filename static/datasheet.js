@@ -25,7 +25,7 @@ const DataSheet = {
       <table border="1" style="width: 100%; border-collapse: collapse; border-spacing: 0; border-color: gray;">
         <thead style="background-color: #f5f5f5;">
           <tr style="border-bottom: 1px solid #eee;">
-            <template v-for="col in labels" :key="col.key" style="padding: 10px; text-align: left;">
+            <template v-for="col in labels" :key="col.key" style="padding: 10px; text-align: center;">
               <th v-if="col.type!=='hidden'" >{{ col.title }}</th>
             </template>
             <th v-if="isShowAll" style="padding: 10px; text-align: center; color: #d32f2f;">Trạng thái</th>
@@ -35,7 +35,7 @@ const DataSheet = {
         <tbody>
           <tr v-for="row in displayedDatas" :key="row.id || row.code" style="border-bottom: 1px solid #eee;">
              <template v-for="col in labels" :key="col.key">
-              <td v-if="col.type !== 'hidden'" style="padding: 8px;">
+              <td v-if="col.type !== 'hidden'" style="padding: 8px; text-align: center; ">
                <span :style="{ textDecoration: row.action === 'xóa' ? 'line-through' : 'none', color: row.action === 'xóa' ? '#9e9e9e' : 'inherit' }">
                  {{ getDisplayText(row, col) }}
                </span>
