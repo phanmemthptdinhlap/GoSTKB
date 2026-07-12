@@ -70,6 +70,7 @@ func (p *WebPage) SetPageGiaoVien() {
 				Delete = append(Delete, giaoVien.ID)
 			}
 		}
+
 		db.InsertGiaoVien(Insert)
 		db.EditGiaoVien(Update)
 		db.DeleteGiaoVien(Delete)

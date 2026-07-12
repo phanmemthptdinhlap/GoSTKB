@@ -47,6 +47,7 @@ func main() {
 		page.SetPageMonHoc()
 		page.SetPageLopHoc()
 		page.SetPageGiaoVien()
+		page.SetPagePhanCong()
     fmt.Println("Server đang chạy tại http://localhost:8080")
     http.ListenAndServe(":8080", mux)
 }

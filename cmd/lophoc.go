@@ -70,6 +70,7 @@ func (p *WebPage) SetPageLopHoc() {
 				Delete = append(Delete, lophoc.ID)
 			}
 		}
+
 		db.InsertLopHoc(Insert)
 		db.EditLopHoc(Update)
 		db.DeleteLopHoc(Delete)

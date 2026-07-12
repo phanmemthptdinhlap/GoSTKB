@@ -16,10 +16,10 @@
     setup() {
       // Đã cập nhật key khớp chuẩn với JSON từ Golang trả về (ma, ten, gvcn)
       const labels = ref([
-        { key: 'id', title: 'Mã lớp học', type: 'text' },
-        { key: 'ten_lop', title: 'Tên lớp học', type: 'text' },
-        { key: 'khoi_lop', title: 'Khối lớp học', type: 'text' },
-        { key: 'gvcn_id', title: 'Giáo viên chủ nhiệm', type: 'select', options: [] } // Sẽ nạp động dữ liệu vào đây
+        { key: 'id', title: 'Mã phân công', type: 'text' },
+        { key: 'lop_id', title: 'Lớp học', type: 'select', options: [] },
+        { key: 'mon_hoc_id', title: 'Môn học', type: 'select', options: [] },
+        { key: 'giao_vien_id', title: 'Giáo viên', type: 'select', options: [] }
       ]);
       
       const datas = ref([]);
@@ -27,7 +27,7 @@
       // 1. Hàm lấy dữ liệu từ Golang Server
       const fetchData = async () => {
         try {
-          const response = await fetch('/api/lophoc');
+          const response = await fetch('/api/phancong');
           if (response.ok) {
             const result = await response.json();
             // Gán dữ liệu server vào datas. Component datasheet sẽ tự động map thêm action 'none'
@@ -53,11 +53,49 @@
             }));
             
             // Đổ vào mảng options của nhãn gvcn_id
-            const lbl = labels.value.find(l => l.key === 'gvcn_id');
+            const lbl = labels.value.find(l => l.key === 'giao_vien_id');
             if (lbl) lbl.options = giaoVienOptions;
           }
         } catch (error) {
           console.error("Lỗi lấy danh sách giao viên:", error);
+        }
+      };
+      const fetchLopHoc = async () => {
+        try {
+          const response = await fetch('/api/lophoc');
+          if (response.ok) {
+            const lophocs = await response.json() || [];
+            // Chuyển đổi dữ liệu lop học thành dạng { value: id, text: ten_lop }
+            const lopHocOptions = lophocs.map(l => ({
+              value: l.id,
+              text: l.ten_lop
+            }));
+            
+            // Đổ vào mảng options của nhãn lop_id
+            const lbl = labels.value.find(l => l.key === 'lop_id');
+            if (lbl) lbl.options = lopHocOptions;
+          }
+        } catch (error) {
+          console.error("Lỗi lấy danh sách lớp học:", error);
+        }
+      };
+      const fetchMonHoc = async () => {
+        try {
+          const response = await fetch('/api/monhoc');
+          if (response.ok) {
+            const monhocs = await response.json() || [];
+            // Chuyển đổi dữ liệu môn học thành dạng { value: id, text: ten_mon }
+            const monHocOptions = monhocs.map(m => ({
+              value: m.id,
+              text: m.ten_mon
+            }));
+            
+            // Đổ vào mảng options của nhãn mon_hoc_id
+            const lbl = labels.value.find(l => l.key === 'mon_hoc_id');
+            if (lbl) lbl.options = monHocOptions;
+          }
+        } catch (error) {
+          console.error("Lỗi lấy danh sách môn học:", error);
         }
       };
 
@@ -73,7 +111,7 @@
 
         try {
           // Gửi POST lên API đồng bộ hàng loạt
-          const response = await fetch('/api/lophoc/sync', {
+          const response = await fetch('/api/phancong/sync', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(dataToSend)
@@ -97,6 +135,8 @@
       onMounted(() => {
         fetchData();
         fetchGiaoVien();
+        fetchLopHoc();
+        fetchMonHoc();
       });
 
       return {

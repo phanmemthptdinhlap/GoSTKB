@@ -68,12 +68,11 @@ func (p *WebPage) SetPageMonHoc() {
 				Update = append(Update, mon)
 			case "xóa":
 				Delete = append(Delete, mon.ID)
-			}
-			db.InsertMonHoc(Insert)
-			db.EditMonHoc(Update)
-			db.DeleteMonHoc(Delete)	
+			}	
 		}
-
+		db.InsertMonHoc(Insert)
+		db.EditMonHoc(Update)
+		db.DeleteMonHoc(Delete)	
 		// Trả về thành công
 		json.NewEncoder(w).Encode(map[string]string{"status": "success", "message": "Đồng bộ hoàn tất"})
 	})

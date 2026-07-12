@@ -70,12 +70,12 @@ const (
 		VALUES (?, ?);
 		`
 		sqlInsertLopHoc = `
-		INSERT INTO lophoc(ten_lop, khoi_lop)
-		VALUES (?, ?);
+		INSERT INTO lophoc(ten_lop, khoi_lop, gvcn_id)
+		VALUES (?, ?, ?);
 		`
 		sqlInsertPhanCong = `
-		INSERT INTO phancong(giao_vien_id, lop_id, mon_hoc_id, tuan, so_tiet)
-		VALUES (?, ?, ?, ?, ?);
+		INSERT INTO phancong(giao_vien_id, lop_id, mon_hoc_id)
+		VALUES (?, ?, ?);
 		`
 		sqlInsertPhanbotiet = `
 		INSERT INTO phanbotiet(phan_cong_id, tuan, so_tiet)
@@ -101,7 +101,7 @@ const (
 		`
 		sqlEditLopHoc = `
 		UPDATE lophoc
-		SET ten_lop = ?, khoi_lop = ?
+		SET ten_lop = ?, khoi_lop = ?, gvcn_id = ?
 		WHERE id = ?;
 		`
 		sqlEditPhanCong = `
@@ -251,6 +251,7 @@ type LopHoc struct {
 	ID int `json:"id"`
 	TenLop string `json:"ten_lop"`
 	KhoiLop string `json:"khoi_lop"`
+	GvcnId int `json:"gvcn_id"`
 	Action string `json:"action,omitempty"`
 }
 type PhanCong struct {
@@ -258,8 +259,6 @@ type PhanCong struct {
 	GiaoVienId int `json:"giao_vien_id"`
 	LopId int `json:"lop_id"`
 	MonHocId int `json:"mon_hoc_id"`
-	Tuan int `json:"tuan"`
-	Sotiet int `json:"so_tiet"`
 	Action string `json:"action,omitempty"`
 }
 type PhanBotiet struct {
@@ -300,14 +299,7 @@ func (s *SqlTKB) InsertGiaoVien(giaovien []GiaoVien) (int, error) {
 	}
 
 	// Đảm bảo rollback nếu có lỗi xảy ra (tránh treo CSDL)
-	defer func() {
-		if p := recover(); p != nil {
-			tx.Rollback()
-			panic(p) // Bắn lại panic sau khi rollback
-		} else if err != nil {
-			tx.Rollback() // Rollback nếu err != nil
-		}
-	}()
+	defer tx.Rollback()
 
 	var count int
 	// Chuẩn bị câu lệnh SQL (Prepared Statement) để tái sử dụng trong vòng lặp
@@ -316,14 +308,16 @@ func (s *SqlTKB) InsertGiaoVien(giaovien []GiaoVien) (int, error) {
 		return 0, fmt.Errorf("không thể chuẩn bị câu lệnh: %w", err)
 	}
 	defer stmt.Close() // Đóng statement khi xong
-
+	fmt.Printf("Thêm mới %d giáo viên: ", len(giaovien))
 	for _, gv := range giaovien {
 		// Dùng statement đã chuẩn bị để thực thi
 		_, err = stmt.Exec(gv.TenNgan, gv.HoTen, gv.MonChinhId)
 		if err != nil {
 			// Lỗi được gán cho biến err, defer sẽ kích hoạt Rollback()
+			//fmt.Printf("Lỗi thêm giáo viên: (%v)\n", err)
 			return count, fmt.Errorf("không thể thêm giáo viên %s (%w)", gv.TenNgan, err)
 		}
+		//fmt.Printf("Đã thêm giáo viên: %s \n", gv.TenNgan)
 		count++
 	}
 
@@ -341,15 +335,8 @@ func (s *SqlTKB) InsertMonHoc(monhoc []MonHoc) (int, error) {
 		return 0, fmt.Errorf("không thể bắt đầu giao dịch: %w", err)
 	}
 	// Đảm bảo rollback nếu có lỗi xảy ra (tránh treo CSDL)
-	defer func() {
-		if p := recover(); p != nil {
-			tx.Rollback()
-			panic(p) // Bắn lại panic sau khi rollback
-		} else if err != nil {
-			tx.Rollback() // Rollback nếu err != nil
-			return // Đừng gọi return khi err != nil
-		}
-	}()
+	defer tx.Rollback()
+
 	var count int
 	// Chuẩn bị câu lệnh SQL (Prepared Statement) để tái sử dụng trong vòng lặp
 	stmt, err := tx.Prepare(sqlInsertMonHoc)
@@ -357,13 +344,16 @@ func (s *SqlTKB) InsertMonHoc(monhoc []MonHoc) (int, error) {
 		return 0, fmt.Errorf("không thể chuẩn bị câu lệnh: %w", err)
 	}
 	defer stmt.Close() // Đóng statement khi xong
+	fmt.Printf("Thêm mới %d môn học:\n ", len(monhoc))
 	for _, mh := range monhoc {
 		// Dùng statement đã chuẩn bị để thực thi
 		_, err = stmt.Exec(mh.TenMon, mh.LoaiMon)
 		if err != nil {
 			// Lỗi được gán cho biến err, defer sẽ kích hoạt Rollback()
+			//fmt.Printf("Lỗi thêm môn học: (%v)\n", err)
 			return count, fmt.Errorf("không thể thêm môn học %s (%w)", mh.TenMon, err)
 		}
+		//fmt.Printf("Đã thêm môn học: %s \n", mh.TenMon)
 		count++
 	}
 	// Nếu mọi thứ ổn, commit giao dịch
@@ -380,15 +370,8 @@ func (s *SqlTKB) InsertLopHoc(lophoc []LopHoc) (int, error) {
 		return 0, fmt.Errorf("không thể bắt đầu giao dịch: %w", err)
 	}
 	// Đảm bảo rollback nếu có lỗi xảy ra (tránh treo CSDL)
-	defer func() {
-		if p := recover(); p != nil {
-			tx.Rollback()
-			panic(p) // Bắn lại panic sau khi rollback
-		} else if err != nil {
-			tx.Rollback() // Rollback nếu err != nil
-			return // Đừng gọi return khi err != nil
-		}
-	}()
+	defer tx.Rollback()
+
 	var count int
 	// Chuẩn bị câu lệnh SQL (Prepared Statement) để tái sử dụng trong vòng lặp
 	stmt, err := tx.Prepare(sqlInsertLopHoc)
@@ -398,7 +381,7 @@ func (s *SqlTKB) InsertLopHoc(lophoc []LopHoc) (int, error) {
 	defer stmt.Close() // Đóng statement khi xong
 	for _, lh := range lophoc {
 		// Dùng statement đã chuẩn bị để thực thi
-		_, err = stmt.Exec(lh.TenLop, lh.KhoiLop)
+		_, err = stmt.Exec(lh.TenLop, lh.KhoiLop, lh.GvcnId)
 		if err != nil {
 			// Lỗi được gán cho biến err, defer sẽ kích hoạt Rollback()
 			return count, fmt.Errorf("không thể thêm lớp học %s (%w)", lh.TenLop, err)
@@ -419,15 +402,8 @@ func (s *SqlTKB) InsertPhanCong(phancong []PhanCong) (int, error) {
 		return 0, fmt.Errorf("không thể bắt đầu giao dịch: %w", err)
 	}
 	// Đảm bảo rollback nếu có lỗi xảy ra (tránh treo CSDL)
-	defer func() {
-		if p := recover(); p != nil {
-			tx.Rollback()
-			panic(p) // Bắn lại panic sau khi rollback
-		} else if err != nil {
-			tx.Rollback() // Rollback nếu err != nil
-			return // Đừng gọi return khi err != nil
-		}
-	}()
+	defer tx.Rollback()
+
 	var count int
 	// Chuẩn bị câu lệnh SQL (Prepared Statement) để tái sử dụng trong vòng lặp
 	stmt, err := tx.Prepare(sqlInsertPhanCong)
@@ -437,7 +413,7 @@ func (s *SqlTKB) InsertPhanCong(phancong []PhanCong) (int, error) {
 	defer stmt.Close() // Đóng statement khi xong
 	for _, pc := range phancong {
 		// Dùng statement đã chuẩn bị để thực thi
-		_, err = stmt.Exec(pc.GiaoVienId, pc.LopId, pc.MonHocId, pc.Tuan, pc.Sotiet)
+		_, err = stmt.Exec(pc.GiaoVienId, pc.LopId, pc.MonHocId)
 		if err != nil {
 			// Lỗi được gán cho biến err, defer sẽ kích hoạt Rollback()
 			return count, fmt.Errorf("không thể thêm phần cống %d (%w)", pc.GiaoVienId, err)
@@ -458,16 +434,9 @@ func (s *SqlTKB) InsertPhanbotiet(phanbotiet []PhanBotiet) (int, error) {
 		return 0, fmt.Errorf("không thể bắt đầu giao dịch: %w", err)
 	}
 	// Đảm bảo rollback nếu có lỗi xảy ra (tránh treo CSDL)
-	defer func() {
-		if p := recover(); p != nil {
-			tx.Rollback()
-			panic(p) // Bắn lại panic sau khi rollback
-		} else if err != nil {
-			tx.Rollback() // Rollback nếu err != nil
-			return // Đừng gọi return khi err != nil
-		}
-	}()
-	var count int
+	defer tx.Rollback()
+
+ 	var count int
 	// Chuẩn bị câu lệnh SQL (Prepared Statement) để tái sử dụng trong vòng lặp
 	stmt, err := tx.Prepare(sqlInsertPhanbotiet)
 	if err != nil {
@@ -497,15 +466,8 @@ func (s *SqlTKB) InsertTiendo(tiendo []Tiendo) (int, error) {
 		return 0, fmt.Errorf("không thể bắt đầu giao dịch: %w", err)
 	}
 	// Đảm bảo rollback nếu có lỗi xảy ra (tránh treo CSDL)
-	defer func() {
-		if p := recover(); p != nil {
-			tx.Rollback()
-			panic(p) // Bắn lại panic sau khi rollback
-		} else if err != nil {
-			tx.Rollback() // Rollback nếu err != nil
-			return // Đừng gọi return khi err != nil
-		}
-	}()
+	defer tx.Rollback()
+
 	var count int
 	// Chuẩn bị câu lệnh SQL (Prepared Statement) để tái sử dụng trong vòng lặp
 	stmt, err := tx.Prepare(sqlInsertTiendo)
@@ -536,16 +498,9 @@ func (s *SqlTKB) InsertRangBuoc(rangbuoc []RangBuoc) (int, error) {
 		return 0, fmt.Errorf("không thể bắt đầu giao dịch: %w", err)
 	}
 	// Đảm bảo rollback nếu có lỗi xảy ra (tránh treo CSDL)
-	defer func() {
-		if p := recover(); p != nil {
-			tx.Rollback()
-			panic(p) // Bắn lại panic sau khi rollback
-		} else if err != nil {
-			tx.Rollback() // Rollback nếu err != nil
-			return // Đừng gọi return khi err != nil
-		}
-	}()
-	var count int
+	defer tx.Rollback()
+
+ 	var count int
 	// Chuẩn bị câu lệnh SQL (Prepared Statement) để tái sử dụng trong vòng lặp
 	stmt, err := tx.Prepare(sqlInsertRangBuoc)
 	if err != nil {
@@ -579,15 +534,8 @@ func (s *SqlTKB) EditGiaoVien(giaovien []GiaoVien) (int, error) {
 		return 0, fmt.Errorf("không thể bắt đầu giao dịch: %w", err)
 	}
 	// Đảm bảo rollback nếu có lỗi xảy ra (tránh treo CSDL)
-	defer func() {
-		if p := recover(); p != nil {
-			tx.Rollback()
-			panic(p) // Bắn lại panic sau khi rollback
-		} else if err != nil {
-			tx.Rollback() // Rollback nếu err != nil
-			return // Đừng gọi return khi err != nil
-		}
-	}()
+	defer tx.Rollback()
+
 	var count int
 	// Chuẩn bị câu lệnh SQL (Prepared Statement) để tái sử dụng trong vòng lặp
 	stmt, err := tx.Prepare(sqlEditGiaoVien)
@@ -618,15 +566,8 @@ func (s *SqlTKB) EditMonHoc(monhoc []MonHoc) (int, error) {
 		return 0, fmt.Errorf("không thể bắt đầu giao dịch: %w", err)
 	}
 	// Đảm bảo rollback nếu có lỗi xảy ra (tránh treo CSDL)
-	defer func() {
-		if p := recover(); p != nil {
-			tx.Rollback()
-			panic(p) // Bắn lại panic sau khi rollback
-		} else if err != nil {
-			tx.Rollback() // Rollback nếu err != nil
-			return // Đừng gọi return khi err != nil
-		}
-	}()
+	defer tx.Rollback()
+
 	var count int
 	// Chuẩn bị câu lệnh SQL (Prepared Statement) để tái sử dụng trong vòng lặp
 	stmt, err := tx.Prepare(sqlEditMonHoc)
@@ -657,15 +598,8 @@ func (s *SqlTKB) EditLopHoc(lophoc []LopHoc) (int, error) {
 		return 0, fmt.Errorf("không thể bắt đầu giao dịch: %w", err)
 	}
 	// Đảm bảo rollback nếu có lỗi xảy ra (tránh treo CSDL)
-	defer func() {
-		if p := recover(); p != nil {
-			tx.Rollback()
-			panic(p) // Bắn lại panic sau khi rollback
-		} else if err != nil {
-			tx.Rollback() // Rollback nếu err != nil
-			return // Đừng gọi return khi err != nil
-		}
-	}()
+	defer tx.Rollback()
+
 	var count int
 	// Chuẩn bị câu lệnh SQL (Prepared Statement) để tái sử dụng trong vòng lặp
 	stmt, err := tx.Prepare(sqlEditLopHoc)
@@ -675,7 +609,7 @@ func (s *SqlTKB) EditLopHoc(lophoc []LopHoc) (int, error) {
 	defer stmt.Close() // Đóng statement khi xong
 	for _, lh := range lophoc {
 		// Dùng statement đã chuẩn bị để thực thi
-		_, err = stmt.Exec(lh.TenLop, lh.KhoiLop, lh.ID)
+		_, err = stmt.Exec(lh.TenLop, lh.KhoiLop, lh.GvcnId, lh.ID)
 		if err != nil {
 			// Lỗi được gán cho biến err, defer sẽ kích hoạt Rollback()
 			return count, fmt.Errorf("không thể sửa lớp học %s (%w)", lh.TenLop, err)
@@ -696,15 +630,8 @@ func (s *SqlTKB) EditPhanCong(phancong []PhanCong) (int, error) {
 		return 0, fmt.Errorf("không thể bắt đầu giao dịch: %w", err)
 	}
 	// Đảm bảo rollback nếu có lỗi xảy ra (tránh treo CSDL)
-	defer func() {
-		if p := recover(); p != nil {
-			tx.Rollback()
-			panic(p) // Bắn lại panic sau khi rollback
-		} else if err != nil {
-			tx.Rollback() // Rollback nếu err != nil
-			return // Đừng gọi return khi err != nil
-		}
-	}()
+	defer tx.Rollback()
+
 	var count int
 	// Chuẩn bị câu lệnh SQL (Prepared Statement) để tái sử dụng trong vòng lặp
 	stmt, err := tx.Prepare(sqlEditPhanCong)
@@ -714,7 +641,7 @@ func (s *SqlTKB) EditPhanCong(phancong []PhanCong) (int, error) {
 	defer stmt.Close() // Đóng statement khi xong
 	for _, pc := range phancong {
 		// Dùng statement đã chuẩn bị để thực thi
-		_, err = stmt.Exec(pc.Tuan, pc.Sotiet, pc.ID)
+		_, err = stmt.Exec(pc.GiaoVienId, pc.LopId, pc.MonHocId, pc.ID)
 		if err != nil {
 			// Lỗi được gán cho biến err, defer sẽ kích hoạt Rollback()
 			return count, fmt.Errorf("không thể sửa phần cống %d (%w)", pc.GiaoVienId, err)
@@ -735,15 +662,8 @@ func (s *SqlTKB) EditPhanbotiet(phanbotiet []PhanBotiet) (int, error) {
 		return 0, fmt.Errorf("không thể bắt đầu giao dịch: %w", err)
 	}
 	// Đảm bảo rollback nếu có lỗi xảy ra (tránh treo CSDL)
-	defer func() {
-		if p := recover(); p != nil {
-			tx.Rollback()
-			panic(p) // Bắn lại panic sau khi rollback
-		} else if err != nil {
-			tx.Rollback() // Rollback nếu err != nil
-			return // Đừng gọi return khi err != nil
-		}
-	}()
+	defer tx.Rollback()
+
 	var count int
 	// Chuẩn bị câu lệnh SQL (Prepared Statement) để tái sử dụng trong vòng lặp
 	stmt, err := tx.Prepare(sqlEditPhanbotiet)
@@ -774,15 +694,8 @@ func (s *SqlTKB) EditTiendo(tiendo []Tiendo) (int, error) {
 		return 0, fmt.Errorf("không thể bắt đầu giao dịch: %w", err)
 	}
 	// Đảm bảo rollback nếu có lỗi xảy ra (tránh treo CSDL)
-	defer func() {
-		if p := recover(); p != nil {
-			tx.Rollback()
-			panic(p) // Bắn lại panic sau khi rollback
-		} else if err != nil {
-			tx.Rollback() // Rollback nếu err != nil
-			return // Đừng gọi return khi err != nil
-		}
-	}()
+	defer tx.Rollback()
+
 	var count int
 	// Chuẩn bị câu lệnh SQL (Prepared Statement) để tái sử dụng trong vòng lặp
 	stmt, err := tx.Prepare(sqlEditTiendo)
@@ -813,15 +726,8 @@ func (s *SqlTKB) EditRangBuoc(rangbuoc []RangBuoc) (int, error) {
 		return 0, fmt.Errorf("không thể bắt đầu giao dịch: %w", err)
 	}
 	// Đảm bảo rollback nếu có lỗi xảy ra (tránh treo CSDL)
-	defer func() {
-		if p := recover(); p != nil {
-			tx.Rollback()
-			panic(p) // Bắn lại panic sau khi rollback
-		} else if err != nil {
-			tx.Rollback() // Rollback nếu err != nil
-			return // Đừng gọi return khi err != nil
-		}
-	}()
+	defer tx.Rollback()
+
 	var count int
 	// Chuẩn bị câu lệnh SQL (Prepared Statement) để tái sử dụng trong vòng lặp
 	stmt, err := tx.Prepare(sqlEditRangBuoc)
@@ -856,15 +762,8 @@ func (s *SqlTKB) DeleteGiaoVien(ids []int) (int, error) {
 		return 0, fmt.Errorf("Không thể bắt đầu giao dịch %w", err)
 	}
 	// Đảm bảo rollback nếu có lỗi xảy ra (tránh treo CSDL)
-	defer func() {
-		if p := recover(); p != nil {
-			tx.Rollback()
-			panic(p) // Bắn lại panic sau khi rollback
-		} else if err != nil {
-			tx.Rollback() // Rollback nếu err != nil
-			return // Đừng gọi return khi err != nil
-		}
-	}()
+	defer tx.Rollback()
+
 	var count int
 	// Chuẩn bị câu lệnh SQL (Prepared Statement) để tái sử dụng trong vòng lặp
 	stmt, err := tx.Prepare(sqlDeleteGiaoVien)
@@ -895,15 +794,8 @@ func (s *SqlTKB) DeleteMonHoc(ids []int) (int, error) {
 		return 0, fmt.Errorf("Không thể bắt đầu giao dịch %w", err)
 	}
 	// Đảm bảo rollback nếu có lỗi xảy ra (tránh treo CSDL)
-	defer func() {
-		if p := recover(); p != nil {
-			tx.Rollback()
-			panic(p) // Bắn lại panic sau khi rollback
-		} else if err != nil {
-			tx.Rollback() // Rollback nếu err != nil
-			return // Đừng gọi return khi err != nil
-		}
-	}()
+	defer tx.Rollback()
+
 	var count int
 	// Chuẩn bị câu lệnh SQL (Prepared Statement) để tái sử dụng trong vòng lặp
 	stmt, err := tx.Prepare(sqlDeleteMonHoc)
@@ -934,15 +826,8 @@ func (s *SqlTKB) DeleteLopHoc(ids []int) (int, error) {
 		return 0, fmt.Errorf("Không thể bắt đầu giao dịch %w", err)
 	}
 		// Đảm bảo rollback nếu có lỗi xảy ra (tránh treo CSDL)
-	defer func() {
-		if p := recover(); p != nil {
-			tx.Rollback()
-			panic(p) // Bắn lại panic sau khi rollback
-		} else if err != nil {
-			tx.Rollback() // Rollback nếu err != nil
-			return // Đừng gọi return khi err != nil
-		}
-	}()
+	defer tx.Rollback()
+
 	var count int
 	// Chuẩn bị câu lệnh SQL (Prepared Statement) để tái sử dụng trong vòng lặp
 	stmt, err := tx.Prepare(sqlDeleteLopHoc)
@@ -973,15 +858,8 @@ func (s *SqlTKB) DeletePhanCong(ids []int) (int, error) {
 		return 0, fmt.Errorf("Không thể bắt đầu giao dịch %w", err)
 	}
 	// Đảm bảo rollback nếu có lỗi xảy ra (tránh treo CSDL)
-	defer func() {
-		if p := recover(); p != nil {
-			tx.Rollback()
-			panic(p) // Bắn lại panic sau khi rollback
-		} else if err != nil {
-			tx.Rollback() // Rollback nếu err != nil
-			return // Đừng gọi return khi err != nil
-		}
-	}()
+	defer tx.Rollback()
+
 	var count int
 	// Chuẩn bị câu lệnh SQL (Prepared Statement) để tái sử dụng trong vòng lặp
 	stmt, err := tx.Prepare(sqlDeletePhanCong)
@@ -1012,15 +890,8 @@ func (s *SqlTKB) DeletePhanbotiet(ids []int) (int, error) {
 		return 0, fmt.Errorf("Không thể bắt đầu giao dịch %w", err)
 	}
 	// Đảm bảo rollback nếu có lỗi xảy ra (tránh treo CSDL)
-	defer func() {
-		if p := recover(); p != nil {
-			tx.Rollback()
-			panic(p) // Bắn lại panic sau khi rollback
-		} else if err != nil {
-			tx.Rollback() // Rollback nếu err != nil
-			return // Đừng gọi return khi err != nil
-		}
-	}()
+	defer tx.Rollback()
+
 	var count int
 	// Chuẩn bị câu lệnh SQL (Prepared Statement) để tái sử dụng trong vòng lặp
 	stmt, err := tx.Prepare(sqlDeletePhanbotiet)
@@ -1051,15 +922,8 @@ func (s *SqlTKB) DeleteTiendo(ids []int) (int, error) {
 		return 0, fmt.Errorf("Không thể bắt đầu giao dịch %w", err)
 	}
 	// Đảm bảo rollback nếu có lỗi xảy ra (tránh treo CSDL)
-	defer func() {
-		if p := recover(); p != nil {
-			tx.Rollback()
-			panic(p) // Bắn lại panic sau khi rollback
-		} else if err != nil {
-			tx.Rollback() // Rollback nếu err != nil
-			return // Đừng gọi return khi err != nil
-		}
-	}()
+	defer tx.Rollback()
+
 	var count int
 	// Chuẩn bị câu lệnh SQL (Prepared Statement) để tái sử dụng trong vòng lặp
 	stmt, err := tx.Prepare(sqlDeleteTiendo)
@@ -1090,15 +954,8 @@ func (s *SqlTKB) DeleteRangBuoc(ids []int) (int, error) {
 		return 0, fmt.Errorf("Không thể bắt đầu giao dịch %w", err)
 	}
 	// Đảm bảo rollback nếu có lỗi xảy ra (tránh treo CSDL)
-	defer func() {
-		if p := recover(); p != nil {
-			tx.Rollback()
-			panic(p) // Bắn lại panic sau khi rollback
-		} else if err != nil {
-			tx.Rollback() // Rollback nếu err != nil
-			return // Đừng gọi return khi err != nil
-		}
-	}()
+	defer tx.Rollback()
+
 	var count int
 	// Chuẩn bị câu lệnh SQL (Prepared Statement) để tái sử dụng trong vòng lặp
 	stmt, err := tx.Prepare(sqlDeleteRangBuoc)
@@ -1147,7 +1004,7 @@ func (s *SqlTKB) SelectMonHoc(id int) (*MonHoc, error) {
 
 func (s *SqlTKB) SelectLopHoc(id int) (*LopHoc, error) {
 	var lh LopHoc
-	err := s.db.QueryRow(sqlSelectLopHoc, id).Scan(&lh.ID, &lh.TenLop, &lh.KhoiLop)
+	err := s.db.QueryRow(sqlSelectLopHoc, id).Scan(&lh.ID, &lh.TenLop, &lh.KhoiLop, &lh.GvcnId)
 	if err != nil {
 		return nil, fmt.Errorf("không thể lấy dữ liệu từ bảng lophoc : %w", err)
 	}
@@ -1156,7 +1013,7 @@ func (s *SqlTKB) SelectLopHoc(id int) (*LopHoc, error) {
 
 func (s *SqlTKB) SelectPhanCong(id int) (*PhanCong, error) {
 	var pc PhanCong
-	err := s.db.QueryRow(sqlSelectPhanCong, id).Scan(&pc.ID, &pc.GiaoVienId, &pc.LopId, &pc.MonHocId, &pc.Tuan, &pc.Sotiet)
+	err := s.db.QueryRow(sqlSelectPhanCong, id).Scan(&pc.ID, &pc.GiaoVienId, &pc.LopId, &pc.MonHocId)
 	if err != nil {
 		return nil, fmt.Errorf("không thể lấy dữ liệu từ bảng phancong : %w", err)
 	}
@@ -1238,7 +1095,7 @@ func (s *SqlTKB) SelectAllLopHoc() ([]LopHoc, error) {
 	defer Rows.Close()
 	for Rows.Next() {
 		var lh LopHoc
-		err := Rows.Scan(&lh.ID, &lh.TenLop, &lh.KhoiLop)
+		err := Rows.Scan(&lh.ID, &lh.TenLop, &lh.KhoiLop, &lh.GvcnId)
 		if err != nil {
 			return nil, fmt.Errorf("Không thể quét dữ liệu vào biến lophoc : %w", err)
 		}
@@ -1256,7 +1113,7 @@ func (s *SqlTKB) SelectAllPhanCong() ([]PhanCong, error) {
 	defer Rows.Close()
 	for Rows.Next() {
 		var pc PhanCong
-		err := Rows.Scan(&pc.ID, &pc.GiaoVienId, &pc.LopId, &pc.MonHocId, &pc.Tuan, &pc.Sotiet)
+		err := Rows.Scan(&pc.ID, &pc.GiaoVienId, &pc.LopId, &pc.MonHocId)
 		if err != nil {
 			return nil, fmt.Errorf("Không thể quét dữ liệu vào biến phancong : %w", err)
 		}
@@ -1343,7 +1200,7 @@ func (s *SqlTKB) FindMonHoc(ten_mon string) (*MonHoc, error) {
 
 func (s *SqlTKB) FindLopHoc(ten_lop string) (*LopHoc, error) {
 	var lh LopHoc
-	err := s.db.QueryRow(sqlFindLopHoc, ten_lop).Scan(&lh.ID, &lh.TenLop, &lh.KhoiLop)
+	err := s.db.QueryRow(sqlFindLopHoc, ten_lop).Scan(&lh.ID, &lh.TenLop, &lh.KhoiLop, &lh.GvcnId)
 	if err != nil {
 		return nil, fmt.Errorf("không thể lấy dữ liệu từ bảng lophoc : %w", err)
 	}	
@@ -1352,7 +1209,7 @@ func (s *SqlTKB) FindLopHoc(ten_lop string) (*LopHoc, error) {
 
 func (s *SqlTKB) FindPhanCong(giao_vien_id int) (*PhanCong, error) {	
 	var pc PhanCong
-	err := s.db.QueryRow(sqlFindPhanCong, giao_vien_id).Scan(&pc.ID, &pc.GiaoVienId, &pc.LopId, &pc.MonHocId, &pc.Tuan, &pc.Sotiet)
+	err := s.db.QueryRow(sqlFindPhanCong, giao_vien_id).Scan(&pc.ID, &pc.GiaoVienId, &pc.LopId, &pc.MonHocId)
 	if err != nil {
 		return nil, fmt.Errorf("không thể lấy dữ liệu từ bảng phancong : %w", err)
 	}
@@ -1401,6 +1258,15 @@ func ConnectSTKB() (*SqlTKB, error) {
 	db, err := sql.Open("sqlite3", sqlpath)
 	if err != nil {
 		return nil, fmt.Errorf("không kết nối được với STKB : %w", err)
+	}
+	sqloptions:=`
+	PRAGMA foreign_keys = ON;
+	PRAGMA journal_mode = WAL;
+	PRAGMA synchronous = NORMAL;
+	`
+	_, err = db.Exec(sqloptions)
+	if err != nil {
+		return nil, fmt.Errorf("không thể thiết lập các tùy chọn : %w", err)
 	}
 	_, err = db.Exec(sqlCreateTables)
 	if err != nil {
