@@ -35,11 +35,12 @@ const (
 			giao_vien_id INTEGER,
 			lop_id INTEGER,
 			mon_hoc_id INTEGER,
+			tong_tiet INTEGER,
 			FOREIGN KEY (giao_vien_id) REFERENCES giaovien(id),
 			FOREIGN KEY (lop_id) REFERENCES lophoc(id),
 			FOREIGN KEY (mon_hoc_id) REFERENCES monhoc(id)
 		);
-		CREATE TABLE IF NOT EXISTS phanbotiet(
+		CREATE TABLE IF NOT EXISTS chitiet(
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			phan_cong_id INTEGER,
 			tuan INTEGER,
@@ -74,14 +75,14 @@ const (
 		VALUES (?, ?, ?);
 		`
 		sqlInsertPhanCong = `
-		INSERT INTO phancong(giao_vien_id, lop_id, mon_hoc_id)
-		VALUES (?, ?, ?);
+		INSERT INTO phancong(giao_vien_id, lop_id, mon_hoc_id, tong_tiet)
+		VALUES (?, ?, ?, ?);
 		`
-		sqlInsertPhanbotiet = `
+		sqlInsertChiTiet = `
 		INSERT INTO phanbotiet(phan_cong_id, tuan, so_tiet)
 		VALUES (?, ?, ?);
 		`
-		sqlInsertTiendo = `
+		sqlInsertTienDo = `
 		INSERT INTO tiendo(phan_cong_id, tuan, so_tiet)
 		VALUES (?, ?, ?);
 		`
@@ -109,12 +110,12 @@ const (
 		SET tuan = ?, so_tiet = ?
 		WHERE id = ?;
 		`
-		sqlEditPhanbotiet = `
-		UPDATE phanbotiet
+		sqlEditChiTiet = `
+		UPDATE chitiet
 		SET tuan = ?, so_tiet = ?
 		WHERE id = ?;
 		`
-		sqlEditTiendo = `
+		sqlEditTienDo = `
 		UPDATE tiendo
 		SET tuan = ?, so_tiet = ?
 		WHERE id = ?;
@@ -140,8 +141,8 @@ const (
 		DELETE FROM phancong
 		WHERE id = ?;
 		`
-		sqlDeletePhanbotiet = `
-		DELETE FROM phanbotiet
+		sqlDeleteChiTiet = `
+		DELETE FROM chitiet
 		WHERE id = ?;
 		`
 		sqlDeleteTiendo = `
@@ -168,8 +169,8 @@ const (
 		SELECT * FROM phancong
 		WHERE id = ?;
 		`
-		sqlSelectPhanbotiet = `
-		SELECT * FROM phanbotiet
+		sqlSelectChiTiet = `
+		SELECT * FROM chitiet
 		WHERE id = ?;
 		`
 		sqlSelectTiendo = `
@@ -192,10 +193,10 @@ const (
 		sqlSelectAllPhanCong = `
 		SELECT * FROM phancong;
 		`
-		sqlSelectAllPhanbotiet = `
-		SELECT * FROM phanbotiet;
+		sqlSelectAllChiTiet = `
+		SELECT * FROM chitiet;
 		`
-		sqlSelectAllTiendo = `
+		sqlSelectAllTienDo = `
 		SELECT * FROM tiendo;
 		`
 		sqlSelectAllRangBuoc = `
@@ -217,11 +218,11 @@ const (
 		SELECT * FROM phancong
 		WHERE giao_vien_id = ?;
 		`
-		sqlFindPhanbotiet = `
-		SELECT * FROM phanbotiet
+		sqlFindChiTiet = `
+		SELECT * FROM chitiet
 		WHERE phan_cong_id = ?;
 		`
-		sqlFindTiendo = `
+		sqlFindTienDo = `
 		SELECT * FROM tiendo
 		WHERE phan_cong_id = ?;
 		`
@@ -239,8 +240,9 @@ type GiaoVien struct {
 	HoTen string `json:"ho_ten"`
 	MonChinhId int `json:"mon_chinh_id"`
 	Action string `json:"action,omitempty"`
-	
 }
+
+
 type MonHoc struct {
 	ID int `json:"id"`
 	TenMon string `json:"ten_mon"`
@@ -259,16 +261,17 @@ type PhanCong struct {
 	GiaoVienId int `json:"giao_vien_id"`
 	LopId int `json:"lop_id"`
 	MonHocId int `json:"mon_hoc_id"`
+	TongTiet int `json:"tong_tiet"`
 	Action string `json:"action,omitempty"`
 }
-type PhanBotiet struct {
+type ChiTiet struct {
 	ID int `json:"id"`
 	PhanCongId int `json:"phan_cong_id"`
 	Tuan int `json:"tuan"`
 	Sotiet int `json:"so_tiet"`
 	Action string `json:"action,omitempty"`
 }
-type Tiendo struct {
+type TienDo struct {
 	ID int `json:"id"`
 	PhanCongId int `json:"phan_cong_id"`
 	Tuan int `json:"tuan"`
@@ -413,7 +416,7 @@ func (s *SqlTKB) InsertPhanCong(phancong []PhanCong) (int, error) {
 	defer stmt.Close() // Đóng statement khi xong
 	for _, pc := range phancong {
 		// Dùng statement đã chuẩn bị để thực thi
-		_, err = stmt.Exec(pc.GiaoVienId, pc.LopId, pc.MonHocId)
+		_, err = stmt.Exec(pc.GiaoVienId, pc.LopId, pc.MonHocId, pc.TongTiet)
 		if err != nil {
 			// Lỗi được gán cho biến err, defer sẽ kích hoạt Rollback()
 			return count, fmt.Errorf("không thể thêm phần cống %d (%w)", pc.GiaoVienId, err)
@@ -428,7 +431,7 @@ func (s *SqlTKB) InsertPhanCong(phancong []PhanCong) (int, error) {
 	return count, nil
 }
 
-func (s *SqlTKB) InsertPhanbotiet(phanbotiet []PhanBotiet) (int, error) {
+func (s *SqlTKB) InsertChiTiet(chitiet []ChiTiet) (int, error) {
 	tx, err := s.db.Begin()
 	if err != nil {
 		return 0, fmt.Errorf("không thể bắt đầu giao dịch: %w", err)
@@ -438,12 +441,12 @@ func (s *SqlTKB) InsertPhanbotiet(phanbotiet []PhanBotiet) (int, error) {
 
  	var count int
 	// Chuẩn bị câu lệnh SQL (Prepared Statement) để tái sử dụng trong vòng lặp
-	stmt, err := tx.Prepare(sqlInsertPhanbotiet)
+	stmt, err := tx.Prepare(sqlInsertChiTiet)
 	if err != nil {
 		return 0, fmt.Errorf("không thể chuẩn bị câu lệnh: %w", err)
 	}
 	defer stmt.Close() // Đóng statement khi xong
-	for _, pb := range phanbotiet {
+	for _, pb := range chitiet {
 		// Dùng statement đã chuẩn bị để thực thi
 		_, err = stmt.Exec(pb.Tuan, pb.Sotiet, pb.ID)
 		if err != nil {
