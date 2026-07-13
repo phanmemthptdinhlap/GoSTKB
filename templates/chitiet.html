@@ -1,0 +1,153 @@
+{{define "content"}}
+<div id="app">
+  <h1 style="color: #333; margin-bottom: 20px;">Danh sách lớp học</h1>
+  <datasheet
+      :labels="labels"
+      :datas="datas"
+      @sync="syncData">
+  </datasheet>
+</div>
+
+<script src="static/datasheet.js"></script>
+<script>
+  const { createApp, ref, onMounted } = Vue;
+
+  const app = createApp({
+    setup() {
+      // Đã cập nhật key khớp chuẩn với JSON từ Golang trả về (ma, ten, gvcn)
+      const labels = ref([
+        { key: 'id', title: 'Mã phân công', type: 'text' },
+        { key: 'lop_id', title: 'Lớp học', type: 'select', options: [] },
+        { key: 'mon_hoc_id', title: 'Môn học', type: 'select', options: [] },
+        { key: 'giao_vien_id', title: 'Giáo viên', type: 'select', options: [] }
+      ]);
+      
+      const datas = ref([]);
+
+      // 1. Hàm lấy dữ liệu từ Golang Server
+      const fetchData = async () => {
+        try {
+          const response = await fetch('/api/phancong');
+          if (response.ok) {
+            const result = await response.json();
+            // Gán dữ liệu server vào datas. Component datasheet sẽ tự động map thêm action 'none'
+            datas.value = result || [];
+          } else {
+            alert("Lỗi khi tải dữ liệu từ máy chủ");
+          }
+        } catch (error) {
+          console.error("Lỗi mạng:", error);
+        }
+      };
+      
+      // Nạp danh sách giao viên để làm menu xổ xuống (Dropdown)
+      const fetchGiaoVien = async () => {
+        try {
+          const response = await fetch('/api/giaovien');
+          if (response.ok) {
+            const giaoviens = await response.json() || [];
+            // Chuyển đổi dữ liệu giao viên thành dạng { value: id, text: ten_ngan }
+            const giaoVienOptions = giaoviens.map(g => ({
+              value: g.id,
+              text: g.ten_ngan
+            }));
+            
+            // Đổ vào mảng options của nhãn gvcn_id
+            const lbl = labels.value.find(l => l.key === 'giao_vien_id');
+            if (lbl) lbl.options = giaoVienOptions;
+          }
+        } catch (error) {
+          console.error("Lỗi lấy danh sách giao viên:", error);
+        }
+      };
+      const fetchLopHoc = async () => {
+        try {
+          const response = await fetch('/api/lophoc');
+          if (response.ok) {
+            const lophocs = await response.json() || [];
+            // Chuyển đổi dữ liệu lop học thành dạng { value: id, text: ten_lop }
+            const lopHocOptions = lophocs.map(l => ({
+              value: l.id,
+              text: l.ten_lop
+            }));
+            
+            // Đổ vào mảng options của nhãn lop_id
+            const lbl = labels.value.find(l => l.key === 'lop_id');
+            if (lbl) lbl.options = lopHocOptions;
+          }
+        } catch (error) {
+          console.error("Lỗi lấy danh sách lớp học:", error);
+        }
+      };
+      const fetchMonHoc = async () => {
+        try {
+          const response = await fetch('/api/monhoc');
+          if (response.ok) {
+            const monhocs = await response.json() || [];
+            // Chuyển đổi dữ liệu môn học thành dạng { value: id, text: ten_mon }
+            const monHocOptions = monhocs.map(m => ({
+              value: m.id,
+              text: m.ten_mon
+            }));
+            
+            // Đổ vào mảng options của nhãn mon_hoc_id
+            const lbl = labels.value.find(l => l.key === 'mon_hoc_id');
+            if (lbl) lbl.options = monHocOptions;
+          }
+        } catch (error) {
+          console.error("Lỗi lấy danh sách môn học:", error);
+        }
+      };
+
+      // 2. Hàm Đồng bộ dữ liệu lên Golang Server
+      const syncData = async (updatedData) => {
+        // Chỉ lấy những dòng bị sửa đổi, thêm mới hoặc xóa
+        const dataToSend = updatedData.filter(item => item.action !== ' ');
+        
+        if (dataToSend.length === 0) {
+          alert('Chưa có thay đổi nào để đồng bộ!');
+          return;
+        }
+
+        try {
+          // Gửi POST lên API đồng bộ hàng loạt
+          const response = await fetch('/api/phancong/sync', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dataToSend)
+          });
+
+          if (response.ok) {
+            alert('Đồng bộ thành công ' + dataToSend.length + ' thao tác!');
+            
+            // 3. Gọi lại hàm tải dữ liệu để làm mới giao diện và reset toàn bộ action về 'none'
+            await fetchData();
+          } else {
+            alert("Đã xảy ra lỗi trong quá trình đồng bộ.");
+          }
+        } catch (error) {
+          console.error("Lỗi đồng bộ:", error);
+          alert("Không thể kết nối đến máy chủ!");
+        }
+      };
+
+      // Khi giao diện vừa render xong thì tự động gọi lấy dữ liệu ngay
+      onMounted(() => {
+        fetchData();
+        fetchGiaoVien();
+        fetchLopHoc();
+        fetchMonHoc();
+      });
+
+      return {
+        labels,
+        datas,
+        syncData
+      };
+    }
+  });
+
+  app.component('datasheet', DataSheet);
+  app.mount('#app');
+</script>
+{{end}}

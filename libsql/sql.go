@@ -296,6 +296,24 @@ type MonHoc struct {
 	Action string `json:"action,omitempty"`
 }
 
+func (s *SqlTKB) SelectAllMonHoc() ([]MonHoc, error) {
+	var monhoc []MonHoc
+	Rows, err := s.db.Query(sqlSelectAllMonHoc)
+	if err != nil {
+		return nil, fmt.Errorf("không thể lấy dữ liệu từ bảng monhoc : %w", err)
+	}
+	defer Rows.Close()
+	for Rows.Next() {
+		var mh MonHoc
+		err := Rows.Scan(&mh.ID, &mh.TenMon, &mh.LoaiMon)
+		if err != nil {
+			return nil, fmt.Errorf("Không thể quét dữ liệu vào biến monhoc : %w", err)
+		}
+		monhoc = append(monhoc, mh)
+	}
+	return monhoc, nil
+}
+
 func (s *SqlTKB) SelectMonHoc(id int) (*MonHoc, error) {
 	var mh MonHoc
 	err := s.db.QueryRow(sqlSelectMonHoc, id).Scan(&mh.ID, &mh.TenMon, &mh.LoaiMon)
@@ -441,6 +459,24 @@ type LopHoc struct {
 	Action string `json:"action,omitempty"`
 }
 
+func (s *SqlTKB) SelectAllLopHoc() ([]LopHoc, error) {
+	var lophoc []LopHoc
+	Rows, err := s.db.Query(sqlSelectAllLopHoc)
+	if err != nil {
+		return nil, fmt.Errorf("không thể lấy dữ liệu từ bảng lophoc : %w", err)
+	}
+	defer Rows.Close()
+	for Rows.Next() {
+		var lh LopHoc
+		err := Rows.Scan(&lh.ID, &lh.TenLop, &lh.KhoiLop, &lh.GvcnId)
+		if err != nil {
+			return nil, fmt.Errorf("Không thể quét dữ liệu vào biến lophoc : %w", err)
+		}
+		lophoc = append(lophoc, lh)
+	}
+	return lophoc, nil
+}
+
 func (s *SqlTKB) SelectLopHoc(id int) (*LopHoc, error) {
 	var lh LopHoc
 	err := s.db.QueryRow(sqlSelectLopHoc, id).Scan(&lh.ID, &lh.TenLop, &lh.KhoiLop, &lh.GvcnId)
@@ -584,6 +620,24 @@ type PhanCong struct {
 	Action string `json:"action,omitempty"`
 }
 
+func (s *SqlTKB) SelectAllPhanCong() ([]PhanCong, error) {
+	var phancong []PhanCong
+	Rows, err := s.db.Query(sqlSelectAllPhanCong)
+	if err != nil {
+		return nil, fmt.Errorf("không thể lấy dữ liệu từ bảng phancong : %w", err)
+	}
+	defer Rows.Close()
+	for Rows.Next() {
+		var pc PhanCong
+		err := Rows.Scan(&pc.ID, &pc.GiaoVienId, &pc.LopId, &pc.MonHocId)
+		if err != nil {
+			return nil, fmt.Errorf("Không thể quét dữ liệu vào biến phancong : %w", err)
+		}
+		phancong = append(phancong, pc)
+	}
+	return phancong, nil
+}
+
 func (s *SqlTKB) SelectPhanCong(id int) (*PhanCong, error) {
 	var pc PhanCong
 	err := s.db.QueryRow(sqlSelectPhanCong, id).Scan(&pc.ID, &pc.GiaoVienId, &pc.LopId, &pc.MonHocId)
@@ -716,6 +770,11 @@ const (
 	DELETE FROM phanbotiet
 	WHERE id = ?;
 	`
+	sqlSelectChiTietTheoLop = `
+	SELECT t.so_tiet FROM phanbotiet as t
+	INNER JOIN phancong as p ON t.phan_cong_id = p.id
+	WHERE p.lop_id = ? AND p.mon_hoc_id = ? AND t.tuan = ?;
+	`
 )
 
 type ChiTiet struct {
@@ -724,6 +783,59 @@ type ChiTiet struct {
 	Tuan int `json:"tuan"`
 	Sotiet int `json:"so_tiet"`
 	Action string `json:"action,omitempty"`
+}
+
+func (s *SqlTKB) SelectChiTietTheoLop(lops []int, Tuan int) ([]interface{}, error) {
+	var chitiet []interface{}
+	monhocs, err := s.SelectAllMonHoc()
+	if err != nil {
+		return nil, fmt.Errorf("Không thể lấy danh sách môn học : %w", err)
+	}
+	lophocs, err := s.SelectAllLopHoc()
+	if err != nil {
+		return nil, fmt.Errorf("Không thể lấy danh sách lớp học : %w", err)
+	}
+	phancongs, err := s.SelectAllPhanCong()
+	if err != nil {
+		return nil, fmt.Errorf("Không thể lấy danh sách phancong : %w", err)
+	}
+	// Lấy danh sách các lop học và môn học
+	var lop []int
+	var mon []int
+	for _, lophoc := range lophocs {
+		lop = append(lop, lophoc.LopId)
+	}
+	for _, monhoc := range monhocs {
+		mon = append(mon, monhoc.MonHocId)
+	}
+	// Lấy danh sách chitiet theo lop học và môn học	
+	for _, lop := range lops {
+		var ct ChiTiet
+		err := s.db.QueryRow(sqlSelectChiTietTheoLop, lop, Tuan).Scan(&ct.ID, &ct.PhanCongId, &ct.Tuan, &ct.Sotiet)
+		if err != nil {
+			return nil, fmt.Errorf("Không thể quét dữ liệu vào biến chitiet : %w", err)
+		}
+		chitiet = append(chitiet, ct)
+	}
+	return chitiet, nil
+}
+
+func (s *SqlTKB) SelectAllChiTiet() ([]ChiTiet, error) {
+	var chitiet []ChiTiet
+	Rows, err := s.db.Query(sqlSelectAllChiTiet)
+	if err != nil {
+		return nil, fmt.Errorf("không thể lấy dữ liệu từ bảng phanbotiet : %w", err)
+	}
+	defer Rows.Close()
+	for Rows.Next() {
+		var ct ChiTiet
+		err := Rows.Scan(&ct.ID, &ct.PhanCongId, &ct.Tuan, &ct.Sotiet)
+		if err != nil {
+			return nil, fmt.Errorf("Không thể quét dữ liệu vào biến chitiet : %w", err)
+		}
+		chitiet = append(chitiet, ct)
+	}
+	return chitiet, nil
 }
 
 func (s *SqlTKB) SelectChiTiet(id int) (*ChiTiet, error) {
@@ -868,6 +980,24 @@ type TienDo struct {
 	Action string `json:"action,omitempty"`
 }
 
+func (s *SqlTKB) SelectAllTiendo() ([]TienDo, error) {
+	var tiendo []TienDo
+	Rows, err := s.db.Query(sqlSelectAllTiendo)
+	if err != nil {
+		return nil, fmt.Errorf("không thể lấy dữ liệu từ bảng tiendo : %w", err)
+	}
+	defer Rows.Close()
+	for Rows.Next() {
+		var td TienDo
+		err := Rows.Scan(&td.ID, &td.PhanCongId, &td.Tuan, &td.Sotiet)
+		if err != nil {
+			return nil, fmt.Errorf("Không thể quét dữ liệu vào biến tiendo : %w", err)
+		}
+		tiendo = append(tiendo, td)
+	}
+	return tiendo, nil
+}
+
 func (s *SqlTKB) SelectTiendo(id int) (*TienDo, error) {
 	var td TienDo
 	err := s.db.QueryRow(sqlSelectTiendo, id).Scan(&td.ID, &td.PhanCongId, &td.Tuan, &td.Sotiet)
@@ -1010,6 +1140,24 @@ type RangBuoc struct {
 	LoaiRangBuoc string `json:"loai_rang_buoc"`
 	Action string `json:"action,omitempty"`
 }
+
+func (s *SqlTKB) SelectAllRangBuoc() ([]RangBuoc, error) {
+	var rangbuoc []RangBuoc
+	Rows, err := s.db.Query(sqlSelectAllRangBuoc)
+	if err != nil {
+		return nil, fmt.Errorf("không thể lấy dữ liệu từ bảng rangbuoc : %w", err)
+	}
+	defer Rows.Close()
+	for Rows.Next() {
+		var rb RangBuoc
+		err := Rows.Scan(&rb.ID, &rb.GiaoVienId, &rb.Thu, &rb.Tiet, &rb.LoaiRangBuoc)
+		if err != nil {
+			return nil, fmt.Errorf("Không thể quét dữ liệu vào biến rangbuoc : %w", err)
+		}
+		rangbuoc = append(rangbuoc, rb)
+	}
+	return rangbuoc, nil
+}	
 
 func (s *SqlTKB) SelectRangBuoc(id int) (*RangBuoc, error) {
 	var rb RangBuoc

@@ -37,12 +37,12 @@ func (p *WebPage) SetPageChiTiet() {
 			http.Error(w, "Lỗi lấy danh sách: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
-		fmt.Println("Lấy danh sách phancong: ", phancong)
-		json.NewEncoder(w).Encode(phancong)
+		fmt.Println("Lấy danh sách chitiet: ", chitiet)
+		json.NewEncoder(w).Encode(chitiet)
 	})
 		
 		// API MỚI: ĐỒNG BỘ DỮ LIỆU HÀNG LOẠT
-	p.mux.HandleFunc("POST /api/phancong/sync", func(w http.ResponseWriter, r *http.Request) {
+	p.mux.HandleFunc("POST /api/chitiet/sync", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		var danhSachDongBo []	ChiTiet
 		err := json.NewDecoder(r.Body).Decode(&danhSachDongBo)
