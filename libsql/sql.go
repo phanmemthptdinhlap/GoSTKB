@@ -758,22 +758,29 @@ const (
 	WHERE phan_cong_id = ?;
 	`
 	sqlInsertChiTiet = `
-	INSERT INTO phanbotiet(phan_cong_id, tuan, so_tiet)
+	INSERT INTO chitiet(phan_cong_id, tuan, so_tiet)
 	VALUES (?, ?, ?);
 	`
 	sqlEditChiTiet = `
-	UPDATE phanbotiet
+	UPDATE chitiet
 	SET tuan = ?, so_tiet = ?
 	WHERE id = ?;
 	`
 	sqlDeleteChiTiet = `
-	DELETE FROM phanbotiet
+	DELETE FROM chitiet
 	WHERE id = ?;
 	`
-	sqlSelectChiTietTheoLop = `
-	SELECT t.so_tiet FROM phanbotiet as t
-	INNER JOIN phancong as p ON t.phan_cong_id = p.id
-	WHERE p.lop_id = ? AND p.mon_hoc_id = ? AND t.tuan = ?;
+	sqlSelectAllChiTietTheoLop=`
+		SELECT 
+			l.id, l.ten_lop, m.id, 
+			COALESCE(pc.id, 0) as phan_cong_id,
+			COALESCE(ct.id, 0) as chi_tiet_id,
+			COALESCE(ct.so_tiet, 0) as so_tiet
+		FROM lophoc l
+		CROSS JOIN monhoc m
+		LEFT JOIN phancong pc ON pc.lop_id = l.id AND pc.mon_hoc_id = m.id
+		LEFT JOIN chitiet ct ON ct.phan_cong_id = pc.id
+		WHERE ct.tuan = ?
 	`
 )
 
@@ -784,40 +791,59 @@ type ChiTiet struct {
 	Sotiet int `json:"so_tiet"`
 	Action string `json:"action,omitempty"`
 }
+type ChiTietTheoLop struct {
+	LopId int `json:"lop_id"`
+	TenLop string `json:"ten_lop"`
+	KhoiLop string `json:"khoi_lop"`
+	MonHoc map[int]*struct {
+		PhanCongId int `json:"phan_cong_id"`
+		ChiTietId int `json:"chi_tiet_id"`
+		SoTiet int `json:"so_tiet"`
+	} `json:"mon_hoc"`
+}
 
-func (s *SqlTKB) SelectChiTietTheoLop(lops []int, Tuan int) ([]interface{}, error) {
-	var chitiet []interface{}
-	monhocs, err := s.SelectAllMonHoc()
+func (s *SqlTKB) SelectAllChiTietTheoLop(tuan int) ([]ChiTietTheoLop, error) {
+
+	Rows, err := s.db.Query(sqlSelectAllChiTietTheoLop,tuan)
 	if err != nil {
-		return nil, fmt.Errorf("Không thể lấy danh sách môn học : %w", err)
+		return nil, fmt.Errorf("không thể lấy dữ liệu từ bảng chitiet : %w", err)
 	}
-	lophocs, err := s.SelectAllLopHoc()
-	if err != nil {
-		return nil, fmt.Errorf("Không thể lấy danh sách lớp học : %w", err)
-	}
-	phancongs, err := s.SelectAllPhanCong()
-	if err != nil {
-		return nil, fmt.Errorf("Không thể lấy danh sách phancong : %w", err)
-	}
-	// Lấy danh sách các lop học và môn học
-	var lop []int
-	var mon []int
-	for _, lophoc := range lophocs {
-		lop = append(lop, lophoc.LopId)
-	}
-	for _, monhoc := range monhocs {
-		mon = append(mon, monhoc.MonHocId)
-	}
-	// Lấy danh sách chitiet theo lop học và môn học	
-	for _, lop := range lops {
-		var ct ChiTiet
-		err := s.db.QueryRow(sqlSelectChiTietTheoLop, lop, Tuan).Scan(&ct.ID, &ct.PhanCongId, &ct.Tuan, &ct.Sotiet)
+	fmt.Println(Rows)
+	defer Rows.Close()
+	chitiet:=make(map[int]*ChiTietTheoLop)
+	for Rows.Next() {
+		var lopID, monID, phancongID, chitietID, soTiet int
+		var tenLop string
+		err := Rows.Scan(&lopID, &tenLop, &monID, &phancongID, &chitietID, &soTiet)
 		if err != nil {
 			return nil, fmt.Errorf("Không thể quét dữ liệu vào biến chitiet : %w", err)
 		}
-		chitiet = append(chitiet, ct)
+		if _, ok := chitiet[lopID]; !ok {
+			chitiet[lopID] = &ChiTietTheoLop{
+				LopId: lopID,
+				TenLop: tenLop,
+				MonHoc: make(map[int]*struct {
+					PhanCongId int `json:"phan_cong_id"`
+					ChiTietId int `json:"chi_tiet_id"`
+					SoTiet int `json:"so_tiet"`
+				}),
+			}
+		}
+		chitiet[lopID].MonHoc[monID] = &struct {
+			PhanCongId int `json:"phan_cong_id"`
+			ChiTietId int `json:"chi_tiet_id"`
+			SoTiet int `json:"so_tiet"`
+		}{
+			PhanCongId: phancongID,
+			ChiTietId: chitietID,
+			SoTiet: soTiet,
+		}
 	}
-	return chitiet, nil
+	var result []ChiTietTheoLop
+	for _, v := range chitiet {
+		result = append(result, *v)
+	}
+	return result, nil
 }
 
 func (s *SqlTKB) SelectAllChiTiet() ([]ChiTiet, error) {
@@ -864,7 +890,7 @@ func (s *SqlTKB) InsertChiTiet(chitiet []ChiTiet) (int, error) {
 	defer stmt.Close() // Đóng statement khi xong
 	for _, ct := range chitiet {
 		// Dùng statement đã chuẩn bị để thực thi
-		_, err = stmt.Exec(ct.Tuan, ct.Sotiet, ct.ID)
+		_, err = stmt.Exec(ct.PhanCongId, ct.Tuan, ct.Sotiet)
 		if err != nil {
 			// Lỗi được gán cho biến err, defer sẽ kích hoạt Rollback()
 			return count, fmt.Errorf("không thể thêm phanbotiet %d (%w)", ct.PhanCongId, err)
@@ -896,7 +922,7 @@ func (s *SqlTKB) EditChiTiet(chitiet []ChiTiet) (int, error) {
 	defer stmt.Close() // Đóng statement khi xong
 	for _, ct := range chitiet {
 		// Dùng statement đã chuẩn bị để thực thi
-		_, err = stmt.Exec(ct.Tuan, ct.Sotiet, ct.ID)
+		_, err = stmt.Exec(ct.PhanCongId, ct.Tuan, ct.Sotiet)
 		if err != nil {
 			// Lỗi được gán cho biến err, defer sẽ kích hoạt Rollback()
 			return count, fmt.Errorf("không thể sửa phanbotiet %d (%w)", ct.PhanCongId, err)
