@@ -9,14 +9,22 @@
     <div id="app">
         <h1>Quản lý Thời khóa biểu</h1>
         
-        <generic-datasheet 
+        <datagrid
+            ref="gridRef"
             :labels="scheduleColumns" 
             :datas="scheduleData" 
             @sync="handleSyncToServer">
-        </generic-datasheet>
+        </datagrid>
+        <div class="mb-3 text-end">
+            <button
+                class="btn btn-primary"
+                :disabled="!gridRef?.hasChanges"
+                @click="handleSyncToServer"
+            >Đồng bộ {{ gridRef?.changedPayload?.length || 0 }} thay đổi</button>
+        </div>
     </div>
 
-    <script src="datasheet.js"></script>
+    <script src="datagrid.js"></script>
 
     <script>
         const { createApp, ref } = Vue;
@@ -24,22 +32,56 @@
         const app = createApp({
             setup() {
                 // Cấu hình các cột (labels) [cite: 5, 10]
+                const gridRef = ref(null);
                 const scheduleColumns = ref([
-                    { key: 'subject', title: 'Tên Môn Học', type: 'text' },
-                    { key: 'teacher', title: 'Giáo viên', type: 'text' },
-                    { key: 'date', title: 'Ngày học', type: 'date' },
-                    { key: 'time', title: 'Thời gian', type: 'time' }
+                    { key: 'ten_lop', title: 'Tên Lớp', type: 'text' },
+                    { key: 'mon', title: 'Môn', type: 'cell', valuekey:'so_tiet', cells: [
+                        { key: '1', title: 'Toán' },
+                        { key: '2', title: 'Văn' },
+                        { key: '3', title: 'Lý' },
+                        { key: '4', title: 'Tin' },
+                        { key: '5', title: 'Sinh' },
+                    ] },
                 ]);
 
                 // Dữ liệu mô phỏng (Sau này lấy từ Golang Server qua Fetch API) [cite: 6]
                 const scheduleData = ref([
-                    { id: 1, subject: 'Toán cao cấp', teacher: 'Nguyễn Văn A', date: '2026-06-28', time: '07:30' },
-                    { id: 2, subject: 'Lập trình Go', teacher: 'Trần Thị B', date: '2026-06-29', time: '09:00' }
+                  { lop_id:1,
+                    ten_lop:'10A1',
+                    khoi_lop:'10',
+                    mon:{
+                      '1':{phan_cong_id:1,chi_tiet:1,so_tiet:5},
+                      '2':{phan_cong_id:2,chi_tiet:2,so_tiet:5},
+                      '3':{phan_cong_id:3,chi_tiet:3,so_tiet:2},
+                      '4':{phan_cong_id:4,chi_tiet:4,so_tiet:5},
+                      '5':{phan_cong_id:5,chi_tiet:5,so_tiet:5},
+                  }},
+                  { lop_id:2,
+                    ten_lop:'10A2',
+                    khoi_lop:'10',
+                    mon:{
+                      '1':{phan_cong_id:1,chi_tiet:1,so_tiet:2},
+                      '2':{phan_cong_id:2,chi_tiet:2,so_tiet:5},
+                      '3':{phan_cong_id:3,chi_tiet:3,so_tiet:2},
+                      '4':{phan_cong_id:4,chi_tiet:4,so_tiet:5},
+                      '5':{phan_cong_id:5,chi_tiet:5,so_tiet:3},
+                  }},
+                  { lop_id:3,
+                    ten_lop:'10A3',
+                    khoi_lop:'10',
+                    mon:{
+                      '1':{phan_cong_id:1,chi_tiet:1,so_tiet:2},
+                      '2':{phan_cong_id:2,chi_tiet:2,so_tiet:2},
+                      '3':{phan_cong_id:3,chi_tiet:3,so_tiet:5},
+                      '4':{phan_cong_id:4,chi_tiet:4,so_tiet:5},
+                      '5':{phan_cong_id:5,chi_tiet:5,so_tiet:1},
+                  }},
                 ]);
 
                 // Hàm xử lý đồng bộ [cite: 14]
-                const handleSyncToServer = (updatedData) => {
-                    console.log('Dữ liệu gửi lên Golang:', updatedData);
+                const handleSyncToServer = async () => {
+                    const payload = gridRef.value.changedPayload;
+                    console.log('Dữ liệu gửi lên Golang:', payload);
                     // Dùng fetch() gửi lên server Go ở đây
                     /*
                     fetch('/api/sync-schedule', {
@@ -52,9 +94,55 @@
                     .catch(err => console.error('Lỗi:', err));
                     */
                     alert('Kiểm tra console để xem dữ liệu chuẩn bị gửi!');
+                    
+                    // Cập nscheduleData=scheduleData=scheduleData;
+                    scheduleData.value = [
+                      { lop_id:1,
+                        ten_lop:'10A1',
+                        khoi_lop:'10',
+                        mon:{
+                          '1':{phan_cong_id:1,chi_tiet:1,so_tiet:5},
+                          '2':{phan_cong_id:2,chi_tiet:2,so_tiet:5},
+                          '3':{phan_cong_id:3,chi_tiet:3,so_tiet:2},
+                          '4':{phan_cong_id:4,chi_tiet:4,so_tiet:5},
+                          '5':{phan_cong_id:5,chi_tiet:5,so_tiet:5},
+                      }},
+                      { lop_id:2,
+                        ten_lop:'10A2',
+                        khoi_lop:'10',
+                        mon:{
+                          '1':{phan_cong_id:1,chi_tiet:1,so_tiet:2},
+                          '2':{phan_cong_id:2,chi_tiet:2,so_tiet:5},
+                          '3':{phan_cong_id:3,chi_tiet:3,so_tiet:2},
+                          '4':{phan_cong_id:4,chi_tiet:4,so_tiet:5},
+                          '5':{phan_cong_id:5,chi_tiet:5,so_tiet:3},
+                      }},
+                      { lop_id:3,
+                        ten_lop:'10A3',
+                        khoi_lop:'10',
+                        mon:{
+                          '1':{phan_cong_id:1,chi_tiet:1,so_tiet:2},
+                          '2':{phan_cong_id:2,chi_tiet:2,so_tiet:2},
+                          '3':{phan_cong_id:3,chi_tiet:3,so_tiet:5},
+                          '4':{phan_cong_id:4,chi_tiet:4,so_tiet:5},
+                          '5':{phan_cong_id:5,chi_tiet:5,so_tiet:1},
+                      }},
+                      { lop_id:4,
+                        ten_lop:'10A4',
+                        khoi_lop:'10',
+                        mon:{
+                          '1':{phan_cong_id:1,chi_tiet:1,so_tiet:2},
+                          '2':{phan_cong_id:2,chi_tiet:2,so_tiet:2},
+                          '3':{phan_cong_id:3,chi_tiet:3,so_tiet:2},
+                          '4':{phan_cong_id:4,chi_tiet:4,so_tiet:5},
+                          '5':{phan_cong_id:5,chi_tiet:5,so_tiet:1},
+                      }},
+                    ]
+
                 };
 
                 return {
+                    gridRef,
                     scheduleColumns,
                     scheduleData,
                     handleSyncToServer
@@ -63,7 +151,7 @@
         });
 
         // Đăng ký component toàn cục để dùng trong HTML
-        app.component('generic-datasheet', DataSheet);
+        app.component('datagrid', DataGrid);
 
         // Chạy ứng dụng
         app.mount('#app');

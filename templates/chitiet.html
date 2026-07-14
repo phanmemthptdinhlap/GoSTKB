@@ -1,153 +1,125 @@
 {{define "content"}}
 <div id="app">
-  <h1 style="color: #333; margin-bottom: 20px;">Danh sách lớp học</h1>
-  <datasheet
-      :labels="labels"
-      :datas="datas"
-      @sync="syncData">
-  </datasheet>
+  <h1>Phân bổ tiết dạy theo tuần</h1>
+  
+  <div class="mb-3 d-flex align-items-center">
+    <label for="week_select" class="fw-bold me-2">Tuần học:</label>
+    <select 
+      id="week_select"
+      v-model.number="week"
+      @change="fetchData"
+      class="form-select form-select-sm"
+      style="width: 150px;">
+      <option v-for="w in 52" :key="w" :value="w" v-text="'Tuần ' + w"></option>
+    </select>
+  </div>
+
+  <datagrid
+    ref="gridRef"
+    :labels="scheduleColumns" 
+    :datas="scheduleData" 
+    @sync="handleSyncToServer">
+  </datagrid>
+
+  <div class="mb-3 text-end mt-3">
+    <!-- An toàn với Golang: Xử lý chuỗi bằng v-text trực tiếp trên thẻ button -->
+    <button
+      class="btn btn-primary"
+      :disabled="!gridRef?.hasChanges"
+      @click="handleSyncToServer"
+      v-text="'Đồng bộ ' + (gridRef?.changedPayload?.length || 0) + ' thay đổi'"
+    ></button>
+  </div>
 </div>
 
-<script src="static/datasheet.js"></script>
+<!-- Cần đảm bảo đường dẫn tới tệp datagrid.js là chính xác tuyệt đối -->
+<script src="/static/datagrid.js"></script>
+
 <script>
   const { createApp, ref, onMounted } = Vue;
 
   const app = createApp({
     setup() {
-      // Đã cập nhật key khớp chuẩn với JSON từ Golang trả về (ma, ten, gvcn)
-      const labels = ref([
-        { key: 'id', title: 'Mã phân công', type: 'text' },
-        { key: 'lop_id', title: 'Lớp học', type: 'select', options: [] },
-        { key: 'mon_hoc_id', title: 'Môn học', type: 'select', options: [] },
-        { key: 'giao_vien_id', title: 'Giáo viên', type: 'select', options: [] }
+      // 1. Khởi tạo các biến phản ứng
+      const gridRef = ref(null);
+      const week = ref(1); // Mặc định chọn tuần 1
+      const scheduleData = ref([]); // Bắt buộc khởi tạo mảng rỗng để tránh lỗi length
+
+      const scheduleColumns = ref([
+        { key: 'ten_lop', title: 'Tên Lớp', type: 'text' },
+        { key: 'mon', title: 'Môn', type: 'cell', valuekey: 'so_tiet', cells: [
+          { key: '1', title: 'Toán' },
+          { key: '2', title: 'Văn' },
+          { key: '3', title: 'Lý' },
+          { key: '4', title: 'Tin' },
+          { key: '5', title: 'Sinh' },
+        ]},
       ]);
-      
-      const datas = ref([]);
 
-      // 1. Hàm lấy dữ liệu từ Golang Server
+      // 2. Logic gọi dữ liệu theo tuần
       const fetchData = async () => {
-        try {
-          const response = await fetch('/api/phancong');
-          if (response.ok) {
-            const result = await response.json();
-            // Gán dữ liệu server vào datas. Component datasheet sẽ tự động map thêm action 'none'
-            datas.value = result || [];
-          } else {
-            alert("Lỗi khi tải dữ liệu từ máy chủ");
+        scheduleData.value = [
+          { 
+            lop_id: 1, ten_lop: '10A1', khoi_lop: '10', 
+            mon: {
+              '1': { phan_cong_id: 1, chi_tiet: 1, so_tiet: 5 },
+              '2': { phan_cong_id: 2, chi_tiet: 2, so_tiet: 5 },
+              '3': { phan_cong_id: 3, chi_tiet: 3, so_tiet: 2 },
+              '4': { phan_cong_id: 4, chi_tiet: 4, so_tiet: 5 },
+              '5': { phan_cong_id: 5, chi_tiet: 5, so_tiet: 5 },
+            }
+          },
+          { 
+            lop_id: 2, ten_lop: '10A2', khoi_lop: '10', 
+            mon: {
+              '1': { phan_cong_id: 1, chi_tiet: 1, so_tiet: 2 },
+              '2': { phan_cong_id: 2, chi_tiet: 2, so_tiet: 5 },
+              '3': { phan_cong_id: 3, chi_tiet: 3, so_tiet: 2 },
+              '4': { phan_cong_id: 4, chi_tiet: 4, so_tiet: 5 },
+              '5': { phan_cong_id: 5, chi_tiet: 5, so_tiet: 3 },
+            }
+          },
+          { 
+            lop_id: 3, ten_lop: '10A3', khoi_lop: '10', 
+            mon: {
+              '1': { phan_cong_id: 1, chi_tiet: 1, so_tiet: 2 },
+              '2': { phan_cong_id: 2, chi_tiet: 2, so_tiet: 2 },
+              '3': { phan_cong_id: 3, chi_tiet: 3, so_tiet: 5 },
+              '4': { phan_cong_id: 4, chi_tiet: 4, so_tiet: 5 },
+              '5': { phan_cong_id: 5, chi_tiet: 5, so_tiet: 1 },
+            }
           }
-        } catch (error) {
-          console.error("Lỗi mạng:", error);
-        }
-      };
-      
-      // Nạp danh sách giao viên để làm menu xổ xuống (Dropdown)
-      const fetchGiaoVien = async () => {
-        try {
-          const response = await fetch('/api/giaovien');
-          if (response.ok) {
-            const giaoviens = await response.json() || [];
-            // Chuyển đổi dữ liệu giao viên thành dạng { value: id, text: ten_ngan }
-            const giaoVienOptions = giaoviens.map(g => ({
-              value: g.id,
-              text: g.ten_ngan
-            }));
-            
-            // Đổ vào mảng options của nhãn gvcn_id
-            const lbl = labels.value.find(l => l.key === 'giao_vien_id');
-            if (lbl) lbl.options = giaoVienOptions;
-          }
-        } catch (error) {
-          console.error("Lỗi lấy danh sách giao viên:", error);
-        }
-      };
-      const fetchLopHoc = async () => {
-        try {
-          const response = await fetch('/api/lophoc');
-          if (response.ok) {
-            const lophocs = await response.json() || [];
-            // Chuyển đổi dữ liệu lop học thành dạng { value: id, text: ten_lop }
-            const lopHocOptions = lophocs.map(l => ({
-              value: l.id,
-              text: l.ten_lop
-            }));
-            
-            // Đổ vào mảng options của nhãn lop_id
-            const lbl = labels.value.find(l => l.key === 'lop_id');
-            if (lbl) lbl.options = lopHocOptions;
-          }
-        } catch (error) {
-          console.error("Lỗi lấy danh sách lớp học:", error);
-        }
-      };
-      const fetchMonHoc = async () => {
-        try {
-          const response = await fetch('/api/monhoc');
-          if (response.ok) {
-            const monhocs = await response.json() || [];
-            // Chuyển đổi dữ liệu môn học thành dạng { value: id, text: ten_mon }
-            const monHocOptions = monhocs.map(m => ({
-              value: m.id,
-              text: m.ten_mon
-            }));
-            
-            // Đổ vào mảng options của nhãn mon_hoc_id
-            const lbl = labels.value.find(l => l.key === 'mon_hoc_id');
-            if (lbl) lbl.options = monHocOptions;
-          }
-        } catch (error) {
-          console.error("Lỗi lấy danh sách môn học:", error);
-        }
+        ];
+        alert('Đã tải dữ liệu cho tuần ' + week.value);
       };
 
-      // 2. Hàm Đồng bộ dữ liệu lên Golang Server
-      const syncData = async (updatedData) => {
-        // Chỉ lấy những dòng bị sửa đổi, thêm mới hoặc xóa
-        const dataToSend = updatedData.filter(item => item.action !== ' ');
-        
-        if (dataToSend.length === 0) {
-          alert('Chưa có thay đổi nào để đồng bộ!');
-          return;
-        }
-
-        try {
-          // Gửi POST lên API đồng bộ hàng loạt
-          const response = await fetch('/api/phancong/sync', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(dataToSend)
-          });
-
-          if (response.ok) {
-            alert('Đồng bộ thành công ' + dataToSend.length + ' thao tác!');
-            
-            // 3. Gọi lại hàm tải dữ liệu để làm mới giao diện và reset toàn bộ action về 'none'
-            await fetchData();
-          } else {
-            alert("Đã xảy ra lỗi trong quá trình đồng bộ.");
-          }
-        } catch (error) {
-          console.error("Lỗi đồng bộ:", error);
-          alert("Không thể kết nối đến máy chủ!");
-        }
+      // 3. Logic Đồng bộ dữ liệu
+      const handleSyncToServer = async () => {
+        const payload = gridRef.value?.changedPayload || [];
+        console.log('Dữ liệu gửi lên Golang:', payload);
+        alert('Kiểm tra console trình duyệt để xem ' + payload.length + ' bản ghi!');
+        await fetchData();
       };
 
-      // Khi giao diện vừa render xong thì tự động gọi lấy dữ liệu ngay
+      // 4. Hook chạy ngay sau khi trang tải xong
       onMounted(() => {
         fetchData();
-        fetchGiaoVien();
-        fetchLopHoc();
-        fetchMonHoc();
       });
 
+      // 5. BẮT BUỘC RETURN TẤT CẢ BIẾN ĐƯỢC GỌI TRONG HTML
       return {
-        labels,
-        datas,
-        syncData
+        gridRef,
+        week,               // Nếu thiếu, dropdown tuần sẽ hỏng
+        scheduleColumns,
+        scheduleData,       // Nếu thiếu, toàn bộ datagrid sẽ crash
+        fetchData,
+        handleSyncToServer
       };
     }
   });
 
-  app.component('datasheet', DataSheet);
+  // Đăng ký component toàn cục và mount vào DOM
+  app.component('datagrid', DataGrid);
   app.mount('#app');
 </script>
 {{end}}
