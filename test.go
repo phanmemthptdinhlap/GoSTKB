@@ -18,26 +18,15 @@ func main() {
 			fmt.Println(err)
 		}
 	}()
-	chitiet:=[]ChiTiet{
-		{PhanCongId: 1, Tuan: 1, Sotiet: 5},
-		{PhanCongId: 2, Tuan: 1, Sotiet: 5},
-
-
-	}
-
-	sl,err := db.InsertChiTiet(chitiet)
-	if err!=nil{
-		fmt.Println(err)
-	}
-	fmt.Printf("Đã thêm %d Giáo viên vào CSDL!\n",sl)
-	ct,err := db.SelectAllChiTiet()
+	tuan,err:=db.SelectTuanHoc()
 	if err!=nil{
 		fmt.Println(err)
 		return
 	}
+	fmt.Println("Tuần mặc định: ", tuan)
 	fmt.Println("Chi tiết của giáo viên")
-	fmt.Println(ct)
-	chitiettheolop,err := db.SelectAllChiTietTheoLop(1)
+	chitiettheolop,err := db.SelectAllChiTietTheoLop(tuan)
+	fmt.Println("Sau khi lấy thông tin")
 	if err!=nil{
 		fmt.Println(err)
 		return

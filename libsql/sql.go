@@ -782,6 +782,11 @@ const (
 		LEFT JOIN chitiet ct ON ct.phan_cong_id = pc.id
 		WHERE ct.tuan = ?
 	`
+	sqlSelectTuanHoc = `
+		SELECT 
+			COALESCE(MAX(tuan), 0) as tuan
+		FROM chitiet
+	`
 )
 
 type ChiTiet struct {
@@ -802,13 +807,22 @@ type ChiTietTheoLop struct {
 	} `json:"mon_hoc"`
 }
 
+func (s *SqlTKB) SelectTuanHoc() (int, error) {
+	var tuan int
+	err := s.db.QueryRow(sqlSelectTuanHoc).Scan(&tuan)
+	if err != nil {
+		return 0, fmt.Errorf("không thể lấy dữ liệu từ bảng phanbotiet : %w", err)
+	}
+	return tuan, nil
+}
+
 func (s *SqlTKB) SelectAllChiTietTheoLop(tuan int) ([]ChiTietTheoLop, error) {
 
 	Rows, err := s.db.Query(sqlSelectAllChiTietTheoLop,tuan)
 	if err != nil {
 		return nil, fmt.Errorf("không thể lấy dữ liệu từ bảng chitiet : %w", err)
 	}
-	fmt.Println(Rows)
+	//fmt.Println(Rows)
 	defer Rows.Close()
 	chitiet:=make(map[int]*ChiTietTheoLop)
 	for Rows.Next() {

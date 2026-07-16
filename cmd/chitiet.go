@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"strconv"
 	. "GoSTKB/libsql"
 )
 
@@ -27,11 +28,24 @@ func (p *WebPage) SetPageChiTiet() {
 			http.Error(w, "Lỗi render: "+err.Error(), http.StatusInternalServerError)
 		}
 	})
+	// API Lấy thông tin tuần mặc định
+	p.mux.HandleFunc("GET /api/chitiet/tuan", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		tuan, err := db.SelectTuanHoc()
+		if err != nil {
+			fmt.Println("Lỗi lấy tuần mặc định: ", err)
+			http.Error(w, "Lỗi lấy tuần mặc định: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		fmt.Println("Lấy tuần mặc định: ", tuan)
+		json.NewEncoder(w).Encode(tuan)
+	})
 
 	// API Lấy danh sách
-	p.mux.HandleFunc("GET /api/chitiet", func(w http.ResponseWriter, r *http.Request) {
+	p.mux.HandleFunc("GET /api/chitiet{tuan}", func(w http.ResponseWriter, r *http.Request) {
+		tuan, err := strconv.Atoi(r.PathValue("tuan"))
 		w.Header().Set("Content-Type", "application/json")
-		chitiet,err := db.SelectAllChiTiet()
+		chitiet,err := db.SelectAllChiTietTheoLop(tuan)
 		if err != nil {
 			fmt.Println("Lỗi lấy danh sách: ", err)
 			http.Error(w, "Lỗi lấy danh sách: "+err.Error(), http.StatusInternalServerError)

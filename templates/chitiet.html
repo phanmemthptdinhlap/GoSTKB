@@ -56,6 +56,34 @@
         ]},
       ]);
 
+      const fetchTuan = async () => {
+        try {
+          const response = await fetch('/api/chitiet/tuan');
+          if (response.ok) {
+            const tuan = await response.json() || [];
+            week.value = tuan[0].id;
+          }
+        } catch (error) {
+          console.error("Lỗi lấy tuần mặc định:", error);
+        }
+      };
+
+      const fetchMonHoc = async () => {
+        try {
+          const response = await fetch('/api/monhoc');
+          if (response.ok) {
+            const monhocs = await response.json() || [];
+            var Mon = monhocs.map(m =>({
+              key: m.id,
+              title: m.ten_mon
+            }));
+            scheduleColumns.value.mon.cells=Mon;
+          }
+        } catch (error) {
+          console.error("Lỗi lấy danh sách môn học:", error);
+        }
+      };
+       
       // 2. Logic gọi dữ liệu theo tuần
       const fetchData = async () => {
         scheduleData.value = [
@@ -103,6 +131,8 @@
 
       // 4. Hook chạy ngay sau khi trang tải xong
       onMounted(() => {
+        fetchTuan();
+        fetchMonHoc();
         fetchData();
       });
 
