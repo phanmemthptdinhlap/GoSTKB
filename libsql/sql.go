@@ -629,7 +629,7 @@ func (s *SqlTKB) SelectAllPhanCong() ([]PhanCong, error) {
 	defer Rows.Close()
 	for Rows.Next() {
 		var pc PhanCong
-		err := Rows.Scan(&pc.ID, &pc.GiaoVienId, &pc.LopId, &pc.MonHocId)
+		err := Rows.Scan(&pc.ID, &pc.GiaoVienId, &pc.LopId, &pc.MonHocId,&pc.TongTiet)
 		if err != nil {
 			return nil, fmt.Errorf("Không thể quét dữ liệu vào biến phancong : %w", err)
 		}
@@ -640,7 +640,7 @@ func (s *SqlTKB) SelectAllPhanCong() ([]PhanCong, error) {
 
 func (s *SqlTKB) SelectPhanCong(id int) (*PhanCong, error) {
 	var pc PhanCong
-	err := s.db.QueryRow(sqlSelectPhanCong, id).Scan(&pc.ID, &pc.GiaoVienId, &pc.LopId, &pc.MonHocId)
+	err := s.db.QueryRow(sqlSelectPhanCong, id).Scan(&pc.ID, &pc.GiaoVienId, &pc.LopId, &pc.MonHocId, &pc.TongTiet)
 	if err != nil {
 		return nil, fmt.Errorf("không thể lấy dữ liệu từ bảng phancong : %w", err)
 	}
@@ -664,7 +664,7 @@ func (s *SqlTKB) InsertPhanCong(phancong []PhanCong) (int, error) {
 	defer stmt.Close() // Đóng statement khi xong
 	for _, pc := range phancong {
 		// Dùng statement đã chuẩn bị để thực thi
-		_, err = stmt.Exec(pc.GiaoVienId, pc.LopId, pc.MonHocId)
+		_, err = stmt.Exec(pc.GiaoVienId, pc.LopId, pc.MonHocId, pc.TongTiet)
 		if err != nil {
 			// Lỗi được gán cho biến err, defer sẽ kích hoạt Rollback()
 			return count, fmt.Errorf("không thể thêm phần cống %d (%w)", pc.GiaoVienId, err)
@@ -772,15 +772,19 @@ const (
 	`
 	sqlSelectAllChiTietTheoLop=`
 		SELECT 
-			l.id, l.ten_lop, m.id, 
-			COALESCE(pc.id, 0) as phan_cong_id,
-			COALESCE(ct.id, 0) as chi_tiet_id,
-			COALESCE(ct.so_tiet, 0) as so_tiet
+    	l.id, 
+    	l.ten_lop, 
+    	m.id AS mon_id, 
+    	COALESCE(pc.id, 0) AS phan_cong_id,
+    	COALESCE(ct.id, 0) AS chi_tiet_id,
+    	COALESCE(ct.so_tiet, 0) AS so_tiet
 		FROM lophoc l
 		CROSS JOIN monhoc m
-		LEFT JOIN phancong pc ON pc.lop_id = l.id AND pc.mon_hoc_id = m.id
-		LEFT JOIN chitiet ct ON ct.phan_cong_id = pc.id
-		WHERE ct.tuan = ?
+		INNER JOIN phancong pc ON pc.lop_id = l.id AND pc.mon_hoc_id = m.id
+		-- Đưa điều kiện lọc tuần trực tiếp vào phép JOIN
+		LEFT JOIN chitiet ct ON ct.phan_cong_id = pc.id AND ct.tuan = ?
+		-- Bổ sung ORDER BY để luồng dữ liệu trả về Vue.js luôn nhất quán theo ma trận
+		ORDER BY l.id;
 	`
 	sqlSelectTuanHoc = `
 		SELECT 

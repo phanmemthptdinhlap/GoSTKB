@@ -16,10 +16,11 @@
     setup() {
       // Đã cập nhật key khớp chuẩn với JSON từ Golang trả về (ma, ten, gvcn)
       const labels = ref([
-        { key: 'id', title: 'Mã phân công', type: 'text' },
+        { key: 'id', title: 'Mã phân công', type: 'number', readonly: true },
         { key: 'lop_id', title: 'Lớp học', type: 'select', options: [] },
         { key: 'mon_hoc_id', title: 'Môn học', type: 'select', options: [] },
-        { key: 'giao_vien_id', title: 'Giáo viên', type: 'select', options: [] }
+        { key: 'giao_vien_id', title: 'Giáo viên', type: 'select', options: [] },
+        { key: 'tong_tiet', title: 'Tông tiết', type: 'number' }
       ]);
       
       const datas = ref([]);
@@ -32,6 +33,7 @@
             const result = await response.json();
             // Gán dữ liệu server vào datas. Component datasheet sẽ tự động map thêm action 'none'
             datas.value = result || [];
+            //alert(result);
           } else {
             alert("Lỗi khi tải dữ liệu từ máy chủ");
           }
@@ -102,7 +104,17 @@
       // 2. Hàm Đồng bộ dữ liệu lên Golang Server
       const syncData = async (updatedData) => {
         // Chỉ lấy những dòng bị sửa đổi, thêm mới hoặc xóa
-        const dataToSend = updatedData.filter(item => item.action !== ' ');
+        const dataToSend = updatedData
+          .filter(item => item.action !== ' ')
+          .map(item => ({
+            // Đổi giá trị thành dạng number
+            id: parseInt(item.id)||0,
+            lop_id: parseInt(item.lop_id)||0,
+            mon_hoc_id: parseInt(item.mon_hoc_id)||0,
+            giao_vien_id: parseInt(item.giao_vien_id)||0,
+            tong_tiet: parseInt(item.tong_tiet)||0,
+            action: item.action
+            }));
         
         if (dataToSend.length === 0) {
           alert('Chưa có thay đổi nào để đồng bộ!');
@@ -111,6 +123,7 @@
 
         try {
           // Gửi POST lên API đồng bộ hàng loạt
+          //alert("Đang đồng bộ hàng loạt...\n"+JSON.stringify(dataToSend));
           const response = await fetch('/api/phancong/sync', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

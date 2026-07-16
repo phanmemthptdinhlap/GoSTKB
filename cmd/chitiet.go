@@ -42,8 +42,14 @@ func (p *WebPage) SetPageChiTiet() {
 	})
 
 	// API Lấy danh sách
-	p.mux.HandleFunc("GET /api/chitiet{tuan}", func(w http.ResponseWriter, r *http.Request) {
+	p.mux.HandleFunc("GET /api/chitiet/{tuan}", func(w http.ResponseWriter, r *http.Request) {
 		tuan, err := strconv.Atoi(r.PathValue("tuan"))
+		if err != nil {
+			fmt.Println("Lỗi lấy tuần mặc định: ", err)
+			http.Error(w, "Lỗi lấy tuần mặc định: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		fmt.Println("Danh sách chi tiet theo tuần: ", tuan)
 		w.Header().Set("Content-Type", "application/json")
 		chitiet,err := db.SelectAllChiTietTheoLop(tuan)
 		if err != nil {
@@ -66,7 +72,15 @@ func (p *WebPage) SetPageChiTiet() {
 			}
 	
 			fmt.Printf("Nhận được %d bản ghi cần đồng bộ\n", len(danhSachDongBo))
-			fmt.Println("Nhận được phancong: ", danhSachDongBo)
+			fmt.Println("Nhận được phancong: ")
+			for _,ct:=range danhSachDongBo{
+				vi,err:=json.MarshalIndent(ct,"","  ")
+				if err!=nil{
+					fmt.Println(err)
+					return
+				}
+				fmt.Println(string(vi))
+			}
 			var Insert []ChiTiet
 			var Update []ChiTiet
 			var Delete []int	

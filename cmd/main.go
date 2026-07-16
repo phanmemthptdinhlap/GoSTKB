@@ -49,6 +49,7 @@ func main() {
 		page.SetPageGiaoVien()
 		page.SetPagePhanCong()
 		page.SetPageChiTiet()
+		page.SetPageTest()
     fmt.Println("Server đang chạy tại cổng 8080")
     http.ListenAndServe("0.0.0.0:8080", mux)
 }
