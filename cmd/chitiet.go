@@ -37,7 +37,7 @@ func (p *WebPage) SetPageChiTiet() {
 			http.Error(w, "Lỗi lấy tuần mặc định: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
-		fmt.Println("Lấy tuần mặc định: ", tuan)
+		//fmt.Println("Lấy tuần mặc định: ", tuan)
 		json.NewEncoder(w).Encode(tuan)
 	})
 
@@ -49,7 +49,7 @@ func (p *WebPage) SetPageChiTiet() {
 			http.Error(w, "Lỗi lấy tuần mặc định: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
-		fmt.Println("Danh sách chi tiet theo tuần: ", tuan)
+		//fmt.Println("Danh sách chi tiet theo tuần: ", tuan)
 		w.Header().Set("Content-Type", "application/json")
 		chitiet,err := db.SelectAllChiTietTheoLop(tuan)
 		if err != nil {
@@ -57,7 +57,7 @@ func (p *WebPage) SetPageChiTiet() {
 			http.Error(w, "Lỗi lấy danh sách: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
-		fmt.Println("Lấy danh sách chitiet: ", chitiet)
+		//fmt.Println("Lấy danh sách chitiet: ", chitiet)
 		json.NewEncoder(w).Encode(chitiet)
 	})
 		
@@ -72,15 +72,6 @@ func (p *WebPage) SetPageChiTiet() {
 			}
 	
 			fmt.Printf("Nhận được %d bản ghi cần đồng bộ\n", len(danhSachDongBo))
-			fmt.Println("Nhận được phancong: ")
-			for _,ct:=range danhSachDongBo{
-				vi,err:=json.MarshalIndent(ct,"","  ")
-				if err!=nil{
-					fmt.Println(err)
-					return
-				}
-				fmt.Println(string(vi))
-			}
 			var Insert []ChiTiet
 			var Update []ChiTiet
 			var Delete []int	
@@ -89,16 +80,21 @@ func (p *WebPage) SetPageChiTiet() {
 	
 			// Phân loại và xử lý từng hành động
 			for _, ct := range danhSachDongBo {
-				switch ct.Action {
-				case "thêm":
+				if ct.Sotiet > 0 && ct.ID == 0 {
 					Insert = append(Insert, ct)
-				case "sửa":
-					Update = append(Update, ct)
-				case "xóa":
+				} else if ct.Sotiet == 0 && ct.ID > 0 {
 					Delete = append(Delete, ct.ID)
+				}	else if ct.Sotiet > 0 && ct.ID > 0 {
+					Update = append(Update, ct)
+				} else {
+					fmt.Println("Không có hành động nào để xử lý")
+					return
 				}
 			}
-	
+			fmt.Println("Nhập được: ", Insert)
+			fmt.Println("Sửa được: ", Update)
+			fmt.Println("Xóa được: ", Delete)
+			// cập nhật dữ liệu
 			db.InsertChiTiet(Insert)
 			db.EditChiTiet(Update)
 			db.DeleteChiTiet(Delete)

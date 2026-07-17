@@ -4,50 +4,63 @@ const DataGrid = {
   props: {
     labels: { type: Array, required: true },
     datas: { type: Array, required: true },
+    theme: { 
+      type: Object, 
+      required: false,
+      default: () => ({
+        panel: 'grid-panel',
+        table: 'grid-table',
+        thead: 'grid-thead',
+        tr: 'grid-tr',
+        th: 'grid-th',
+        th_cell: 'grid-th-cell',
+        tbody: 'grid-tbody',
+        td: 'grid-td',
+        td_cell: 'grid-td-cell',
+        input: 'grid-input',
+        input_dirty: 'grid-input-dirty',
+        span: 'grid-span'
+      })
+    },
   },
   template: `
-  <div>
-    <table class="table table-bordered table-hover">
-      <thead>
-        <tr>
+  <div :class="theme.panel">
+    <table :class="theme.table">
+      <thead :class="theme.thead">
+        <tr :class="theme.tr">
           <template v-for="col in labels" :key="col.key">
-            <th v-if="col.type !== 'cell'" :class="col.header">
+            <th v-if="col.type !== 'cell'" :class="theme.th">
               {{ col.title }}
             </th>
             <template v-else>
-              <th v-for="cell in col.cells" :key="col.key + '-' + cell.key" :class="col.header">
+              <th v-for="cell in col.cells" :key="col.key + '-' + cell.key" :class="theme.th_cell">
                 {{ cell.title }}
               </th>
             </template>
           </template>
         </tr>
       </thead>
-      <tbody>
-        <!-- Đổi item.key thành item.lop_id hoặc lấy index để tránh warning -->
-        <tr v-for="(item, index) in localDatas" :key="item.lop_id || index">
+      <tbody :class="theme.tbody">
+        <tr v-for="(item, index) in localDatas" :key="item.lop_id || index" :class="theme.tr">
           
           <template v-for="col in labels" :key="col.key">
-            
-            <td v-if="col.type !== 'cell'" :class="col.header">
+            <td v-if="col.type !== 'cell'" :class="theme.td">
               {{ item[col.key] }}
             </td>
             
             <template v-else>
-              <td v-for="cell in col.cells" :key="col.key + '-' + cell.key" :class="col.header">
+              <td v-for="cell in col.cells" :key="col.key + '-' + cell.key" :class="theme.td_cell">
                 <input
                   v-if="item[col.key]?.[cell.key]"
                   type="number" 
                   v-model.number="item[col.key][cell.key][col.valuekey]"
                   @input="checkDirtyState(item[col.key][cell.key], col.valuekey)"
-                  class="form-control form-control-sm mx-auto"
-                  :class="{'border-danger bg-danger-subtle': item[col.key][cell.key]._isDirty}"
-                  style="width: 30px; text-align: center;"
+                  :class="item[col.key][cell.key]._isDirty ? theme.input_dirty : theme.input"
                   min="0"
                 />
-                <span v-else class="text-muted">-</span>
+                <span v-else :class="theme.span"> - </span>
               </td>
             </template>
-            
           </template>
           
         </tr>
@@ -55,6 +68,7 @@ const DataGrid = {
     </table>
   </div>
   `,
+  // ... phần setup() giữ nguyên như cũ ...
 setup(props) {
     const localDatas = Vue.ref([]);
     

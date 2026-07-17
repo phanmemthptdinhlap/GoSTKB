@@ -18,7 +18,7 @@
     ref="gridRef"
     :labels="scheduleColumns" 
     :datas="scheduleData" 
-    @sync="handleSyncToServer">
+    @sync="syncToServer">
   </datagrid>
 
   <div class="mb-3 text-end mt-3">
@@ -26,14 +26,14 @@
     <button
       class="btn btn-primary"
       :disabled="!gridRef?.hasChanges"
-      @click="handleSyncToServer"
+      @click="syncToServer"
       v-text="'Đồng bộ ' + (gridRef?.changedPayload?.length || 0) + ' thay đổi'"
     ></button>
   </div>
 </div>
 
 <!-- Cần đảm bảo đường dẫn tới tệp datagrid.js là chính xác tuyệt đối -->
-<script src="/static/datagrid.js"></script>
+<script src="/static/datagrid.js?v=2"></script>
 
 <script>
   const { createApp, ref, onMounted } = Vue;
@@ -44,8 +44,9 @@
       const gridRef = ref(null);
       const week = ref(0); // Mặc định chọn tuần 0
       const scheduleData = ref([]); // Bắt buộc khởi tạo mảng rỗng để tránh lỗi length
-
       const scheduleColumns = ref([]);
+
+      // 2. Khởi tạo các biến phản ứng
 
       const fetchTuan = async () => {
         try {
@@ -53,6 +54,7 @@
           if (response.ok) {
             const tuan = await response.json() || 0;
             week.value = parseInt(tuan);
+            //alert("Tuần mặc định: " + tuan+" chuyển "+ week.value);
           }
         } catch (error) {
           console.error("Lỗi lấy tuần mặc định:", error);
@@ -86,6 +88,7 @@
             const result = await response.json();
             // Gán dữ liệu server vào datas. Component datasheet sẽ tự động map thêm action 'none'
             scheduleData.value = result || [];
+            alert(JSON.stringify(result))
           } else {
             alert("Lỗi khi tải dữ liệu từ máy chủ");
           }
@@ -95,11 +98,39 @@
       };
 
       // 3. Logic Đồng bộ dữ liệu
-      const handleSyncToServer = async () => {
-        const payload = gridRef.value?.changedPayload || [];
-        console.log('Dữ liệu gửi lên Golang:', payload);
-        alert('Kiểm tra console trình duyệt để xem ' + payload.length + ' bản ghi!');
-        await fetchData();
+      const syncToServer = async () => {
+        const payload = (gridRef.value?.changedPayload || [])
+        .map(ct => {
+          return {
+            id: ct.chi_tiet_id,
+            phan_cong_id: ct.phan_cong_id,
+            tuan: week.value,
+            so_tiet: ct.so_tiet  
+          };
+        });
+        if (payload.length === 0) {
+          alert('Chưa có thay đổi nào để đồng bộ!');
+          return;
+        }
+        try {
+          // Gửi POST lên API đồng bộ hàng loạt
+          const response = await fetch('/api/chitiet/sync', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+
+          if (response.ok) {
+            alert('Đồng bộ thành công ' + payload.length + ' thao tác!');
+            
+            // 3. Gọi lại hàm tải dữ liệu để làm mới giao diện và reset toàn bộ action về 'none'
+            await fetchData();
+          } else {
+            alert("Đã xảy ra lỗi trong quá trình đồng bộ.");
+          }
+        } catch (error) {
+          console.error("Lỗi mạng:", error);
+        }
       };
 
       // 4. Hook chạy ngay sau khi trang tải xong
@@ -112,11 +143,11 @@
       // 5. BẮT BUỘC RETURN TẤT CẢ BIẾN ĐƯỢC GỌI TRONG HTML
       return {
         gridRef,
-        week,               // Nếu thiếu, dropdown tuần sẽ hỏng
+        week,
         scheduleColumns,
         scheduleData,       // Nếu thiếu, toàn bộ datagrid sẽ crash
         fetchData,
-        handleSyncToServer
+        syncToServer
       };
     }
   });

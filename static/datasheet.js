@@ -26,7 +26,7 @@ const DataSheet = {
         <thead style="background-color: #f5f5f5;">
           <tr style="border-bottom: 1px solid #eee;">
             <template v-for="col in labels" :key="col.key" style="padding: 10px; text-align: center;">
-              <th v-if="col.type!=='hidden'" >{{ col.title }}</th>
+              <th v-if="col.type!=='hidden'" >{{ col.title }}</th``>
             </template>
             <th v-if="isShowAll" style="padding: 10px; text-align: center; color: #d32f2f;">Trạng thái</th>
             <th style="padding: 10px; text-align: center; width: 120px;">Thao tác</th>

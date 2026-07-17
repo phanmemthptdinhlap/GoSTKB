@@ -784,7 +784,7 @@ const (
 		-- Đưa điều kiện lọc tuần trực tiếp vào phép JOIN
 		LEFT JOIN chitiet ct ON ct.phan_cong_id = pc.id AND ct.tuan = ?
 		-- Bổ sung ORDER BY để luồng dữ liệu trả về Vue.js luôn nhất quán theo ma trận
-		ORDER BY l.id;
+		ORDER BY l.ten_lop ASC
 	`
 	sqlSelectTuanHoc = `
 		SELECT 
