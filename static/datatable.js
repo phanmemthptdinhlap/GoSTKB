@@ -1,7 +1,8 @@
 const DataTable={
   props:{
     labels: { type: Object, required: true },
-    datas: { type: Object, required: true }
+    datas: { type: Object, required: true },
+    cellsmap: { type: Object, required: false }
   },
   template: `
     <div class="panel">
@@ -9,10 +10,10 @@ const DataTable={
         <thead>
           <tr>
             <template v-for="col in labels" :key="col.key" style="padding: 10px; text-align: center;">
-              <th v-if="col.type !== 'cell'" style="padding: 10px; text-align: center;">
+              <th v-if="col.type == 'text'" style="padding: 10px; text-align: center;">
                 {{ col.title }}
               </th>
-              <template v-else>
+              <template v-else-if="col.type == 'group'">
                 <th v-for="cell in col.cells" :key="col.key + '-' + cell.key" style="padding: 10px; text-align: center;">
                   {{ cell.title }}
                 </th>
@@ -26,13 +27,13 @@ const DataTable={
           style="border-bottom: 1px solid #eee;"
           @click="rowClick(row)">
             <template v-for="col in labels" :key="col.key">
-              <td v-if="col.type !== 'cell'" style="padding: 8px; text-align: center;">
+              <td v-if="col.type == 'text'" style="padding: 8px; text-align: center;">
                 {{ row[col.key] }}
               </td>
-              <template v-else>
+              <template v-else-if="col.type == 'group'">
                 <td v-for="cell in col.cells" :key="col.key + '-' + cell.key" 
                 style="padding: 8px; text-align: center; color: #d32f2f;">
-                  {{ col.key}}, {{col.valuekey}}, {{cell.key}}
+                  {{ cellsmap[row[col.key]?.[cell.key]?.[col.subkey]]||'-' }}
                 </td>
               </template>
             </template> 
