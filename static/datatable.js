@@ -1,7 +1,7 @@
 const DataTable={
   props:{
-    labels: { type: object, required: true, default: () => ({}) },
-    datas: { type: object, required: true, default: () => ({}) }
+    labels: { type: Object, required: true },
+    datas: { type: Object, required: true }
   },
   template: `
     <div class="panel">
@@ -32,7 +32,7 @@ const DataTable={
               <template v-else>
                 <td v-for="cell in col.cells" :key="col.key + '-' + cell.key" 
                 style="padding: 8px; text-align: center; color: #d32f2f;">
-                  {{ row[col.key][cell.key] }}
+                  {{ col.key}}, {{col.valuekey}}, {{cell.key}}
                 </td>
               </template>
             </template> 

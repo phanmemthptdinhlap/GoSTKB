@@ -6,31 +6,53 @@
   </datatable>
 </div>
 
-<script src="static/datatable.js"></script>
+<script src="static/datatable.js?v=2"></script>
 <script>
   const { createApp, ref, onMounted } = Vue;
   const app = createApp({
     setup() {
-      const labels = ref([
-        { key: 'id', title: 'Mã lớp học', type: 'text', readonly: true },
-        { key: 'ten_lop', title: 'Tên lớp học', type: 'text' },
-        { key: 'mon', title: 'Môn học', type: 'cell', cells: [
-          { key: 'ten_mon', title: 'Tên Môn học', type: 'text' },
-        ] } // Sẽ nạp động dữ liệu vào đây
-      ]);
+      const labels = ref([]);
       
-      const datas = ref([]);
+      const datas = ref([
+        { id: 1, ten_lop: '10A1',
+          mon:{
+            1:{giao_vien_id:1,ten_TKB:'Giao Vien 1',phan_cong_id:1},
+            2:{giao_vien_id:2,ten_TKB:'Giao Vien 2',phan_cong_id:2},
+            3:{giao_vien_id:3,ten_TKB:'Giao Vien 3',phan_cong_id:3},
+            4:{giao_vien_id:4,ten_TKB:'Giao Vien 4',phan_cong_id:4},
+            5:{giao_vien_id:5,ten_TKB:'Giao Vien 5',phan_cong_id:5},
+            6:{giao_vien_id:6,ten_TKB:'Giao Vien 6',phan_cong_id:6},
+            7:{giao_vien_id:7,ten_TKB:'Giao Vien 7',phan_cong_id:7},
+            8:{giao_vien_id:8,ten_TKB:'Giao Vien 8',phan_cong_id:8},
+            9:{giao_vien_id:9,ten_TKB:'Giao Vien 9',phan_cong_id:9}
+          }},
+        { id: 2, ten_lop: '10A2',
+          mon:{
+            1:{giao_vien_id:1,ten_TKB:'Giao Vien 1',phan_cong_id:10},
+            2:{giao_vien_id:2,ten_TKB:'Giao Vien 2',phan_cong_id:11},
+            3:{giao_vien_id:3,ten_TKB:'Giao Vien 3',phan_cong_id:12},
+            4:{giao_vien_id:4,ten_TKB:'Giao Vien 4',phan_cong_id:13},
+            5:{giao_vien_id:5,ten_TKB:'Giao Vien 5',phan_cong_id:14},
+            6:{giao_vien_id:6,ten_TKB:'Giao Vien 6',phan_cong_id:15},
+            7:{giao_vien_id:7,ten_TKB:'Giao Vien 7',phan_cong_id:16},
+            8:{giao_vien_id:8,ten_TKB:'Giao Vien 8',phan_cong_id:17},
+            9:{giao_vien_id:9,ten_TKB:'Giao Vien 9',phan_cong_id:18}
+          }},
+        { id: 3, ten_lop: '10A3',
+          mon:{
+            1:{giao_vien_id:1,ten_TKB:'Giao Vien 1',phan_cong_id:19},
+            2:{giao_vien_id:2,ten_TKB:'Giao Vien 2',phan_cong_id:20},
+            3:{giao_vien_id:3,ten_TKB:'Giao Vien 3',phan_cong_id:21},
+            4:{giao_vien_id:4,ten_TKB:'Giao Vien 4',phan_cong_id:22},
+            5:{giao_vien_id:5,ten_TKB:'Giao Vien 5',phan_cong_id:23},
+            6:{giao_vien_id:6,ten_TKB:'Giao Vien 6',phan_cong_id:24},
+            7:{giao_vien_id:7,ten_TKB:'Giao Vien 7',phan_cong_id:25},
+            8:{giao_vien_id:8,ten_TKB:'Giao Vien 8',phan_cong_id:26},
+            9:{giao_vien_id:9,ten_TKB:'Giao Vien 9',phan_cong_id:27}
+          }}
+      ]);
 
       // 1. Hàm lấy dữ liệu từ Golang Server
-      const fetchData = async () => {
-        try {
-          const response = await fetch('/api/lophoc');
-          if (response.ok) {
-            const result = await response.json();
-            // Gá
-        };
-      };
-    }
       return {
         labels,
         datas,
