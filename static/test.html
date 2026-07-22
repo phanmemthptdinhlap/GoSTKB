@@ -8,7 +8,11 @@
 <body>
     <div id="app">
         <h1>Quản lý Thời khóa biểu</h1>
-        <datatable :labels="labels" :datas="Datas"></datatable>
+        <datatable 
+          :labels="labels" 
+          :datas="Datas" 
+          :cellsmap="Maps"
+        ></datatable>
         <div class="mb-3 text-end">
             <button
                 class="btn btn-primary"
@@ -21,7 +25,7 @@
     <script src="datatable.js"></script>
 
     <script>
-        const { createApp, ref } = Vue;
+        const { createApp, ref, computed } = Vue;
 
         const app = createApp({
             setup() {
@@ -30,7 +34,9 @@
                 const labels = ref([
                   { key: 'lop_id', title: 'ID', type: 'hidden' },
                   { key: 'ten_lop', title: 'Tên Lớp', type: 'text' },
-                  { key: 'mon', title: 'Môn', type: 'group',subkey:'giao_vien_id', cells: [
+                  { key: 'mon', title: 'Môn', type: 'group',subkey:'giao_vien_id', 
+                    defaultObj: { phan_cong_id: 0, giao_vien_id: null },
+                    cells: [
                     { key: '1', title: 'Toán' },
                     { key: '2', title: 'Văn' },
                     { key: '3', title: 'Lý' },
@@ -68,10 +74,18 @@
                       '2':{phan_cong_id:13,giao_vien_id:2},
                       '3':{phan_cong_id:14,giao_vien_id:3},
                       '5':{phan_cong_id:16,giao_vien_id:5},
-                    }}, 
+                    }} 
                 ]);
 
-                const  = ref([
+                const Maps = computed(() => {
+                    return {
+                        '1':'Kiên',
+                        '2':'Viện',
+                        '3':'Lâm',
+                        '4':'Bách',
+                        '5':'L.Kiên',
+                    }
+                });
 
                 // Hàm xử lý đồng bộ [cite: 14]
                 const handleSyncToServer = async () => {
@@ -140,6 +154,7 @@
                     gridRef,
                     labels,
                     Datas,
+                    Maps,
                     handleSyncToServer
                 };
             }
