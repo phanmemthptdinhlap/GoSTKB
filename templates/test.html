@@ -1,65 +1,154 @@
 {{define "content"}}
 <div id="app">
-  <datatable
-      :labels="labels"
-      :datas="datas">
-  </datatable>
+  <h1>Tạo mới TKB</h1>
+  <card
+    v-for="(card, index) in cards"
+    :key="index"
+    :index="index"
+    :title="card.title"
+    :items="card.items"
+    :click="card.click"
+  ></card>
 </div>
 
-<script src="static/datatable.js?v=2"></script>
+<script src="static/components.js"></script>
 <script>
   const { createApp, ref, onMounted } = Vue;
   const app = createApp({
     setup() {
-      const labels = ref([]);
-      
-      const datas = ref([
-        { id: 1, ten_lop: '10A1',
-          mon:{
-            1:{giao_vien_id:1,ten_TKB:'Giao Vien 1',phan_cong_id:1},
-            2:{giao_vien_id:2,ten_TKB:'Giao Vien 2',phan_cong_id:2},
-            3:{giao_vien_id:3,ten_TKB:'Giao Vien 3',phan_cong_id:3},
-            4:{giao_vien_id:4,ten_TKB:'Giao Vien 4',phan_cong_id:4},
-            5:{giao_vien_id:5,ten_TKB:'Giao Vien 5',phan_cong_id:5},
-            6:{giao_vien_id:6,ten_TKB:'Giao Vien 6',phan_cong_id:6},
-            7:{giao_vien_id:7,ten_TKB:'Giao Vien 7',phan_cong_id:7},
-            8:{giao_vien_id:8,ten_TKB:'Giao Vien 8',phan_cong_id:8},
-            9:{giao_vien_id:9,ten_TKB:'Giao Vien 9',phan_cong_id:9}
-          }},
-        { id: 2, ten_lop: '10A2',
-          mon:{
-            1:{giao_vien_id:1,ten_TKB:'Giao Vien 1',phan_cong_id:10},
-            2:{giao_vien_id:2,ten_TKB:'Giao Vien 2',phan_cong_id:11},
-            3:{giao_vien_id:3,ten_TKB:'Giao Vien 3',phan_cong_id:12},
-            4:{giao_vien_id:4,ten_TKB:'Giao Vien 4',phan_cong_id:13},
-            5:{giao_vien_id:5,ten_TKB:'Giao Vien 5',phan_cong_id:14},
-            6:{giao_vien_id:6,ten_TKB:'Giao Vien 6',phan_cong_id:15},
-            7:{giao_vien_id:7,ten_TKB:'Giao Vien 7',phan_cong_id:16},
-            8:{giao_vien_id:8,ten_TKB:'Giao Vien 8',phan_cong_id:17},
-            9:{giao_vien_id:9,ten_TKB:'Giao Vien 9',phan_cong_id:18}
-          }},
-        { id: 3, ten_lop: '10A3',
-          mon:{
-            1:{giao_vien_id:1,ten_TKB:'Giao Vien 1',phan_cong_id:19},
-            2:{giao_vien_id:2,ten_TKB:'Giao Vien 2',phan_cong_id:20},
-            3:{giao_vien_id:3,ten_TKB:'Giao Vien 3',phan_cong_id:21},
-            4:{giao_vien_id:4,ten_TKB:'Giao Vien 4',phan_cong_id:22},
-            5:{giao_vien_id:5,ten_TKB:'Giao Vien 5',phan_cong_id:23},
-            6:{giao_vien_id:6,ten_TKB:'Giao Vien 6',phan_cong_id:24},
-            7:{giao_vien_id:7,ten_TKB:'Giao Vien 7',phan_cong_id:25},
-            8:{giao_vien_id:8,ten_TKB:'Giao Vien 8',phan_cong_id:26},
-            9:{giao_vien_id:9,ten_TKB:'Giao Vien 9',phan_cong_id:27}
-          }}
+      const labels = ref([
+        { id: 'lop_id', title: 'Tên lớp học', options:[] },
+        { id: 'mon_hoc_id', title: 'Tên môn học', options:[] },
+        { id: 'giao_vien_id', title: 'Tên giao viên', options:[] },
+        { id: 'tong_tiet', title: 'Tổng tiết' },
       ]);
+      const datas = ref(null);
+      const cards = ref([
+        {
+          title: 'Giao viên',
+          items: [
+            { label: 'Tên', value: '' },
+            { label: 'Họ tên', value: '' },
+            { label: 'Mẫu', value: '' },
+            { label: 'Ngày sinh', value: '' },
+          ],
+          click: (index) => {
+            console.log(index);
+          }
+        },
+        {
+          title: 'Môn học',
+          items: [
+            { label: 'Tên', value: '' },
+            { label: 'Họ tên', value: '' },
+          ],
+          click: (index) => {
+            console.log(index);
+          }
+        },
+        {
+          title: 'Lớp học',
+          items: [
+            { label: 'Tên', value: 'Kien Nghi' },
+            { label: 'Họ tên', value: 'ho dem dep' },
+            { label: 'Mẫu', value: 'cai nay thi khong biet' },
+            { label: 'Ngày sinh', value: 'cai nay cung chieu' },
+          ],
+          click: (index) => {
+            console.log(index);
+          }
+        },
+        {
+          title: 'Phần cống',
+          items: [
+            { label: 'Tên', value: '' },
+            { label: 'Họ tên', value: '' },
+            { label: 'Mẫu', value: '' },
+            { label: 'Ngày sinh', value: '' },
+          ],
+          click: (index) => {
+            console.log(index);
+          }
+        },
+        {
+          title: 'Chi tiết',
+          items: [
+            { label: 'Tên', value: '' },
+            { label: 'Họ tên', value: '' },
+            { label: 'Mẫu', value: '' },
+            { label: 'Ngày sinh', value: '' },
+          ],
+          click: (index) => {
+            console.log(index);
+          }
+        },
+        {
+          title: 'Tien do',
+          items: [
+            { label: 'Tên', value: '' },
+            { label: 'Họ tên', value: '' },
+            { label: 'Mẫu', value: '' },
+            { label: 'Ngày sinh', value: '' },
+          ],
+          click: (index) => {
+            console.log(index);
+          }
+        },
+        {
+          title: 'Rang bước',
+          items: [
+            { label: 'Tên', value: '' },
+            { label: 'Họ tên', value: '' },
+            { label: 'Mẫu', value: '' },
+            { label: 'Ngày sinh', value: '' },
+          ],
+          click: (index) => {
+            console.log(index);
+          }
+        },
+      ]); 
+
+      const getLabel =() =>{
+        fetch('api/giaovien')
+          .then(response => response.json())
+          .then(data => {
+            console.log(data);
+            labels.value[0].options = Object.values(data);
+          })
+          .catch(error => {
+            console.error(error);
+          });
+
+      }
+
+      const getData = () => {
+        fetch('api/phancong')
+          .then(response => response.json())
+          .then(data => {
+            console.log(data);
+            datas.value = Object.values(data);
+          })
+          .catch(error => {
+            console.error(error);
+          });
+        console.log(labels.value);
+        console.log(datas.value);
+      };
+      onMounted(() => {
+        getData();
+      });
 
       // 1. Hàm lấy dữ liệu từ Golang Server
       return {
         labels,
         datas,
+        cards,
+        getLabel,
+        getData
       };
     }
   });
-  app.component('datatable', DataTable);
+  app.component('card', DataCard);
   app.mount('#app');
 </script>
 {{end}}

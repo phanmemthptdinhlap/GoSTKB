@@ -16,7 +16,7 @@ const (
 			ten_ngan TEXT UNIQUE,
 			ho_ten TEXT,
 			mon_chinh_id INTEGER,
-			FOREIGN KEY (mon_chinh_id) REFERENCES monhoc(id)
+			FOREIGN KEY (mon_chinh_id) REFERENCES monhoc(id) 
 		);
 		CREATE TABLE IF NOT EXISTS monhoc(
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -32,13 +32,14 @@ const (
 		);
 		CREATE TABLE IF NOT EXISTS phancong(
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			giao_vien_id INTEGER,
 			lop_id INTEGER,
 			mon_hoc_id INTEGER,
+			giao_vien_id INTEGER,
 			tong_tiet INTEGER,
 			FOREIGN KEY (giao_vien_id) REFERENCES giaovien(id),
 			FOREIGN KEY (lop_id) REFERENCES lophoc(id),
-			FOREIGN KEY (mon_hoc_id) REFERENCES monhoc(id)
+			FOREIGN KEY (mon_hoc_id) REFERENCES monhoc(id),
+			UNIQUE(lop_id, mon_hoc_id)
 		);
 		CREATE TABLE IF NOT EXISTS chitiet(
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -590,34 +591,43 @@ const (
 	WHERE id = ?;
 	`
 	sqlSelectAllPhanCong = `
-	SELECT * FROM phancong;
+	SELECT 
+		l.id AS lop_id,
+		pc.mon_hoc_id AS mon_hoc_id,
+		pc.giao_vien_id AS giao_vien_id,
+		pc.tong_tiet AS tong_tiet
+	FROM phancong pc
+	LEFT JOIN lophoc l ON l.id = pc.lop_id
+	order by l.ten_lop ASC
 	`
-	sqlFindPhanCong = `
+	sqlFindPhanCongByGiaoVien = `
 	SELECT * FROM phancong
 	WHERE giao_vien_id = ?;
 	`
-	sqlInsertPhanCong = `
-	INSERT INTO phancong(giao_vien_id, lop_id, mon_hoc_id, tong_tiet)
-	VALUES (?, ?, ?, ?);
+	sqlFindPhanCongByLopId = `
+	SELECT * FROM phancong
+	WHERE lop_id = ?;
 	`
-	sqlEditPhanCong = `
-	UPDATE phancong
-	SET giao_vien_id = ?, lop_id = ?, mon_hoc_id = ?, tong_tiet = ?
-	WHERE id = ?;
+	sqlFindPhanCongByMonHocId = `
+	SELECT * FROM phancong
+	WHERE mon_hoc_id = ?;
+	`
+	sqlInsertPhanCong = `
+	INSERT INTO phancong(lop_id, mon_hoc_id,giao_vien_id, tong_tiet)
+	VALUES (?, ?, ?, ?) 
+	ON CONFLICT(lop_id, mon_hoc_id) DO UPDATE SET giao_vien_id = ?, tong_tiet = ?;
 	`
 	sqlDeletePhanCong = `
 	DELETE FROM phancong
-	WHERE id = ?;
+	WHERE lop_id = ? AND mon_hoc_id = ?;
 	`
 )
 
 type PhanCong struct {
-	ID int `json:"id"`
-	GiaoVienId int `json:"giao_vien_id"`
 	LopId int `json:"lop_id"`
 	MonHocId int `json:"mon_hoc_id"`
+	GiaoVienId int `json:"giao_vien_id"`
 	TongTiet int `json:"tong_tiet"`
-	Action string `json:"action,omitempty"`
 }
 
 func (s *SqlTKB) SelectAllPhanCong() ([]PhanCong, error) {
@@ -629,22 +639,13 @@ func (s *SqlTKB) SelectAllPhanCong() ([]PhanCong, error) {
 	defer Rows.Close()
 	for Rows.Next() {
 		var pc PhanCong
-		err := Rows.Scan(&pc.ID, &pc.GiaoVienId, &pc.LopId, &pc.MonHocId,&pc.TongTiet)
+		err := Rows.Scan(&pc.LopId, &pc.MonHocId,&pc.GiaoVienId,&pc.TongTiet)
 		if err != nil {
 			return nil, fmt.Errorf("Không thể quét dữ liệu vào biến phancong : %w", err)
 		}
 		phancong = append(phancong, pc)
 	}
 	return phancong, nil
-}
-
-func (s *SqlTKB) SelectPhanCong(id int) (*PhanCong, error) {
-	var pc PhanCong
-	err := s.db.QueryRow(sqlSelectPhanCong, id).Scan(&pc.ID, &pc.GiaoVienId, &pc.LopId, &pc.MonHocId, &pc.TongTiet)
-	if err != nil {
-		return nil, fmt.Errorf("không thể lấy dữ liệu từ bảng phancong : %w", err)
-	}
-	return &pc, nil
 }
 
 func (s *SqlTKB) InsertPhanCong(phancong []PhanCong) (int, error) {
@@ -664,7 +665,7 @@ func (s *SqlTKB) InsertPhanCong(phancong []PhanCong) (int, error) {
 	defer stmt.Close() // Đóng statement khi xong
 	for _, pc := range phancong {
 		// Dùng statement đã chuẩn bị để thực thi
-		_, err = stmt.Exec(pc.GiaoVienId, pc.LopId, pc.MonHocId, pc.TongTiet)
+		_, err = stmt.Exec(pc.LopId, pc.MonHocId, pc.GiaoVienId, pc.TongTiet)
 		if err != nil {
 			// Lỗi được gán cho biến err, defer sẽ kích hoạt Rollback()
 			return count, fmt.Errorf("không thể thêm phần cống %d (%w)", pc.GiaoVienId, err)
@@ -679,37 +680,6 @@ func (s *SqlTKB) InsertPhanCong(phancong []PhanCong) (int, error) {
 	return count, nil
 }
 
-func (s *SqlTKB) EditPhanCong(phancong []PhanCong) (int, error) {
-	tx, err := s.db.Begin()
-	if err != nil {
-		return 0, fmt.Errorf("không thể bắt đầu giao dịch: %w", err)
-	}
-	// Đảm bảo rollback nếu có lỗi xảy ra (tránh treo CSDL)
-	defer tx.Rollback()
-
-	var count int
-	// Chuẩn bị câu lệnh SQL (Prepared Statement) để tái sử dụng trong vòng lặp
-	stmt, err := tx.Prepare(sqlEditPhanCong)
-	if err != nil {
-		return 0, fmt.Errorf("không thể chuẩn bị câu lệnh: %w", err)
-	}
-	defer stmt.Close() // Đóng statement khi xong
-	for _, pc := range phancong {
-		// Dùng statement đã chuẩn bị để thực thi
-		_, err = stmt.Exec(pc.GiaoVienId, pc.LopId, pc.MonHocId,pc.TongTiet, pc.ID)
-		if err != nil {
-			// Lỗi được gán cho biến err, defer sẽ kích hoạt Rollback()
-			return count, fmt.Errorf("không thể sửa phần cống %d (%w)", pc.GiaoVienId, err)
-		}
-		count++
-	}
-	// Nếu mọi thứ ổn, commit giao dịch
-	err = tx.Commit()
-	if err != nil {
-		return count, fmt.Errorf("không thể chốt giao dịch: %w",	err)
-	}
-	return count, nil
-}
 
 func (s *SqlTKB) DeletePhanCong(ids []int) (int, error) {
 	tx, err := s.db.Begin()

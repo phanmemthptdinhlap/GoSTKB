@@ -19,7 +19,7 @@ func (p *WebPage) SetPagePhanCong() {
 			return
 		}
 
-		data := struct{ Title string }{Title: "Phân phối - Website của tôi"}
+		data := struct{ Title string }{Title: "Phân công - Website của tôi"}
 
 		err = tmpl.ExecuteTemplate(w, "base", data)
 		if err != nil {
@@ -37,8 +37,15 @@ func (p *WebPage) SetPagePhanCong() {
 			http.Error(w, "Lỗi lấy danh sách: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
-		fmt.Println("Lấy danh sách phancong: ", phancong)
-		json.NewEncoder(w).Encode(phancong)
+		pc:=make(map[int]map[int][2]int)
+		for _, v := range phancong {
+			if _, ok := pc[v.LopId]; !ok {
+				pc[v.LopId] = make(map[int][2]int)
+			}
+			pc[v.LopId][v.MonHocId] = [2]int{v.GiaoVienId, v.TongTiet}
+		}
+		fmt.Println("Lấy danh sách phancong: ", pc)
+		json.NewEncoder(w).Encode(pc)
 	})
 		
 		// API MỚI: ĐỒNG BỘ DỮ LIỆU HÀNG LOẠT
@@ -54,25 +61,13 @@ func (p *WebPage) SetPagePhanCong() {
 			fmt.Printf("Nhận được %d bản ghi cần đồng bộ\n", len(danhSachDongBo))
 			fmt.Println("Nhận được phancong: ", danhSachDongBo)
 			var Insert []PhanCong
-			var Update []PhanCong
 			var Delete []int	
 	
 			// Lấy danh sách các giao vien đã có trong DB
 	
 			// Phân loại và xử lý từng hành động
-			for _, phancong := range danhSachDongBo {
-				switch phancong.Action {
-				case "thêm":
-					Insert = append(Insert, phancong)
-				case "sửa":
-					Update = append(Update, phancong)
-				case "xóa":
-					Delete = append(Delete, phancong.ID)
-				}
-			}
-	
+				
 			db.InsertPhanCong(Insert)
-			db.EditPhanCong(Update)
 			db.DeletePhanCong(Delete)
 	
 			// Trả về thành công
