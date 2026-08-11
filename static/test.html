@@ -8,7 +8,12 @@
 <body>
     <div id="app">
         <h1>Quản lý Thời khóa biểu</h1>
-        <datatable :labels="labels" :datas="Datas"></datatable>
+        <checktable
+            v-model="gridRef"
+            :title="'Thời khóa biểu'"
+            :labels="labels"
+            :datas="Datas"
+        />
         <div class="mb-3 text-end">
             <button
                 class="btn btn-primary"
@@ -18,7 +23,7 @@
         </div>
     </div>
 
-    <script src="datatable.js"></script>
+    <script src="components/checktable.js"></script>
 
     <script>
         const { createApp, ref } = Vue;
@@ -27,30 +32,7 @@
             setup() {
                 // Cấu hình các cột (labels) [cite: 5, 10]
                 const gridRef = ref(null);
-                const labels = ref([
-                  { id: 'lop_id', title: 'Tên Lớp', type: 'text',
-                    options:{
-                      1:'10A1',
-                      2:'10A2',
-                      3:'10A3',
-                      4:'10A4',
-                    }}, 
-                  {id: 'mon', type: 'group', 
-                    children: [
-                    { id: '1', title: 'Toán' },
-                    { id: '2', title: 'Văn' },
-                    { id: '3', title: 'Lý' },
-                    { id: '4', title: 'Tin' },
-                    { id: '5', title: 'Sinh' },
-                  ], 
-                    options:{
-                    1:'Kiên',
-                    2:'Viện',
-                    3:'Lâm',
-                    4:'Bách',
-                    5:'Mít',
-                  }}
-                ]);
+                const labels = ref({});
 
                 // Dữ liệu mô phỏng (Sau này lấy từ Golang Server qua Fetch API) [cite: 6]
                 const Datas = ref([
@@ -137,7 +119,6 @@
         });
 
         // Đăng ký component toàn cục để dùng trong HTML
-        app.component('datatable', DataTable);
 
         // Chạy ứng dụng
         app.mount('#app');
