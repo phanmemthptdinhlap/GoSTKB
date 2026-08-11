@@ -7,7 +7,7 @@
     :index="index"
     :title="card.title"
     :items="card.items"
-    :click="card.click"
+    :click="cardclick"
   ></card>
 </div>
 
@@ -54,9 +54,6 @@
             { label: 'Mẫu', value: 'cai nay thi khong biet' },
             { label: 'Ngày sinh', value: 'cai nay cung chieu' },
           ],
-          click: (index) => {
-            console.log(index);
-          }
         },
         {
           title: 'Phần cống',
@@ -66,10 +63,7 @@
             { label: 'Mẫu', value: '' },
             { label: 'Ngày sinh', value: '' },
           ],
-          click: (index) => {
-            console.log(index);
-          }
-        },
+         },
         {
           title: 'Chi tiết',
           items: [
@@ -78,9 +72,6 @@
             { label: 'Mẫu', value: '' },
             { label: 'Ngày sinh', value: '' },
           ],
-          click: (index) => {
-            console.log(index);
-          }
         },
         {
           title: 'Tien do',
@@ -90,9 +81,6 @@
             { label: 'Mẫu', value: '' },
             { label: 'Ngày sinh', value: '' },
           ],
-          click: (index) => {
-            console.log(index);
-          }
         },
         {
           title: 'Rang bước',
@@ -102,11 +90,12 @@
             { label: 'Mẫu', value: '' },
             { label: 'Ngày sinh', value: '' },
           ],
-          click: (index) => {
-            console.log(index);
-          }
         },
       ]); 
+
+      const cardclick = (index) => {
+        alert("Clicked on card " + index);
+      };
 
       const getLabel =() =>{
         fetch('api/giaovien')
@@ -119,6 +108,17 @@
             console.error(error);
           });
 
+      }
+      const getLop = () => {
+        fetch('api/lop')
+          .then(response => response.json())
+          .then(data => {
+            console.log(data);
+            labels.value[1].options = Object.values(data);
+          })
+          .catch(error => {
+            console.error(error);
+          });
       }
 
       const getData = () => {
@@ -144,6 +144,7 @@
         datas,
         cards,
         getLabel,
+        cardclick,
         getData
       };
     }
