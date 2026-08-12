@@ -1,7 +1,7 @@
-vue.component('checktable', {
+const CheckTable = {
   props: {
     title: String,
-    labels: { type: Array, required: true },
+    labels: { type: Object, required: true }, // Sửa: Sửa kiểu dữ liệu thành Object ({ cols: [], rows: [] })
     datas: { type: Array, required: true },
     theme: { 
       type: Object, 
@@ -29,7 +29,7 @@ vue.component('checktable', {
     <table :class="theme.table">
       <thead :class="theme.thead">
         <tr :class="theme.tr">
-          <th :class="theme.th">...</th>
+          <th :class="theme.th">Mục</th>
           <template v-for="col in labels.cols" :key="col.key">
             <th :class="theme.th">
               {{ col.text }}
@@ -41,17 +41,28 @@ vue.component('checktable', {
         </tr>
       </thead>
       <tbody :class="theme.tbody">
-        <tr v-for="row in lables.rows" :key="row.key" :class="theme.tr">
+        <!-- Sửa lỗi 3: Sửa 'lables.rows' thành 'labels.rows' -->
+        <tr v-for="row in labels.rows" :key="row.key" :class="theme.tr">
             <td :class="theme.td">
               {{ row.text }}
             </td>
           <template v-for="cell in labels.cols" :key="cell.key">
             <td :class="theme.td_cell" style="text-align: center;">
-              <input type="checkbox" v-model="ischecked(row.key, cell.key)" @change="checkRow(row.key, cell.key)">
+              <!-- Sửa lỗi 1: Thay v-model thành :checked -->
+              <input 
+                type="checkbox" 
+                :checked="ischecked(row.key, cell.key)" 
+                @change="checkRow(row.key, cell.key, $event)"
+              >
             </td>
           </template>
-            <td :class="theme.td">
-              <input type="checkbox" v-model="isallchecked(row.key)" @change="checkAll(row.key)">
+            <td :class="theme.td" style="text-align: center;">
+              <!-- Sửa lỗi 1: Thay v-model thành :checked -->
+              <input 
+                type="checkbox" 
+                :checked="isallchecked(row.key)" 
+                @change="checkAll(row.key, $event)"
+              >
             </td>
         </tr>
       </tbody>
@@ -70,27 +81,23 @@ vue.component('checktable', {
     const localDatas = Vue.ref([]);
     
     const initData = (newData) => {
-      // SỬA LỖI: Deep Clone để tách biệt hoàn toàn bộ nhớ với props gốc
       const cloned = JSON.parse(JSON.stringify(newData));
       
       cloned.forEach(row => {
-        props.labels.forEach(col => {
-          if (col.type === 'cell' && row[col.key]) {
-            col.cells.forEach(cellDef => {
-              const cellData = row[col.key][cellDef.key];
-              if (cellData) {
-                // Lưu giá trị gốc để so sánh
-                cellData._original = cellData[col.valuekey];
-                cellData._isDirty = false;
-              }
-            });
-          }
-        });
+        // Sửa lỗi 4: Duyệt qua props.labels.cols
+        if (props.labels && props.labels.cols) {
+          props.labels.cols.forEach(col => {
+            if (row[col.key]) {
+              const cellData = row[col.key];
+              cellData._original = cellData.checked || false;
+              cellData._isDirty = false;
+            }
+          });
+        }
       });
       localDatas.value = cloned;
     };
 
-    // SỬA LỖI: Viết hoa 'Vue.watch' thay vì 'vue.watch'
     Vue.watch(
       () => props.datas,
       (newVal) => {
@@ -100,28 +107,57 @@ vue.component('checktable', {
       },
       { immediate: true, deep: true }
     );
-    
-    // 2. Hàm kiểm tra sự thay đổi của từng ô dữ liệu
-    const checkDirtyState = (cellData, valuekey) => {
-      cellData._isDirty = (cellData[valuekey] !== cellData._original);
+
+    // --- BỔ SUNG LỖI 2: Khai báo 4 hàm kiểm tra và xử lý checkbox ---
+
+    // 1. Kiểm tra ô đơn lẻ có được chọn không
+    const ischecked = (rowKey, colKey) => {
+      return localDatas.value.find(r => r[0] === rowKey && r[1] === colKey)|| false;
     };
 
-    // 3. Computed quét và trích xuất payload tự động
+    // 2. Xử lý khi tick/untick ô đơn lẻ
+    const checkRow = (rowKey, colKey, event) => {
+      const isChecked = event.target.checked;
+      const row = localDatas.value.find(r => r.key === rowKey);
+      if (row && row[colKey]) {
+        row[colKey].checked = isChecked;
+        row[colKey]._isDirty = (row[colKey].checked !== row[colKey]._original);
+      }
+    };
+
+    // 3. Kiểm tra xem toàn bộ các cột trong 1 dòng có được chọn hết không
+    const isallchecked = (rowKey) => {
+      const row = localDatas.value.find(r => r.key === rowKey);
+      if (!row || !props.labels.cols) return false;
+      return props.labels.cols.every(col => row[col.key] && row[col.key].checked);
+    };
+
+    // 4. Xử lý khi tick nút "Chọn toàn bộ" của 1 dòng
+    const checkAll = (rowKey, event) => {
+      const isChecked = event.target.checked;
+      const row = localDatas.value.find(r => r.key === rowKey);
+      if (row && props.labels.cols) {
+        props.labels.cols.forEach(col => {
+          if (row[col.key]) {
+            row[col.key].checked = isChecked;
+            row[col.key]._isDirty = (row[col.key].checked !== row[col.key]._original);
+          }
+        });
+      }
+    };
+
+    // Quét và lọc danh sách các ô đã bị thay đổi
     const changedPayload = Vue.computed(() => {
       const payload = [];
       localDatas.value.forEach(row => {
-        props.labels.forEach(col => {
-          if (col.type === 'cell' && row[col.key]) {
-            col.cells.forEach(cellDef => {
-              const cellData = row[col.key][cellDef.key];
-              
-              if (cellData && cellData._isDirty) {
-                // Đóng gói đối tượng theo đúng subkey và valuekey
-                payload.push(cellData);
-              }
-            });
-          }
-        });
+        if (props.labels && props.labels.cols) {
+          props.labels.cols.forEach(col => {
+            const cellData = row[col.key];
+            if (cellData && cellData._isDirty) {
+              payload.push(cellData);
+            }
+          });
+        }
       });
       return payload;
     });
@@ -130,11 +166,12 @@ vue.component('checktable', {
    
     return {
       localDatas,
-      checkDirtyState,
       changedPayload,
       hasChanges,
+      ischecked,
+      checkRow,
+      isallchecked,
+      checkAll
     };
   }
-});
-
-
+};
