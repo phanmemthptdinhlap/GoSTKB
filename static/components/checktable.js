@@ -17,8 +17,8 @@ const CheckTable = {
         tbody: 'check-tbody',
         td: 'check-td',
         td_cell: 'check-td-cell',
-        input: 'check-input',
-        input_dirty: 'background-color: red;',
+        input: 'background-color: white; color: black;',
+        input_dirty: 'background-color: red; color: white;',
         span: 'check-span'
       })
     },
@@ -54,13 +54,16 @@ const CheckTable = {
                 type="checkbox" 
                 :checked="isChecked(rkey, index)"
                 @change="checkRow(rkey, index)"
-                :style="[theme.input, isChanged(rkey, index) ? theme.input_dirty : '']"
+                :style="color:red"
               >
             </td>
           </template>
           </tr>
       </tbody>
     </table>
+    <div :class="theme.span" style="text-align: center;">
+    <button @click="buton_click">Click</button>
+    </div>
     <div :class="theme.span">
       <span v-if="hasChanges">
         Đã có {{ changedPayload.length }} thay đổi
@@ -72,7 +75,7 @@ const CheckTable = {
   </div>
   `,
   setup(props) {
-    const {ref,watch,computed, onMounted, toRaw} = Vue;
+    const {computed, toRaw} = Vue;
     const localDatas = Vue.ref([]);
     
     const initData = (newData) => {
@@ -88,27 +91,57 @@ const CheckTable = {
       },
       { immediate: true, deep: true }
     );
+    const buton_click=()=>{
+      alert(JSON.stringify(localDatas.value,null,2))
+    }
 
     // --- BỔ SUNG LỖI 2: Khai báo 4 hàm kiểm tra và xử lý checkbox ---
-    const isChanged = (rowKey, colKey) => {
-      const current = !!(localDatas.value?.[rowKey]?.[colKey]);
-      const original = !!(props.datas?.[rowKey]?.[colKey]);
-      return current !== original;
-    };
+
+    const changedMap = computed(() => {
+      const map = {};
+      if (!localDatas.value||!props.datas) return map;
+      Object.keys(localDatas.value).forEach(rkey => {
+        const row = localDatas.value[rkey];
+        const prow = props.datas[rkey];
+        if (row && prow) {
+          row.forEach((cell, cindex) => {
+            if (cell !== prow[cindex]) {
+              map[`${rkey}_${cindex}`] = true;
+            }
+          });
+        }
+      });
+      return map;
+    });
+
     const isChecked = (rowKey, colKey) => {
       return !!localDatas.value[rowKey]?.[colKey];
     };
     const checkRow = (rowKey, colKey) => {
-      if (localDatas.value?.[rowKey]?.[colKey]) {
+      if (localDatas.value?.[rowKey]?.[colKey]!==undefined) {
         localDatas.value[rowKey][colKey] = !isChecked(rowKey, colKey);
+      } else {
+        console.log("Chưa có dữ liệu");
       }
+      console.log(localDatas.value);
     };
+    const hasChanges = computed(() => {
+      return changedPayload.value.length > 0;
+    });
+    // Sửa lỗi 3: Sửa 'lables.rows' thành 'labels.rows'
+    const changedPayload = computed(() => {
+          return localDatas.value;
+    });
  
     return {
       localDatas,
       isChecked,
-      isChanged,
+      
       checkRow,
+      buton_click,
+      changedMap,
+      hasChanges,
+      changedPayload,
     };
   }
 };
