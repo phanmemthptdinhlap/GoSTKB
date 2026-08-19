@@ -1,101 +1,60 @@
 {{define "content"}}
 <div id="app">
   <h1>Tạo mới TKB</h1>
-  <card
-    v-for="(card, index) in cards"
-    :key="index"
-    :index="index"
-    :title="card.title"
-    :items="card.items"
-    :click="cardclick"
-  ></card>
+  <checktable
+    v-model="gridRef"
+    :title="'Thời khóa biểu'"
+    :labels="labels"
+    :datas="datas"
+  />
+  <div class="mb-3 text-end">
+    <button
+      class="btn btn-primary"
+      :disabled="!gridRef?.hasChanges"
+      @click="handleSyncToServer"
+    > Đồng bộ [[ gridRef?.changedPayload?.length || 0 ]] thay đổi</button>
+  </div>
 </div>
 
-<script src="static/components.js"></script>
+<script src="static/components/checktable.js?v=2"></script>
 <script>
   const { createApp, ref, onMounted } = Vue;
   const app = createApp({
     setup() {
-      const labels = ref([
-        { id: 'lop_id', title: 'Tên lớp học', options:[] },
-        { id: 'mon_hoc_id', title: 'Tên môn học', options:[] },
-        { id: 'giao_vien_id', title: 'Tên giao viên', options:[] },
-        { id: 'tong_tiet', title: 'Tổng tiết' },
-      ]);
-      const datas = ref(null);
-      const cards = ref([
-        {
-          title: 'Giao viên',
-          items: [
-            { label: 'Tên', value: '' },
-            { label: 'Họ tên', value: '' },
-            { label: 'Mẫu', value: '' },
-            { label: 'Ngày sinh', value: '' },
-          ],
-          click: (index) => {
-            console.log(index);
-          }
-        },
-        {
-          title: 'Môn học',
-          items: [
-            { label: 'Tên', value: '' },
-            { label: 'Họ tên', value: '' },
-          ],
-          click: (index) => {
-            console.log(index);
-          }
-        },
-        {
-          title: 'Lớp học',
-          items: [
-            { label: 'Tên', value: 'Kien Nghi' },
-            { label: 'Họ tên', value: 'ho dem dep' },
-            { label: 'Mẫu', value: 'cai nay thi khong biet' },
-            { label: 'Ngày sinh', value: 'cai nay cung chieu' },
-          ],
-        },
-        {
-          title: 'Phần cống',
-          items: [
-            { label: 'Tên', value: '' },
-            { label: 'Họ tên', value: '' },
-            { label: 'Mẫu', value: '' },
-            { label: 'Ngày sinh', value: '' },
-          ],
-         },
-        {
-          title: 'Chi tiết',
-          items: [
-            { label: 'Tên', value: '' },
-            { label: 'Họ tên', value: '' },
-            { label: 'Mẫu', value: '' },
-            { label: 'Ngày sinh', value: '' },
-          ],
-        },
-        {
-          title: 'Tien do',
-          items: [
-            { label: 'Tên', value: '' },
-            { label: 'Họ tên', value: '' },
-            { label: 'Mẫu', value: '' },
-            { label: 'Ngày sinh', value: '' },
-          ],
-        },
-        {
-          title: 'Rang bước',
-          items: [
-            { label: 'Tên', value: '' },
-            { label: 'Họ tên', value: '' },
-            { label: 'Mẫu', value: '' },
-            { label: 'Ngày sinh', value: '' },
-          ],
-        },
-      ]); 
+      const labels = ref({
+        rows: {
+          1:"10A1",
+          2:"10A2",
+          3:"10C1",
+          4:"10C2",
+          5:"10C3",
+          6:"10C4",
+          7:"11A1",
+          8:"11A2",
+          },
+        cols: {
+          1:"Toán",
+          2:"Văn",
+          3:"Lý",
+          4:"Hóa",
+          5:"Sinh",
+          6:"Tin",
+          7:"Sử",
+          8:"Địa",
+        }
+      });
+      const datas = ref({
+        1:[true,false,false,false,false,false,false,false],
+        2:[false,true,false,false,false,false,false,false],
+        3:[false,false,true,false,false,false,false,false],
+        4:[false,false,false,true,false,false,false,false],
+        5:[false,false,false,false,true,false,false,false],
+        6:[false,false,false,false,false,true,false,false],
+        7:[false,false,false,false,false,false,true,false],
+        8:[false,false,false,false,false,false,false,true],
+      });
+      const chref = ref(null);
 
-      const cardclick = (index) => {
-        alert("Clicked on card " + index);
-      };
 
       const getLabel =() =>{
         fetch('api/giaovien')
@@ -142,14 +101,13 @@
       return {
         labels,
         datas,
-        cards,
+        chref,
         getLabel,
-        cardclick,
         getData
       };
     }
   });
-  app.component('card', DataCard);
+  app.component('checktable', CheckTable);
   app.mount('#app');
 </script>
 {{end}}
