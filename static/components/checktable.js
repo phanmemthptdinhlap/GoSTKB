@@ -32,12 +32,16 @@ const CheckTable = {
           <th :class="theme.th">Mục</th>
           <template v-for="(ctext,ckey) in labels.cols" :key="ckey">
             <th :class="theme.th">
-              {{ typeof ctext === 'object' ? ctext.text : ctext }}
+             <input 
+                type="checkbox" 
+                :checked="isCheckedAll(ckey)"
+                @change="checkAll(ckey)"
+                @change=""
+                :class="theme.input"
+              />
+            {{ typeof ctext === 'object' ? ctext.text : ctext }}
             </th>
           </template>
-          <th :class="theme.th">
-            Chọn toàn bộ
-          </th>
         </tr>
       </thead>
       <tbody :class="theme.tbody">
@@ -55,21 +59,13 @@ const CheckTable = {
                 @change="checkRow(rkey,index)"
                 :class=" changedMap[rkey+'_'+index] ? theme.input_dirty : theme.input"
               />
-
             </td>
           </template>
+          </td>
         </tr>
       </tbody>
     </table>
-    <div :class="theme.span">
-      <span v-if="hasChanges">
-        Đã có {{ changedMapCount }} thay đổi
-      </span>
-      <span v-else>
-        Không có thay đổi
-      </span>
-    </div>
-    <button @click="buton_click">Click</button>
+
   </div>
   `,
   setup(props) {
@@ -112,6 +108,18 @@ const CheckTable = {
       return map;
     });
 
+    const isCheckedAll = (rowKey) => {
+      return !!localDatas.value[rowKey]?.every(cell => cell);
+    };
+
+    const checkAll = () => {
+      localDatas.value.forEach(row => {
+        row.forEach((cell, cindex) => {
+          localDatas.value[rowKey][colKey] = !isChecked(rowKey, colKey);
+        });
+      });
+    };
+
     const isChecked = (rowKey, colKey) => {
       return !!localDatas.value[rowKey]?.[colKey];
     };
@@ -136,7 +144,8 @@ const CheckTable = {
       localDatas,
       isChecked, 
       checkRow,
-      buton_click,
+      checkAll,
+      isCheckedAll,
       changedMap,
       hasChanges,
       changedMapCount,
