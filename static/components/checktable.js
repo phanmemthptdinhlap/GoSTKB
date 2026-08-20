@@ -30,13 +30,12 @@ const CheckTable = {
       <thead :class="theme.thead">
         <tr :class="theme.tr">
           <th :class="theme.th">Mục</th>
-          <template v-for="(ctext,ckey) in labels.cols" :key="ckey">
+          <template v-for="(ctext,ckey,cindex) in labels.cols" :key="ckey">
             <th :class="theme.th">
              <input 
                 type="checkbox" 
-                :checked="isCheckedAll(ckey)"
-                @change="checkAll(ckey)"
-                @change=""
+                :checked="colCheckAll[cindex]"
+                @change="checkAll(cindex)"
                 :class="theme.input"
               />
             {{ typeof ctext === 'object' ? ctext.text : ctext }}
@@ -108,15 +107,31 @@ const CheckTable = {
       return map;
     });
 
-    const isCheckedAll = (rowKey) => {
-      return !!localDatas.value[rowKey]?.every(cell => cell);
-    };
-
-    const checkAll = () => {
-      localDatas.value.forEach(row => {
-        row.forEach((cell, cindex) => {
-          localDatas.value[rowKey][colKey] = !isChecked(rowKey, colKey);
+    const colCheckAll = computed(() => {
+      const col={};
+      if (!localDatas.value|| Object.keys(localDatas.value).length===0) return col;
+      Object.keys(props.labels.cols).forEach((_, index) => {
+        col[index] = Object.values(localDatas.value).every(row => {
+          return !!row[index];
         });
+      });
+      return col;
+    });
+
+    const checkAll = (colindex) => {
+      if (!localDatas.value) {
+        console.log("Chưa có dữ liệu checkAll");
+        return;
+      }
+      const newState = !colCheckAll.value[colindex];
+      console.log(newState+" of State:"+colindex);
+      Object.keys(localDatas.value).forEach(rowKey => {
+        if (localDatas.value[rowKey]!==undefined) {
+          localDatas.value[rowKey][colindex] = newState;
+        }
+        else {
+          console.log("Chưa có dữ liệu "+rowKey);
+        }
       });
     };
 
@@ -145,7 +160,7 @@ const CheckTable = {
       isChecked, 
       checkRow,
       checkAll,
-      isCheckedAll,
+      colCheckAll,
       changedMap,
       hasChanges,
       changedMapCount,
