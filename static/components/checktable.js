@@ -17,8 +17,8 @@ const CheckTable = {
         tbody: 'check-tbody',
         td: 'check-td',
         td_cell: 'check-td-cell',
-        input: 'background-color: white; color: black;',
-        input_dirty: 'background-color: red; color: white;',
+        input: 'check-input',
+        input_dirty: 'check-input-dirty',
         span: 'check-span'
       })
     },
@@ -49,29 +49,27 @@ const CheckTable = {
           <template v-for="(cell, ckey, index) in labels.cols" :key="ckey">
             <td :class="theme.td_cell" style="text-align: center;">
               <!-- Sửa lỗi 1: Thay v-model thành :checked -->
-              <label>{{rkey}} - {{index}}</label>
               <input 
                 type="checkbox" 
-                :checked="isChecked(rkey, index)"
-                @change="checkRow(rkey, index)"
-                :style="color:red"
-              >
+                :checked="isChecked(rkey,index)" 
+                @change="checkRow(rkey,index)"
+                :class=" changedMap[rkey+'_'+index] ? theme.input_dirty : theme.input"
+              />
+
             </td>
           </template>
-          </tr>
+        </tr>
       </tbody>
     </table>
-    <div :class="theme.span" style="text-align: center;">
-    <button @click="buton_click">Click</button>
-    </div>
     <div :class="theme.span">
       <span v-if="hasChanges">
-        Đã có {{ changedPayload.length }} thay đổi
+        Đã có {{ changedMapCount }} thay đổi
       </span>
       <span v-else>
         Không có thay đổi
       </span>
     </div>
+    <button @click="buton_click">Click</button>
   </div>
   `,
   setup(props) {
@@ -92,7 +90,7 @@ const CheckTable = {
       { immediate: true, deep: true }
     );
     const buton_click=()=>{
-      alert(JSON.stringify(localDatas.value,null,2))
+      alert(JSON.stringify(changedMap.value,null,2))
     }
 
     // --- BỔ SUNG LỖI 2: Khai báo 4 hàm kiểm tra và xử lý checkbox ---
@@ -126,22 +124,22 @@ const CheckTable = {
       console.log(localDatas.value);
     };
     const hasChanges = computed(() => {
-      return changedPayload.value.length > 0;
+      return changedMapCount.value > 0;
+    });
+    const changedMapCount = computed(() => {
+      if (!changedMap.value) return 0;
+      return Object.keys(changedMap.value).length;
     });
     // Sửa lỗi 3: Sửa 'lables.rows' thành 'labels.rows'
-    const changedPayload = computed(() => {
-          return localDatas.value;
-    });
- 
+
     return {
       localDatas,
-      isChecked,
-      
+      isChecked, 
       checkRow,
       buton_click,
       changedMap,
       hasChanges,
-      changedPayload,
+      changedMapCount,
     };
   }
 };

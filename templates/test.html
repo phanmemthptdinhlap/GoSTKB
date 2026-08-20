@@ -1,25 +1,98 @@
 {{define "content"}}
 <div id="app">
   <h1>Tạo mới TKB</h1>
+  <div class="mb-3">
+    noi dung bo trong
+  </div>
+  <div class="mb-3">
+    <button class="btn btn-primary" @click="getLabel">
+      Lấy danh sách từ server
+    </button>
+    <button class="btn btn-primary" @click="getData">
+      Lấy dữ liệu từ server
+    </button>
+  </div>
   <checktable
-    v-model="gridRef"
+    ref="chRef"
     :title="'Thời khóa biểu'"
     :labels="labels"
     :datas="datas"
-  />
+  > </checktable>
   <div class="mb-3 text-end">
     <button
       class="btn btn-primary"
-      :disabled="!gridRef?.hasChanges"
+      :disabled="!chRef?.hasChanges"
       @click="handleSyncToServer"
-    > Đồng bộ [[ gridRef?.changedPayload?.length || 0 ]] thay đổi</button>
+      > Đồng bộ [[ chRef?.changedMapCount ]] dòng</button>
   </div>
 </div>
+<style>
+  .check-panel {
+    border: 1px solid #ccc;
+    padding: 10px;
+    /* BẮT BUỘC: Tạo vùng cuộn để sticky hoạt động */
+    /*max-height: 80vh;*/
+    /*overflow-y: auto;*/
+  }
+  
+  .check-table {
+    border-collapse: collapse;
+    width: 100%;
+  }
 
-<script src="static/components/checktable.js?v=2"></script>
+  .check-thead {
+    background-color: #eee;
+  }
+
+  .check-thead .check-th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    /* ĐÃ SỬA: Bỏ dấu phẩy, dùng khoảng trắng */
+    box-shadow: 0 1px 0 #d1d5db; 
+    /* ĐẢM BẢO: Không bị xuyên thấu khi cuộn */
+    background-color: #eee; 
+  }
+
+  .check-title {
+    font-size: 1.2rem;
+    font-weight: bold;
+  }
+
+  .check-tr {
+    border-bottom: 1px solid #ccc;
+    background-color: #fff;
+  }
+
+  .check-th,
+  .check-th-cell {
+    padding: 10px;
+    text-align: center;
+  }
+
+  .check-tbody {
+    border-bottom: 1px solid #ccc;
+  }
+
+  .check-td,
+  .check-td-cell {
+    padding: 10px;
+    text-align: center;
+  }
+
+  .check-input {
+    outline: none;
+  }
+
+  .check-input-dirty {
+    outline: 2px solid red;
+    background-color: lightcoral;
+  }
+</style><script src="static/components/checktable.js?v=2"></script>
 <script>
   const { createApp, ref, onMounted } = Vue;
   const app = createApp({
+    delimiters: ['[[', ']]'],
     setup() {
       const labels = ref({
         rows: {
@@ -53,7 +126,7 @@
         7:[false,false,false,false,false,false,true,false],
         8:[false,false,false,false,false,false,false,true],
       });
-      const chref = ref(null);
+      const chRef = ref(null);
 
 
       const getLabel =() =>{
@@ -67,7 +140,7 @@
             console.error(error);
           });
 
-      }
+      };
       const getLop = () => {
         fetch('api/lop')
           .then(response => response.json())
@@ -78,7 +151,7 @@
           .catch(error => {
             console.error(error);
           });
-      }
+      };
 
       const getData = () => {
         fetch('api/phancong')
@@ -97,13 +170,33 @@
         //getData();
       });
 
+      // 2. Hàm đồng bộ dữ liệu
+      const handleSyncToServer = () => {
+        console.log(chRef.value.changedMap);
+        fetch('api/phancong', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(chRef.value.changedMap),
+        })
+          .then(response => response.json())
+          .then(data => {
+            console.log(data);
+          })
+          .catch(error => {
+            console.error(error);
+          });
+      };
+
       // 1. Hàm lấy dữ liệu từ Golang Server
       return {
         labels,
         datas,
-        chref,
+        chRef,
         getLabel,
-        getData
+        getData,
+        handleSyncToServer,
       };
     }
   });
