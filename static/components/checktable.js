@@ -30,7 +30,7 @@ const CheckTable = {
       <thead :class="theme.thead">
         <tr :class="theme.tr">
           <th :class="theme.th">Mục</th>
-          <template v-for="(ctext,ckey,cindex) in labels.cols" :key="ckey">
+          <template v-for="(ctext,cindex) in labels.cols" :key="cindex">
             <th :class="theme.th">
              <input 
                 type="checkbox" 
@@ -45,26 +45,24 @@ const CheckTable = {
       </thead>
       <tbody :class="theme.tbody">
         <!-- Sửa lỗi 3: Sửa 'lables.rows' thành 'labels.rows' -->
-        <tr v-for="(rtext, rkey) in labels.rows" :key="rkey" :class="theme.tr">
+        <tr v-for="row in labels.rows" :key="row" :class="theme.tr">
             <td :class="theme.td">
-              {{ typeof rtext === 'object' ? rtext.text : rtext }}
+              {{ typeof row === 'object' ? row.text : row }}
             </td>
-          <template v-for="(cell, ckey, index) in labels.cols" :key="ckey">
+          <template v-for="(cell, index) in labels.cols" :key="index">
             <td :class="theme.td_cell" style="text-align: center;">
               <!-- Sửa lỗi 1: Thay v-model thành :checked -->
               <input 
                 type="checkbox" 
-                :checked="isChecked(rkey,index)" 
-                @change="checkRow(rkey,index)"
-                :class=" changedMap[rkey+'_'+index] ? theme.input_dirty : theme.input"
+                :checked="isChecked(row,index)"
+                @change="checkRow(row,index)"
+                :class=" (changedMap[row+'_'+index]!==undefined) ? theme.input_dirty : theme.input"
               />
             </td>
           </template>
-          </td>
         </tr>
       </tbody>
     </table>
-
   </div>
   `,
   setup(props) {
@@ -84,22 +82,22 @@ const CheckTable = {
       },
       { immediate: true, deep: true }
     );
-    const buton_click=()=>{
-      alert(JSON.stringify(changedMap.value,null,2))
-    }
+
 
     // --- BỔ SUNG LỖI 2: Khai báo 4 hàm kiểm tra và xử lý checkbox ---
 
     const changedMap = computed(() => {
       const map = {};
       if (!localDatas.value||!props.datas) return map;
-      Object.keys(localDatas.value).forEach(rkey => {
-        const row = localDatas.value[rkey];
-        const prow = props.datas[rkey];
+      Object.keys(localDatas.value).forEach(rIndex => {
+        const row = localDatas.value[rIndex];
+        const prow = props.datas[rIndex];
         if (row && prow) {
-          row.forEach((cell, cindex) => {
-            if (cell !== prow[cindex]) {
-              map[`${rkey}_${cindex}`] = true;
+          row.forEach((cell, cIndex) => {
+            if (cell !== prow[cIndex]) {
+              map[`${rIndex}_${cIndex}`] = row[cIndex];
+            }else{
+              delete map[`${rIndex}_${cIndex}`];
             }
           });
         }
@@ -118,29 +116,30 @@ const CheckTable = {
       return col;
     });
 
-    const checkAll = (colindex) => {
+    const checkAll = (cIndex) => {
       if (!localDatas.value) {
         console.log("Chưa có dữ liệu checkAll");
         return;
       }
-      const newState = !colCheckAll.value[colindex];
-      console.log(newState+" of State:"+colindex);
-      Object.keys(localDatas.value).forEach(rowKey => {
-        if (localDatas.value[rowKey]!==undefined) {
-          localDatas.value[rowKey][colindex] = newState;
+      const newState = !colCheckAll.value[cIndex];
+      console.log(newState+" of State:"+cIndex);
+      Object.keys(localDatas.value).forEach(rIndex => {
+        if (localDatas.value[rIndex]!==undefined) {
+          localDatas.value[rIndex][cIndex] = newState;
         }
         else {
-          console.log("Chưa có dữ liệu "+rowKey);
+          console.log("Chưa có dữ liệu "+rIndex);
         }
       });
     };
 
-    const isChecked = (rowKey, colKey) => {
-      return !!localDatas.value[rowKey]?.[colKey];
+    const isChecked = (rKey, cIndex) => {
+      return !!localDatas.value[rKey]?.[cIndex];
     };
-    const checkRow = (rowKey, colKey) => {
-      if (localDatas.value?.[rowKey]?.[colKey]!==undefined) {
-        localDatas.value[rowKey][colKey] = !isChecked(rowKey, colKey);
+    const checkRow = (rKey, cIndex) => {
+      console.log(rKey,cIndex);
+      if (localDatas.value?.[rKey]?.[cIndex]!==undefined) {
+        localDatas.value[rKey][cIndex] = !isChecked(rKey, cIndex);
       } else {
         console.log("Chưa có dữ liệu");
       }

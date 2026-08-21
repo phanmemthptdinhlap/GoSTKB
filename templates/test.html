@@ -95,36 +95,18 @@
     delimiters: ['[[', ']]'],
     setup() {
       const labels = ref({
-        rows: {
-          1:"10A1",
-          2:"10A2",
-          3:"10C1",
-          4:"10C2",
-          5:"10C3",
-          6:"10C4",
-          7:"11A1",
-          8:"11A2",
-          },
-        cols: {
-          1:"Toán",
-          2:"Văn",
-          3:"Lý",
-          4:"Hóa",
-          5:"Sinh",
-          6:"Tin",
-          7:"Sử",
-          8:"Địa",
-        }
+        rows: ["10A1", "10A2", "10C1", "10C2", "10C3", "10C4", "11A1", "11A2"],
+        cols: ["Toán", "Văn", "Lý", "Hóa", "Sinh", "Tin", "Sử", "Địa"],
       });
       const datas = ref({
-        1:[true,false,false,false,false,false,false,false],
-        2:[false,true,false,false,false,false,false,false],
-        3:[false,false,true,false,false,false,false,false],
-        4:[false,false,false,true,false,false,false,false],
-        5:[false,false,false,false,true,false,false,false],
-        6:[false,false,false,false,false,true,false,false],
-        7:[false,false,false,false,false,false,true,false],
-        8:[false,false,false,false,false,false,false,true],
+        "10A1":[true,false,false,false,false,false,false,false],
+        "10A2":[false,true,false,false,false,false,false,false],
+        "10C1":[false,false,true,false,false,false,false,false],
+        "10C2":[false,false,false,true,false,false,false,false],
+        "10C3":[false,false,false,false,true,false,false,false],
+        "10C4":[false,false,false,false,false,true,false,false],
+        "11A1":[false,false,false,false,false,false,true,false],
+        "11A2":[false,false,false,false,false,false,false,true],
       });
       const chRef = ref(null);
 
@@ -172,20 +154,31 @@
 
       // 2. Hàm đồng bộ dữ liệu
       const handleSyncToServer = () => {
+        if (!chRef.value.hasChanges) return;
+        const data = [];
+        Object.keys(chRef.value.changedMap).forEach(key => {
+          const [rkey, cIndex] = String(key).split('_');
+          data.push({
+            lop: rkey,
+            mon_hoc: labels.value.cols[cIndex],
+            phan_cong: chRef.value.changedMap[key],
+          });
+        });
         console.log(chRef.value.changedMap);
-        fetch('api/phancong', {
+        console.log(data);
+        fetch('api/phancong/sync', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(chRef.value.changedMap),
+          body: JSON.stringify(data),
         })
           .then(response => response.json())
-          .then(data => {
-            console.log(data);
+          .then(res => {
+            console.log(res);
           })
           .catch(error => {
-            console.error(error);
+            console.log(error);
           });
       };
 
