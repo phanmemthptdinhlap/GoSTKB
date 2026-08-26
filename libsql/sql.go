@@ -600,6 +600,13 @@ const (
 	LEFT JOIN lophoc l ON l.id = pc.lop_id
 	order by l.ten_lop ASC
 	`
+	sqlSelectAllPhanCongGiaoVien = `
+	SELECT 
+		id,
+		mon_hoc_id
+	FROM phancong pc
+	order by id ASC
+	`
 	sqlFindPhanCongByGiaoVien = `
 	SELECT * FROM phancong
 	WHERE giao_vien_id = ?;

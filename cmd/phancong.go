@@ -11,15 +11,15 @@ import (
 // Bổ sung trường action để mapping với giao diện Vue
 
 func (p *WebPage) SetPagePhanCong() {
-	p.mux.HandleFunc("/phancong", func(w http.ResponseWriter, r *http.Request) {
-		tmpl, err := template.ParseFiles("templates/phancong.html", "templates/base.html")
+	p.mux.HandleFunc("/pc_giaovien", func(w http.ResponseWriter, r *http.Request) {
+		tmpl, err := template.ParseFiles("templates/phancong_giaovien.html", "templates/base.html")
 		if err != nil {
 			fmt.Println("Lỗi parse template: ", err)
 			http.Error(w, "Lỗi parse template: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		data := struct{ Title string }{Title: "Phân công - Website của tôi"}
+		data := struct{ Title string }{Title: "Phân công giáo viên - Website của tôi"}
 
 		err = tmpl.ExecuteTemplate(w, "base", data)
 		if err != nil {
@@ -27,9 +27,25 @@ func (p *WebPage) SetPagePhanCong() {
 			http.Error(w, "Lỗi render: "+err.Error(), http.StatusInternalServerError)
 		}
 	})
+	p.mux.HandleFunc("/pc_monhoc", func(w http.ResponseWriter, r *http.Request) {
+		tmpl, err := template.ParseFiles("templates/phancong_monhoc.html", "templates/base.html")
+		if err != nil {
+			fmt.Println("Lỗi parse template: ", err)
+			http.Error(w, "Lỗi parse template: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		data := struct{ Title string }{Title: "Phân công môn học - Website của tôi"}
+		err = tmpl.ExecuteTemplate(w, "base", data)
+		if err != nil {
+			fmt.Println("Lỗi render: ", err)
+			http.Error(w, "Lỗi render: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+	})
 
 	// API Lấy danh sách
-	p.mux.HandleFunc("GET /api/phancong", func(w http.ResponseWriter, r *http.Request) {
+	p.mux.HandleFunc("GET /api/phancong/giaovien", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		phancong,err := db.SelectAllPhanCong()
 		if err != nil {
