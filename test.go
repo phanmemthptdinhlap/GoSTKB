@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"encoding/json"
 	. "GoSTKB/libsql"
 )
 
@@ -18,26 +17,37 @@ func main() {
 			fmt.Println(err)
 		}
 	}()
-	tuan,err:=db.SelectTuanHoc()
-	if err!=nil{
+	lophoc, err := db.SelectAllLopHoc()
+	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	fmt.Println("Tuần mặc định: ", tuan)
-	fmt.Println("Chi tiết của giáo viên")
-	chitiettheolop,err := db.SelectAllChiTietTheoLop(tuan)
-	fmt.Println("Sau khi lấy thông tin")
-	if err!=nil{
+	lops:=make([]string,0)
+	for _,l := range lophoc{
+		lops = append(lops,l.TenLop)
+	}
+	monhoc, err:=db.SelectAllMonHoc()
+	if err !=nil {
 		fmt.Println(err)
 		return
 	}
-	fmt.Println("Danh sách các Chi tiết theo lớp")
-	for _,ct:=range chitiettheolop{
-		vi,err:=json.MarshalIndent(ct,"","  ")
-		if err!=nil{
-			fmt.Println(err)
-			return
+	mons:=make([]string,0)
+	for _,m := range monhoc{
+		mons = append(mons,m.TenMon)
+	}
+	phancong, err := db.SelectAllPhanCong()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	phancongMap := make(map[int]map[int][2]int)
+	for _, v := range phancong {
+		if _, ok := phancongMap[v.LopId]; !ok {
+			phancongMap[v.LopId] = make(map[int][2]int)
 		}
-		fmt.Println(string(vi))
+		phancongMap[v.LopId][v.MonHocId] = [2]int{v.GiaoVienId, v.TongTiet}
 	}
+
+	fmt.Println(lops)
+	fmt.Println(mons)
 }

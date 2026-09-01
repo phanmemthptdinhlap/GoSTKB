@@ -53,6 +53,27 @@ func (p *WebPage) SetPagePhanCong() {
 			http.Error(w, "Lỗi lấy danh sách: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
+		lophoc, err := db.SelectAllLopHoc()
+		if err != nil {
+			fmt.Println("Lỗi lấy danh sách: ", err)
+			http.Error(w, "Lỗi lấy danh sách: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		lops:=make([]string,0)
+		for _,l := range lophoc{
+			lops=append(lops,l.TenLop)
+		}
+		monhoc, err := db.SelectAllMonHoc()
+		if err != nil {
+			fmt.Println("Lỗi lấy danh sách: ", err)
+			http.Error(w, "Lỗi lấy danh sách: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		mons:=make([]string,0)
+		for _,m := range monhoc{
+			mons=append(mons,m.TenMon)
+		}
+
 		pc:=make(map[int]map[int][2]int)
 		for _, v := range phancong {
 			if _, ok := pc[v.LopId]; !ok {
