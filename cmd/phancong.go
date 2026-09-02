@@ -10,6 +10,39 @@ import (
 
 // Bổ sung trường action để mapping với giao diện Vue
 
+func phancongMonHoc() interface{} {
+	lophoc, err := db.SelectAllLopHoc()
+	if err != nil {
+		fmt.Println("Lỗi lấy danh sách: ", err)
+		return nil
+	}
+	monhoc, err := db.SelectAllMonHoc()
+	if err != nil {
+		fmt.Println("Lỗi lấy danh sách: ", err)
+		return nil
+	}
+	mons:=make([]string,0)
+	for _,m := range monhoc{
+		mons=append(mons,m.TenMon)
+	}
+	phancong, err := db.SelectAllPhanCongMonHoc()
+	if err != nil {
+		fmt.Println("Lỗi lấy danh sách: ", err)
+		return nil
+	}
+	phancongMap := make(map[string][]string)
+	for _, l := range lophoc {
+		phancongMap[l.TenLop] = make([]string, 0)
+	}
+	for _, pc := range phancong {
+		phancongMap[pc.Lop] = append(phancongMap[pc.Lop], pc.Mon)
+	}
+	return map[string] interface{}{
+		"mon": mons,
+		"phancong": phancongMap,
+	}
+}
+
 func (p *WebPage) SetPagePhanCong() {
 	p.mux.HandleFunc("/pc_giaovien", func(w http.ResponseWriter, r *http.Request) {
 		tmpl, err := template.ParseFiles("templates/phancong_giaovien.html", "templates/base.html")
@@ -45,44 +78,14 @@ func (p *WebPage) SetPagePhanCong() {
 	})
 
 	// API Lấy danh sách
+	p.mux.HandleFunc("GET /api/phancong/mon", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		data:=phancongMonHoc()
+		json.NewEncoder(w).Encode(data)
+	})
 	p.mux.HandleFunc("GET /api/phancong/giaovien", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		phancong,err := db.SelectAllPhanCong()
-		if err != nil {
-			fmt.Println("Lỗi lấy danh sách: ", err)
-			http.Error(w, "Lỗi lấy danh sách: "+err.Error(), http.StatusInternalServerError)
-			return
-		}
-		lophoc, err := db.SelectAllLopHoc()
-		if err != nil {
-			fmt.Println("Lỗi lấy danh sách: ", err)
-			http.Error(w, "Lỗi lấy danh sách: "+err.Error(), http.StatusInternalServerError)
-			return
-		}
-		lops:=make([]string,0)
-		for _,l := range lophoc{
-			lops=append(lops,l.TenLop)
-		}
-		monhoc, err := db.SelectAllMonHoc()
-		if err != nil {
-			fmt.Println("Lỗi lấy danh sách: ", err)
-			http.Error(w, "Lỗi lấy danh sách: "+err.Error(), http.StatusInternalServerError)
-			return
-		}
-		mons:=make([]string,0)
-		for _,m := range monhoc{
-			mons=append(mons,m.TenMon)
-		}
-
-		pc:=make(map[int]map[int][2]int)
-		for _, v := range phancong {
-			if _, ok := pc[v.LopId]; !ok {
-				pc[v.LopId] = make(map[int][2]int)
-			}
-			pc[v.LopId][v.MonHocId] = [2]int{v.GiaoVienId, v.TongTiet}
-		}
-		fmt.Println("Lấy danh sách phancong: ", pc)
-		json.NewEncoder(w).Encode(pc)
+			json.NewEncoder(w).Encode("Hello World")
 	})
 		
 		// API MỚI: ĐỒNG BỘ DỮ LIỆU HÀNG LOẠT

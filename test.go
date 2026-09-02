@@ -35,19 +35,21 @@ func main() {
 	for _,m := range monhoc{
 		mons = append(mons,m.TenMon)
 	}
-	phancong, err := db.SelectAllPhanCong()
+	phancong, err := db.SelectAllPhanCongMonHoc()
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	phancongMap := make(map[int]map[int][2]int)
-	for _, v := range phancong {
-		if _, ok := phancongMap[v.LopId]; !ok {
-			phancongMap[v.LopId] = make(map[int][2]int)
-		}
-		phancongMap[v.LopId][v.MonHocId] = [2]int{v.GiaoVienId, v.TongTiet}
+	phancongMap := make(map[string][]string)
+	for _, l := range lophoc {
+		phancongMap[l.TenLop] = make([]string, 0)
+	}
+	for _, pc := range phancong {
+		phancongMap[pc.Lop] = append(phancongMap[pc.Lop], pc.Mon)
 	}
 
 	fmt.Println(lops)
 	fmt.Println(mons)
+	fmt.Println(phancongMap)
+
 }

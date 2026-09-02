@@ -600,6 +600,15 @@ const (
 	LEFT JOIN lophoc l ON l.id = pc.lop_id
 	order by l.ten_lop ASC
 	`
+	sqlSelectAllPhanCongMonHoc = `
+		SELECT 
+			l.ten_lop AS lop,
+			m.ten_mon AS mon
+		FROM phancong pc
+		Inner join lophoc l on l.id = pc.lop_id
+		Inner join monhoc m on m.id = pc.mon_hoc_id
+		order by l.ten_lop ASC
+		`
 	sqlSelectAllPhanCongGiaoVien = `
 	SELECT 
 		id,
@@ -635,6 +644,29 @@ type PhanCong struct {
 	MonHocId int `json:"mon_hoc_id"`
 	GiaoVienId int `json:"giao_vien_id"`
 	TongTiet int `json:"tong_tiet"`
+}
+
+type PhanCongMonHoc struct {
+	Lop string `json:"lop"`
+	Mon string `json:"mon"`
+}
+
+func (s *SqlTKB) SelectAllPhanCongMonHoc() ([]PhanCongMonHoc, error) {
+	var phancong []PhanCongMonHoc
+	Rows, err := s.db.Query(sqlSelectAllPhanCongMonHoc)
+	if err != nil {
+		return nil, fmt.Errorf("không thể lấy dữ liệu từ bảng phancong : %w", err)
+	}
+	defer Rows.Close()
+	for Rows.Next() {
+		var pc PhanCongMonHoc
+		err := Rows.Scan(&pc.Lop, &pc.Mon)
+		if err != nil {
+			return nil, fmt.Errorf("Không thể quét dữ liệu vào biến phancong : %w", err)
+		}
+		phancong = append(phancong, pc)
+	}
+	return phancong, nil
 }
 
 func (s *SqlTKB) SelectAllPhanCong() ([]PhanCong, error) {
