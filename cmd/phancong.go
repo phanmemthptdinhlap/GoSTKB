@@ -43,6 +43,39 @@ func phancongMonHoc() interface{} {
 	}
 }
 
+func phancongGiaoVien() interface{} {
+	lophoc, err := db.SelectAllLopHoc()
+	if err != nil {
+		fmt.Println("Lỗi lấy danh sách: ", err)
+		return nil
+	}
+	monhoc, err := db.SelectAllMonHoc()
+	if err != nil {
+		fmt.Println("Lỗi lấy danh sách: ", err)
+		return nil
+	}
+	mons:=make([]string,0)
+	for _,m := range monhoc{
+		mons=append(mons,m.TenMon)
+	}
+	phancong, err := db.SelectAllPhanCongMonHoc()
+	if err != nil {
+		fmt.Println("Lỗi lấy danh sách: ", err)
+		return nil
+	}
+	phancongMap := make(map[string][]string)
+	for _, l := range lophoc {
+		phancongMap[l.TenLop] = make([]string, 0)
+	}
+	for _, pc := range phancong {
+		phancongMap[pc.Lop] = append(phancongMap[pc.Lop], pc.Mon)
+	}
+	return map[string] interface{}{
+		"mon": mons,
+		"phancong": phancongMap,
+	}
+}
+
 func (p *WebPage) SetPagePhanCong() {
 	p.mux.HandleFunc("/pc_giaovien", func(w http.ResponseWriter, r *http.Request) {
 		tmpl, err := template.ParseFiles("templates/phancong_giaovien.html", "templates/base.html")

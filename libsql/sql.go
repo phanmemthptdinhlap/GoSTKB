@@ -612,9 +612,13 @@ const (
 	sqlSelectAllPhanCongGiaoVien = `
 	SELECT 
 		id,
-		mon_hoc_id
+		l.ten_lop AS lop,
+		m.ten_mon AS mon,
+		pc.giao_vien_id AS giao_vien
 	FROM phancong pc
-	order by id ASC
+	Inner join lophoc l on l.id = pc.lop_id
+	Inner join monhoc m on m.id = pc.mon_hoc_id
+	order by l.ten_lop ASC
 	`
 	sqlFindPhanCongByGiaoVien = `
 	SELECT * FROM phancong
