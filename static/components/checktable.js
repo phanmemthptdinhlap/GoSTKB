@@ -1,7 +1,7 @@
 const CheckTable = {
   props: {
     title: String,
-    labels: { type: Object, required: true }, // Sửa: Sửa kiểu dữ liệu thành Object ({ cols: [], rows: [] })
+    labels: { type: Array, required: true }, // Sửa: Sửa kiểu dữ liệu thành labels ([])
     datas: { type: Object, required: true },
     theme: { 
       type: Object, 
@@ -26,11 +26,13 @@ const CheckTable = {
   template: `
   <div :class="theme.panel">
     <h3 :class="theme.title">{{ title }}</h3>
+    <p>{{ labels }}</p>
     <table :class="theme.table">
       <thead :class="theme.thead">
         <tr :class="theme.tr">
           <th :class="theme.th">Mục</th>
-          <template v-for="(ctext,cindex) in labels.cols" :key="cindex">
+          <th :class="theme.th">Mon Hoc</th>
+          <template v-for="(ctext,cindex) in labels" :key="cindex">
             <th :class="theme.th">
              <input 
                 type="checkbox" 
@@ -44,12 +46,11 @@ const CheckTable = {
         </tr>
       </thead>
       <tbody :class="theme.tbody">
-        <!-- Sửa lỗi 3: Sửa 'lables.rows' thành 'labels.rows' -->
-        <tr v-for="row in labels.rows" :key="row" :class="theme.tr">
+        <tr v-for="row in rows" :key="row" :class="theme.tr">
             <td :class="theme.td">
               {{ typeof row === 'object' ? row.text : row }}
             </td>
-          <template v-for="(cell, index) in labels.cols" :key="index">
+          <template v-for="(cell, index) in labels" :key="index">
             <td :class="theme.td_cell" style="text-align: center;">
               <!-- Sửa lỗi 1: Thay v-model thành :checked -->
               <input 
@@ -71,6 +72,7 @@ const CheckTable = {
     
     const initData = (newData) => {
       localDatas.value = structuredClone(toRaw(newData));
+      console.log(props.labels);
     };
 
     Vue.watch(
@@ -85,6 +87,10 @@ const CheckTable = {
 
 
     // --- BỔ SUNG LỖI 2: Khai báo 4 hàm kiểm tra và xử lý checkbox ---
+    const rows = computed(() => {
+      if (!localDatas.value) return [];
+      return Object.keys(localDatas.value);
+    });
 
     const changedMap = computed(() => {
       const map = {};
@@ -108,7 +114,7 @@ const CheckTable = {
     const colCheckAll = computed(() => {
       const col={};
       if (!localDatas.value|| Object.keys(localDatas.value).length===0) return col;
-      Object.keys(props.labels.cols).forEach((_, index) => {
+      Object.keys(props.labels).forEach((_, index) => {
         col[index] = Object.values(localDatas.value).every(row => {
           return !!row[index];
         });
@@ -159,6 +165,7 @@ const CheckTable = {
       isChecked, 
       checkRow,
       checkAll,
+      rows,
       colCheckAll,
       changedMap,
       hasChanges,

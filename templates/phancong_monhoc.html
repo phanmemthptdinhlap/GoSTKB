@@ -94,10 +94,7 @@
   const app = createApp({
     delimiters: ['[[', ']]'],
     setup() {
-      const labels = ref({
-        rows: ["10A1", "10A2", "10C1", "10C2", "10C3", "10C4", "11A1", "11A2"],
-        cols: ["Toán", "Văn", "Lý", "Hóa", "Sinh", "Tin", "Sử", "Địa"],
-      });
+      const labels = ref(["Toán", "Văn", "Lý", "Hóa", "Sinh", "Tin", "Sử", "Địa"]);
       const datas = ref({
         "10A1":[true,false,false,false,false,false,false,false],
         "10A2":[false,true,false,false,false,false,false,false],
