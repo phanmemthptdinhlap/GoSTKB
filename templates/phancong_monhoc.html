@@ -108,45 +108,34 @@
       const chRef = ref(null);
 
 
-      const getLabel =() =>{
-        fetch('api/giaovien')
+      const fetchData = () => {
+        fetch('api/phancong/mon')
           .then(response => response.json())
           .then(data => {
             console.log(data);
-            labels.value[0].options = Object.values(data);
-          })
-          .catch(error => {
-            console.error(error);
-          });
-
-      };
-      const getLop = () => {
-        fetch('api/lop')
-          .then(response => response.json())
-          .then(data => {
-            console.log(data);
-            labels.value[1].options = Object.values(data);
-          })
-          .catch(error => {
-            console.error(error);
-          });
-      };
-
-      const getData = () => {
-        fetch('api/phancong')
-          .then(response => response.json())
-          .then(data => {
-            console.log(data);
-            datas.value = Object.values(data);
+            labels.value = Object.values(data.mon);
+            const tdatas = {};
+            const keys = Object.keys(data.phancong);
+            keys.forEach(key => {
+              tdatas[key] = [];
+              labels.value.forEach((m) => {
+                tdatas[key].push(
+                  m in data.phancong[key]
+                );
+              });
+            });
+            datas.value = tdatas;
           })
           .catch(error => {
             console.error(error);
           });
         console.log(labels.value);
         console.log(datas.value);
+
       };
       onMounted(() => {
         //getData();
+        fetchData();
       });
 
       // 2. Hàm đồng bộ dữ liệu
@@ -157,7 +146,7 @@
           const [rkey, cIndex] = String(key).split('_');
           data.push({
             lop: rkey,
-            mon_hoc: labels.value.cols[cIndex],
+            mon_hoc: labels.value[cIndex],
             phan_cong: chRef.value.changedMap[key],
           });
         });
@@ -184,8 +173,7 @@
         labels,
         datas,
         chRef,
-        getLabel,
-        getData,
+        fetchData,
         handleSyncToServer,
       };
     }

@@ -26,12 +26,10 @@ const CheckTable = {
   template: `
   <div :class="theme.panel">
     <h3 :class="theme.title">{{ title }}</h3>
-    <p>{{ labels }}</p>
     <table :class="theme.table">
       <thead :class="theme.thead">
         <tr :class="theme.tr">
           <th :class="theme.th">Mục</th>
-          <th :class="theme.th">Mon Hoc</th>
           <template v-for="(ctext,cindex) in labels" :key="cindex">
             <th :class="theme.th">
              <input 
