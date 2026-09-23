@@ -10,6 +10,12 @@ import (
 
 // Bổ sung trường action để mapping với giao diện Vue
 
+type Phanmon struct {
+	Lop string `json:"lop"`
+	Monhoc string `json:"mon_hoc"`
+	Phancong bool `json:"phan_cong"`
+}
+
 func phancongMonHoc() interface{} {
 	lophoc, err := db.SelectAllLopHoc()
 	if err != nil {
@@ -116,6 +122,21 @@ func (p *WebPage) SetPagePhanCong() {
 		data:=phancongMonHoc()
 		json.NewEncoder(w).Encode(data)
 	})
+	p.mux.HandleFunc("POST /api/phancong/sync/mon",func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		var danhSachDongBo []	Phanmon	
+		err := json.NewDecoder(r.Body).Decode(&danhSachDongBo)
+			if err != nil {
+				http.Error(w, "Lỗi decode: "+err.Error(), http.StatusBadRequest)
+				return
+			}
+	
+			fmt.Printf("Nhận được %d bản ghi cần đồng bộ\n", len(danhSachDongBo))
+			fmt.Println("Nhận được phancong: ", danhSachDongBo)	
+		
+			// Trả về thành công
+			json.NewEncoder(w).Encode(map[string]string{"status": "success", "message": "Đồng bộ hoàn tất"})
+		})
 	p.mux.HandleFunc("GET /api/phancong/giaovien", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 			json.NewEncoder(w).Encode("Hello World")

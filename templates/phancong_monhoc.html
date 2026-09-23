@@ -152,14 +152,20 @@
         });
         console.log(chRef.value.changedMap);
         console.log(data);
-        fetch('api/phancong/sync', {
+        fetch('api/phancong/sync/mon', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify(data),
         })
-          .then(response => response.json())
+          .then(async response => {
+            if (!response.ok) {
+              const errorText = await response.text();
+              throw new Error(`HTTP ${response.status}: ${errorText}`); 
+            }
+            return response.json();
+          })
           .then(res => {
             console.log(res);
           })
